@@ -208,7 +208,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 .keys button.blk{background:var(--ink);color:#fff;border-color:var(--ink)}
 .ednav{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;align-items:center;text-align:center}
 .ednav .btn{padding:0;justify-content:center}
-.edacts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+.edacts{display:grid;grid-template-columns:1fr 1fr 1fr 1.4fr;gap:8px;margin-top:8px}
 .edacts .btn{padding:0;justify-content:center}
 .edrow{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:8px 0;flex-wrap:wrap}
 .edrow input{font:inherit;font-size:16px;flex:1;min-width:140px;min-height:44px;border-radius:12px;border:2px solid var(--line);padding:0 12px;color:var(--ink)}
@@ -415,7 +415,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <div class="tline" id="edNotes"></div>
     <p class="hint" style="margin:6px 0 0">Tap a block to change its length. Grey blocks are rests. Thin lines mark beats, thick lines mark bars. Swipe sideways for longer riffs.</p>
     <div class="edrow"><input id="edName" placeholder="Name your riff (optional)" maxlength="40"></div>
-    <div class="edacts"><button class="btn" id="edUndo">Undo</button><button class="btn" id="edClear">Clear</button><button class="btn" id="edPlay">Play</button><button class="btn saved" id="edSave">Save</button></div>
+    <div class="edacts"><button class="btn" id="edUndo">Undo</button><button class="btn" id="edClear">Clear</button><button class="btn" id="edPlay">Play</button><button class="btn saved" id="edSave">Save riff</button></div>
   </section>
 
   <section class="card">
@@ -428,7 +428,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-0135';
+const APP_VERSION='2026.11.26-0139';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1401,9 +1401,9 @@ $('edUndo').onclick=()=>{ed.notes.pop();renderEditor()};
 $('edClear').onclick=()=>{ed.notes=[];renderEditor()};
 $('edPlay').onclick=()=>{if(edNoteCount()<1)return;loadRiff(edRiff(),true);window.scrollTo({top:0,behavior:'smooth'})};
 $('edSave').onclick=()=>{
-  if(edNoteCount()<2){$('edTotal').textContent='Add at least 2 notes first.';return}
+  if(edNoteCount()<2){toast('Add at least 2 notes to save a riff.');return}
   const r=edRiff();r.title=$('edName').value.trim()||`My riff ${saved.filter(s=>s.custom).length+1}`;r.tempo=S.tempo;r.savedAt=Date.now();
-  saved.unshift(r);store.set('riffecho.saved',saved);ed.notes=[];$('edName').value='';renderEditor();toast(`Saved as "${r.title}"`,{label:'View',fn:goSaved});
+  saved.unshift(r);store.set('riffecho.saved',saved);ed.notes=[];$('edName').value='';renderEditor();toast(`Saved as "${r.title}". It's playing now.`,{label:'View',fn:goSaved});
   if(S.practice!=='riff'){S.practice='riff';saveS();syncControls()}
   loadRiff(r,true);window.scrollTo({top:0,behavior:'smooth'});
 };
