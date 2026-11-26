@@ -419,7 +419,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-0107';
+const APP_VERSION='2026.11.26-0111';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -472,8 +472,9 @@ const CELLS={
   rock:[[0,2,4,6],[0,4,6],[0,2,4],[0,3,6],[0,4],[0,2,6],[0,6]],
   funk:[[0,3,6],[0,3,4,7],[0,2,3,6],[0,6,7],[0,3,5],[0,2,5],[0,1,4,6]],
   pop:[[0,4,6],[0,2,6],[0,4],[0,3,6],[0,2,4],[0,6]],
-  walking:[[0,4]]};
-const STYLES=['rock','funk','pop','walking'];
+  walking:[[0,4]],
+  metal:[[0,2,3,4,6,7],[0,1,2,3,4,6],[0,2,3,6],[0,1,2,4,6],[0,3,6,7],[0,2,4,5,6]]};
+const STYLES=['rock','funk','pop','walking','metal'];
 const pickA=a=>a[rnd(a.length)];
 const isChord=d=>{const m=((d%7)+7)%7;return m===0||m===2||m===4};
 function nearestDeg(from,test,maxD){let best=null;for(let c=from-maxD;c<=from+maxD;c++)if(test(c)&&(best==null||Math.abs(c-from)<Math.abs(best-from)||(Math.abs(c-from)===Math.abs(best-from)&&rnd(2))))best=c;return best}
@@ -488,6 +489,12 @@ function motifDegs(cell,start,voice){
   }
   return d;
 }
+// Metal cell: chug on the root (palm-muted), with one or two accented 'riff notes' on dark intervals
+function metalCell(cell){
+  const d=cell.map((s,i)=>i===0?0:Math.random()<.62?0:wpick([[1,3],[4,2],[3,1],[6,2],[7,2],[-1,1],[2,1]]));
+  if(d.every(x=>x===0))d[d.length-1-rnd(Math.max(1,d.length-2))]=wpick([[1,3],[4,2],[6,2],[7,2]]);
+  return d;
+}
 function genRiff(o){
   const want={short:[3,4],medium:[5,7],long:[8,12]}[o.length]||[5,7];
   const voice=o.instrument==='voice';
@@ -499,15 +506,17 @@ function genRiff(o){
     else mode=+o.mode;
     const root=o.key==='random'?rnd(12):+o.key;
     const style=(!o.style||o.style==='any')?pickA(voice?['rock','pop','funk']:STYLES):o.style;
+    if(style==='metal'&&o.mode==='random')mode=pickA([5,2,2,6,1]);   // metal leans dark: minor, Phrygian, Locrian, Dorian
     const pool=CELLS[style];
-    const nCells=pickA({short:[1,2],medium:[2,2,3],long:[4,4,5,6]}[o.length]||[2]);
+    const nCells=style==='metal'?({short:1,medium:2,long:4}[o.length]||2):pickA({short:[1,2],medium:[2,2,3],long:[4,4,5,6]}[o.length]||[2]);
     const A=pickA(pool),B=rnd(3)?A:pickA(pool),D=rnd(2)?A:pickA(pool);
     const cells=Array.from({length:nCells},(_,k)=>k===0||k%2===0?A:k===nCells-1?D:B);
     const n=cells.reduce((s,c)=>s+c.length,0);
-    if(n<want[0]||n>want[1])continue;
+    if(style!=='metal'&&(n<want[0]||n>want[1]))continue;
+    if(style==='metal'&&n>(o.length==='long'?24:o.length==='short'?7:14))continue;
     // motif
     const start=wpick([[0,65],[4,20],[2,15]]);
-    let motif=motifDegs(A,start,voice);
+    let motif=style==='metal'?metalCell(A):motifDegs(A,start,voice);
     const pedal=!voice&&style==='rock'&&A.length>=3&&Math.random()<.45;
     if(pedal)motif=A.map(()=>start);                       // pounding root, the answer adds the fill
     if(!voice&&style==='funk')motif=motif.map((d,i)=>i>0&&d===start&&A[i]%4!==0&&Math.random()<.55?d+7:d);   // octave pops
@@ -516,6 +525,7 @@ function genRiff(o){
       if(!motif.some(x=>((x%7)+7)%7===ch)){const c=nearestDeg(motif[i-1],x=>((x%7)+7)%7===ch,4);if(c!=null)motif[i]=c}
     }
     const answer=(cell,final)=>{
+      if(style==='metal'){const d=cell===A?motif.slice():metalCell(cell);const nz=d.map((x,i)=>x?i:-1).filter(i=>i>0);if(nz.length){const i=nz[nz.length-1];d[i]=final?wpick([[1,3],[6,2],[4,1]]):wpick([[4,2],[3,2],[6,1],[7,1]])}return d}
       let d=cell===A?motif.slice():motifDegs(cell,nearestDeg(motif[motif.length-1],isChord,3)??motif[0],voice);
       if(pedal&&d.length>=3&&cell===A)d[d.length-2]=start+wpick([[1,3],[2,3],[-1,2],[4,1]]);   // fill
       const last=d.length-1,prev=last?d[last-1]:motif[motif.length-1];
@@ -541,6 +551,7 @@ function genRiff(o){
     if(style==='walking'&&!voice)for(let i=3;i<midis.length-1;i+=4){const up=midis[i+1]+1,dn=midis[i+1]-1;midis[i]=dn<lo?up:rnd(2)?up:dn}   // chromatic approach into each bar
     const target=collapse(midis.map(m=>m%12));
     if(target.length<3||new Set(target).size<2)continue;
+    if(style==='metal'&&(target.length<want[0]||target.length>want[1]+2))continue;
     const onsets=[];cells.forEach((c,k)=>c.forEach(s=>onsets.push(k*8+s)));
     const slots=nCells*8;
     const notes=midis.map((m,i)=>({midi:m,start:onsets[i],dur:Math.min(8,(i<n-1?onsets[i+1]:slots)-onsets[i])}));
@@ -969,14 +980,16 @@ function playTone(inst,t,midi,len,vel,slide){
 }
 function ghostNote(inst,t,midi){if(inst==='voice')return;if(inst==='bass'&&S.octUp)midi+=12;const f=SAMPLED[inst+':'+S.sounds[inst]];if(f&&playSample(t,f,midi,.05,.3,0,inst))return;pluck(t,midi,.07,PLUCK[inst+':muted'],inst+':muted:',.35)}
 // how a human would play it: accent by beat position, length by style, a little timing drift
-const GATE={funk:.5,rock:.8,pop:.88,walking:.95};
+const GATE={funk:.5,rock:.8,pop:.88,walking:.95,metal:.85};
 function feelFor(r,n,i){
   const s16=n.start*(4/(r.unit||2)),pos=s16%16;
   let v=pos===0?1:pos%4===0?.86:pos%2===0?.74:.62;
   if(r.custom||r.single)v=pos%4===0?1:.85;
+  const chug=r.style==='metal'&&n.midi%12===r.root;
+  if(r.style==='metal')v=chug?(pos%4===0?.82:.7):1;
   v=Math.min(1,v*(.93+Math.random()*.12));
   const jitter=r.custom||r.single?0:(Math.random()-.5)*.018+(r.style==='funk'?.007:0);
-  const gate=r.custom?.88:(GATE[r.style]||.85)*(i===r.notes.length-1?1.15:1);
+  const gate=chug?.38:r.custom?.88:(GATE[r.style]||.85)*(i===r.notes.length-1?1.15:1);
   return {v,jitter,gate};
 }
 // ---- drums (synthesised) ----
@@ -989,7 +1002,7 @@ function snare(t){hitNoise(t,'bandpass',1800,.7,.45,.16);const o=ctx.createOscil
 function hat(t,v){hitNoise(t,'highpass',7000,.7,v,.045)}
 function ride(t){hitNoise(t,'bandpass',5200,1.5,.12,.28)}
 // Recorded kits per style. Rock: Red Zeppelin, Funk/Pop: Black Pearl (AVL Drumkits, Glen MacArthur, CC BY-SA). Walking: Virtuosity Drums (CC0).
-const KITS={rock:'zep',funk:'pearl',pop:'pearl',walking:'jazz'};
+const KITS={rock:'zep',funk:'pearl',pop:'pearl',walking:'jazz',metal:'pearl'};
 const KITFILES={zep:'kick1 kick2 kick3 snare-ghost snare1 snare2 snare3 stick hat1 hat2 hat3 hatopen pedal ride1 ride2 bell tamb tom floor crash',pearl:'kick1 kick2 kick3 snare-ghost snare1 snare2 snare3 stick hat1 hat2 hat3 hatopen pedal ride1 ride2 bell tamb tom floor crash',jazz:'kick1 kick2 kick3 snare-ghost snare1 snare2 snare3 hat1 hat2 hat3 ride1 ride2 bell'};
 const DRUMFALLBACK={stick:'snare-ghost',hatopen:'hat3',pedal:'hat1',tamb:'hat2',tom:'snare1',floor:'kick2',crash:'bell'};
 const ALL16=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],E8=[0,2,4,6,8,10,12,14],SWING=[0,4,6,8,12,14];
@@ -1018,6 +1031,14 @@ const BEATS={
        {name:'One drop',k:[8],x:[8],h:E8},
        {name:'Latin pop',k:[0,6,12],x:[4,10],h:E8,t:[2,6,10,14]},
        {name:'Hip-hop',k:[0,7,10],s:[4,12],h:E8,o:[14]}],
+  metal:[{name:'Double kick',k:ALL16,s:[4,12],r:[0,4,8,12],c:[0],dk:1},
+         {name:'Thrash',k:[0,4,8,12],s:[2,6,10,14],h:E8,c:[0]},
+         {name:'Gallop',k:[0,2,3,4,6,7,8,10,11,12,14,15],s:[4,12],r:[0,4,8,12],dk:1},
+         {name:'Breakdown',k:[0,3,6,10],s:[8],r:[0,4,8,12],c:[0]},
+         {name:'Blast beat',k:E8,s:[1,3,5,7,9,11,13,15],r:E8,dk:1},
+         {name:'Half-time',k:[0,2,3,10,11],s:[8],r:E8,c:[0]},
+         {name:'Djent',k:[0,3,6,9,12,14],s:[8],h:[0,4,8,12]},
+         {name:'Stomp',k:[0,1,8,9],s:[4,12],r:[0,4,8,12],c:[0]}],
   walking:[{name:'Swing ride',r:SWING,p:[4,12],k:[0,4,8,12],soft:1},
            {name:'Two-feel',r:SWING,p:[4,12],k:[0,8],soft:1},
            {name:'Ride + backbeat',r:SWING,p:[4,12],gh:[12],k:[0,8],soft:1},
@@ -1057,7 +1078,7 @@ function playDrums(t0,n16,style,e16,first){
   setTimeout(()=>{const i=drumBuses.indexOf(db);if(i>=0)drumBuses.splice(i,1)},(n16*e16+3)*1000);
   const hit=(arr,kind,i,b,vf)=>{if(arr&&arr.includes(b))drumHit(kit,kind,Math.max(t0,t0+i*e16+(b%4===2?sw:0)+hum()),Math.min(1,vf(b)*(.92+Math.random()*.12)))};
   for(let i=0;i<n16;i++){const b=i%16;
-    hit(B.k,'kick',i,b,b=>B.soft?.3:b===0?1:.85);
+    hit(B.k,'kick',i,b,b=>B.soft?.3:B.dk?(b%4===0?.95:.78):b===0?1:.85);
     hit(B.s,'snare',i,b,()=>.95);hit(B.gh,'snare',i,b,()=>.25);hit(B.x,'stick',i,b,()=>.85);
     hit(B.h,'hat',i,b,b=>b%4===0?.95:b%2===0?.72:.45);hit(B.o,'hatopen',i,b,()=>.85);hit(B.p,'pedal',i,b,()=>.7);
     hit(B.r,'ride',i,b,b=>b%4===0?.9:.6);hit(B.b,'bell',i,b,()=>.8);hit(B.t,'tamb',i,b,()=>.7);
@@ -1280,10 +1301,10 @@ async function previewSound(){
   [0,4,7,12,7].forEach((iv,i)=>playTone(inst,t+i*step,base+iv,inst==='voice'?.32:step*1.1));
   muteUntil=Math.max(muteUntil,t+5*step+.4);
 }
-const STYLE_TILES=[{v:'any',name:'Any style',cell:null},{v:'rock',name:'Rock',cell:[0,2,4,6]},{v:'funk',name:'Funk',cell:[0,3,6]},{v:'pop',name:'Pop',cell:[0,4,6]},{v:'walking',name:'Walking',cell:[0,4]}];
+const STYLE_TILES=[{v:'any',name:'Any style',cell:null},{v:'rock',name:'Rock',cell:[0,2,4,6]},{v:'funk',name:'Funk',cell:[0,3,6]},{v:'pop',name:'Pop',cell:[0,4,6]},{v:'walking',name:'Walking',cell:[0,4]},{v:'metal',name:'Metal',cell:[0,2,3,4,6,7]}];
 function curBeatStyle(){return riff&&riff.style?riff.style:S.style!=='any'?S.style:'rock'}
 function renderBeats(){
-  const st=curBeatStyle(),list=BEATS[st],sel=(S.beats||{})[st]||0,nmS={rock:'Rock',funk:'Funk',pop:'Pop',walking:'Walking'}[st];
+  const st=curBeatStyle(),list=BEATS[st],sel=(S.beats||{})[st]||0,nmS={rock:'Rock',funk:'Funk',pop:'Pop',walking:'Walking',metal:'Metal'}[st];
   const row=(arr,cls,arr2,cls2)=>Array.from({length:16},(_,i)=>`<i class="${arr&&arr.includes(i)?cls:arr2&&arr2.includes(i)?cls2:''}"></i>`).join('');
   $('beatSeg').innerHTML=list.map((B,i)=>`<button class="tile" data-v="${i}" aria-pressed="${i===sel}"><b>${nmS} ${i+1}</b><small>${B.name}</small><span class="bgrid">${row(B.h||B.r,'h',(B.o||B.p||[]).concat(B.c||[]),'o')}${row(B.s||B.x||B.tm,'s',(B.gh||[]).concat(B.tm&&(B.s||B.x)?B.tm:[]),'g')}${row(B.k||B.fl,'k',B.fl&&B.k?B.fl:null,'k')}</span></button>`).join('');
   $('beatHint').textContent=`Beats for ${nmS}${S.style==='any'?' (the current riff’s style)':''}. Each style has its own recorded kit. Rows: cymbals, snare, kick.`;
