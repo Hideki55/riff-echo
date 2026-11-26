@@ -428,7 +428,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-0126';
+const APP_VERSION='2026.11.26-0135';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -696,7 +696,11 @@ function genSingle(o,prevPc){
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const store={lastErr:'',get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){store.lastErr=e.name+': '+e.message;return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){store.lastErr=e.name+': '+e.message;return false}}};
+// Show unexpected errors on screen so they can be reported from a phone
+function showErr(msg){let b=document.getElementById('errBanner');if(!b){b=document.createElement('div');b.id='errBanner';b.style.cssText='position:fixed;top:max(8px,env(safe-area-inset-top));left:8px;right:8px;z-index:50;background:#a1271d;color:#fff;border-radius:12px;padding:10px 12px;font:600 13px/1.35 system-ui;box-shadow:0 6px 20px rgba(0,0,0,.3)';b.onclick=()=>b.remove();document.body.appendChild(b)}b.textContent='Something went wrong (tap to hide): '+msg}
+window.addEventListener('error',e=>showErr((e.message||'error')+(e.lineno?' @'+e.lineno:'')));
+window.addEventListener('unhandledrejection',e=>{const r=e.reason;if(r&&/decode|abort|NotAllowed/i.test(String(r.name||r)))return;showErr(String(r&&r.message||r))});
 const S=Object.assign({drumVol:.55,beats:{},practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
 let saved=store.get('riffecho.saved',[]),renaming=-1,confirmDel=-1,toastT=null;
 S.sounds=Object.assign({bass:'finger',guitar:'clean',voice:'choir'},S.sounds||{});
@@ -1442,8 +1446,10 @@ $('saveBtn').onclick=()=>{
   const SN={rock:'Rock',funk:'Funk',pop:'Pop',walking:'Walking',metal:'Metal'},base=riff.custom?'My riff':`${SN[riff.style]||'Riff'} riff`;
   const title=`${base} ${saved.filter(s=>s.title&&s.title.startsWith(base)).length+1}`;
   saved.unshift(Object.assign({},riff,{title,tempo:S.tempo,savedAt:Date.now()}));
-  store.set('riffecho.saved',saved);renderSave();renderSaved();
-  toast(`Saved as "${title}"`,{label:'View',fn:goSaved});
+  const ok=store.set('riffecho.saved',saved),back=store.get('riffecho.saved',[]);
+  try{renderSave();renderSaved()}catch(e){showErr('list: '+e.message)}
+  if(!ok||!back.some(s=>s.id===riff.id))toast(`Couldn't store it on this phone (${store.lastErr||'storage unavailable'})`);
+  else toast(`Saved as "${title}" · ${back.length} saved`,{label:'View',fn:goSaved});
 };
 $('savedList').onclick=e=>{
   const t=e.target.closest('button');if(!t)return;
