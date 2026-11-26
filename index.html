@@ -399,9 +399,11 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <h2>Saved riffs</h2>
     <ul class="saved-list" id="savedList"></ul>
   </section>
+  <p class="muted" id="verLbl" style="text-align:center;margin:18px 0 0;font-size:12px"></p>
 </main>
 
 <script>
+const APP_VERSION='2026.11.26-0018';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1239,6 +1241,17 @@ $('savedList').onclick=e=>{
 };
 document.addEventListener('visibilitychange',async()=>{if(listening&&document.visibilityState==='visible'){try{wake=await navigator.wakeLock?.request('screen')}catch(e){}}});
 
+// Keep the home-screen app fresh: compare with the published version and reload past any cached copy.
+async function checkUpdate(){
+  try{
+    const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;
+    const v=(await r.json()).v;if(!v||v===APP_VERSION)return;
+    if(sessionStorage.getItem('riffecho.tried')===v)return;sessionStorage.setItem('riffecho.tried',v);
+    location.replace(location.pathname+'?v='+encodeURIComponent(v));
+  }catch(e){}
+}
+$('verLbl').textContent='Version '+APP_VERSION;
+if(/^https?:/.test(location.protocol)){checkUpdate();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()})}
 syncControls();
 loadRiff(genRiff(S),false);
 }
