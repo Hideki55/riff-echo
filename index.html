@@ -329,9 +329,10 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
   </section>
 
   <section class="card">
-    <h2>Drum beat</h2>
+    <h2>Drum beat &amp; volume</h2>
     <p class="hint" id="beatHint">Pick the groove for each style. Each style has its own drum kit. Rows show kick, snare and cymbals over one bar.</p>
     <div class="beats" id="beatSeg"></div>
+    <div class="sens" style="margin-top:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v6c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/></svg><input type="range" id="drumVol" min="0" max="100" step="5" aria-label="Drum volume"><span class="muted" id="drumVolLbl" style="min-width:44px;text-align:right"></span></div>
   </section>
 
   <section class="card">
@@ -418,7 +419,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-0052';
+const APP_VERSION='2026.11.26-0107';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -676,7 +677,7 @@ function genSingle(o,prevPc){
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const S=Object.assign({beats:{},practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
+const S=Object.assign({drumVol:.55,beats:{},practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
 let saved=store.get('riffecho.saved',[]);
 S.sounds=Object.assign({bass:'finger',guitar:'clean',voice:'choir'},S.sounds||{});
 
@@ -989,26 +990,43 @@ function hat(t,v){hitNoise(t,'highpass',7000,.7,v,.045)}
 function ride(t){hitNoise(t,'bandpass',5200,1.5,.12,.28)}
 // Recorded kits per style. Rock: Red Zeppelin, Funk/Pop: Black Pearl (AVL Drumkits, Glen MacArthur, CC BY-SA). Walking: Virtuosity Drums (CC0).
 const KITS={rock:'zep',funk:'pearl',pop:'pearl',walking:'jazz'};
-const KITFILES={zep:'kick1 kick2 kick3 snare-ghost snare1 snare2 snare3 stick hat1 hat2 hat3 hatopen pedal ride1 ride2 bell tamb',pearl:'kick1 kick2 kick3 snare-ghost snare1 snare2 snare3 stick hat1 hat2 hat3 hatopen pedal ride1 ride2 bell tamb',jazz:'kick1 kick2 kick3 snare-ghost snare1 snare2 snare3 hat1 hat2 hat3 ride1 ride2 bell'};
-const DRUMFALLBACK={stick:'snare-ghost',hatopen:'hat3',pedal:'hat1',tamb:'hat2'};
+const KITFILES={zep:'kick1 kick2 kick3 snare-ghost snare1 snare2 snare3 stick hat1 hat2 hat3 hatopen pedal ride1 ride2 bell tamb tom floor crash',pearl:'kick1 kick2 kick3 snare-ghost snare1 snare2 snare3 stick hat1 hat2 hat3 hatopen pedal ride1 ride2 bell tamb tom floor crash',jazz:'kick1 kick2 kick3 snare-ghost snare1 snare2 snare3 hat1 hat2 hat3 ride1 ride2 bell'};
+const DRUMFALLBACK={stick:'snare-ghost',hatopen:'hat3',pedal:'hat1',tamb:'hat2',tom:'snare1',floor:'kick2',crash:'bell'};
 const ALL16=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],E8=[0,2,4,6,8,10,12,14],SWING=[0,4,6,8,12,14];
 const BEATS={
-  rock:[{name:'Straight 8ths',k:[0,8],s:[4,12],h:E8},
+  rock:[{name:'Straight 8ths',k:[0,8],s:[4,12],h:E8,c:[0]},
         {name:'Driving',k:[0,6,8,10],s:[4,12],h:[0,2,4,6,8,10,12],o:[14]},
         {name:'Half-time',k:[0,6,10],s:[8],h:E8},
-        {name:'Ride groove',k:[0,8,10],s:[4,12],r:E8}],
+        {name:'Ride groove',k:[0,8,10],s:[4,12],r:E8,c:[0]},
+        {name:'Four on the floor',k:[0,4,8,12],s:[4,12],h:E8,o:[14]},
+        {name:'Punk',k:[0,4,8,12],s:[2,6,10,14],h:E8,c:[0]},
+        {name:'Tom groove',k:[0,8],fl:[0,3,6,10],tm:[12,14],s:[4],h:[0,4,8,12]},
+        {name:'Heavy',k:[0,2,3,8,10,11],s:[4,12],r:[0,4,8,12],c:[0]}],
   funk:[{name:'Classic 16ths',k:[0,3,10],s:[4,12],gh:[7,9,15],h:ALL16},
         {name:'Syncopated',k:[0,6,10,11],s:[4,12],gh:[2,7,14],h:ALL16.filter(x=>x!==6),o:[6]},
         {name:'Linear',k:[0,3,8,11],s:[4,12],gh:[6,9,14],h:[2,5,7,10,13,15]},
-        {name:'Disco funk',k:[0,4,8,12],s:[4,12],gh:[7,15],h:[0,4,8,12],o:[2,6,10,14]}],
+        {name:'Disco funk',k:[0,4,8,12],s:[4,12],gh:[7,15],h:[0,4,8,12],o:[2,6,10,14]},
+        {name:'Street strut',k:[0,7,10],s:[4,12],gh:[3,6,9,14],h:E8,o:[10]},
+        {name:'Half-time funk',k:[0,3,10],s:[8],gh:[5,7,13,15],h:ALL16},
+        {name:'Open hats',k:[0,6,10],s:[4,12],gh:[7,15],h:ALL16.filter(x=>x!==2&&x!==10),o:[2,10]},
+        {name:'Ghost notes',k:[0,10,13],s:[4,12],gh:[1,3,6,7,9,11,14,15],h:E8}],
   pop:[{name:'Pop 8ths',k:[0,6,8],s:[4,12],h:E8,t:[4,12]},
        {name:'Four on the floor',k:[0,4,8,12],s:[4,12],h:[0,4,8,12],o:[2,6,10,14]},
        {name:'Ballad',k:[0,8,10],x:[4,12],h:E8},
-       {name:'Dance 16ths',k:[0,8,11],s:[4,12],h:ALL16,t:[2,6,10,14]}],
+       {name:'Dance 16ths',k:[0,8,11],s:[4,12],h:ALL16,t:[2,6,10,14]},
+       {name:'Motown',k:[0,6,8,14],s:[4,12],t:[0,4,8,12],h:E8},
+       {name:'One drop',k:[8],x:[8],h:E8},
+       {name:'Latin pop',k:[0,6,12],x:[4,10],h:E8,t:[2,6,10,14]},
+       {name:'Hip-hop',k:[0,7,10],s:[4,12],h:E8,o:[14]}],
   walking:[{name:'Swing ride',r:SWING,p:[4,12],k:[0,4,8,12],soft:1},
            {name:'Two-feel',r:SWING,p:[4,12],k:[0,8],soft:1},
-           {name:'Ride + backbeat',r:SWING,p:[4,12],gh:[12],k:[0,8],soft:1}]};
+           {name:'Ride + backbeat',r:SWING,p:[4,12],gh:[12],k:[0,8],soft:1},
+           {name:'Blues shuffle',k:[0,8],s:[4,12],h:[0,2,4,6,8,10,12,14],swing:1},
+           {name:'Bossa nova',k:[0,6,8,14],x:[0,6,12],h:E8,soft:1,straight:1},
+           {name:'Fast swing',r:[0,4,8,12],p:[4,12],soft:1}]};
 const drumRaw=new Map(),drumBuf=new Map(),kitState={};
+let DRUMBUS=null,drumBuses=[];
+function setDrumVol(){for(const g of drumBuses)try{g.gain.setTargetAtTime(S.drumVol,ctx.currentTime,.03)}catch(e){}}
 function fetchKit(kit){
   if(kitState[kit]||!/^https?:/.test(location.protocol))return;kitState[kit]='loading';
   const files=KITFILES[kit].split(' ');let left=files.length;
@@ -1020,7 +1038,7 @@ async function decodeDrums(){
   for(const [n,ab] of [...drumRaw]){if(!drumRaw.has(n))continue;drumRaw.delete(n);try{const b=await new Promise((res,rej)=>ctx.decodeAudioData(ab,res,rej));const d=b.getChannelData(0);let pk=0;for(let i=0;i<d.length;i++){const v=Math.abs(d[i]);if(v>pk)pk=v}drumBuf.set(n,{b,g:pk>0?.7/pk:1})}catch(e){}}
   for(const k in kitState)if(kitState[k]==='fetched'&&![...drumRaw.keys()].some(n=>n.startsWith(k+'/')))kitState[k]='ready';
 }
-const DRUMMIX={kick:1,snare:.8,stick:.6,hat:.34,hatopen:.3,pedal:.28,ride:.32,bell:.3,tamb:.28};
+const DRUMMIX={kick:1,snare:.8,stick:.6,hat:.34,hatopen:.3,pedal:.28,ride:.32,bell:.3,tamb:.28,tom:.7,floor:.75,crash:.3};
 function drumHit(kit,kind,t,v){
   let name=kind;
   if(kind==='kick')name=v<.5?'kick1':v<.88?'kick2':'kick3';
@@ -1030,18 +1048,22 @@ function drumHit(kit,kind,t,v){
   let o=drumBuf.get(kit+'/'+name)||(DRUMFALLBACK[name]&&drumBuf.get(kit+'/'+DRUMFALLBACK[name]));
   if(!o){if(kind==='kick')kick(t);else if(kind==='snare')snare(t);else if(kind==='ride'||kind==='bell')ride(t);else hat(t,.06+.1*v);return}
   const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=o.b;
-  g.gain.value=o.g*(DRUMMIX[kind]||.3)*(.5+.5*v);s.connect(g);g.connect(OUT());s.start(t);
+  g.gain.value=o.g*(DRUMMIX[kind]||.3)*(.5+.5*v);s.connect(g);g.connect(DRUMBUS||OUT());s.start(t);
 }
 function beatFor(style){const list=BEATS[style]||BEATS.rock;return list[Math.min(list.length-1,(S.beats||{})[style]||0)]}
-function playDrums(t0,n16,style,e16){
-  const B=beatFor(style),kit=KITS[style]||'zep',sw=style==='walking'?.67*e16:0,hum=()=>(Math.random()-.5)*.008;
+function playDrums(t0,n16,style,e16,first){
+  const B=beatFor(style),kit=KITS[style]||'zep',sw=style==='walking'&&!B.straight?.67*e16:0,hum=()=>(Math.random()-.5)*.008;
+  const db=ctx.createGain();db.gain.value=S.drumVol;db.connect(OUT());drumBuses.push(db);DRUMBUS=db;
+  setTimeout(()=>{const i=drumBuses.indexOf(db);if(i>=0)drumBuses.splice(i,1)},(n16*e16+3)*1000);
   const hit=(arr,kind,i,b,vf)=>{if(arr&&arr.includes(b))drumHit(kit,kind,Math.max(t0,t0+i*e16+(b%4===2?sw:0)+hum()),Math.min(1,vf(b)*(.92+Math.random()*.12)))};
   for(let i=0;i<n16;i++){const b=i%16;
     hit(B.k,'kick',i,b,b=>B.soft?.3:b===0?1:.85);
     hit(B.s,'snare',i,b,()=>.95);hit(B.gh,'snare',i,b,()=>.25);hit(B.x,'stick',i,b,()=>.85);
     hit(B.h,'hat',i,b,b=>b%4===0?.95:b%2===0?.72:.45);hit(B.o,'hatopen',i,b,()=>.85);hit(B.p,'pedal',i,b,()=>.7);
     hit(B.r,'ride',i,b,b=>b%4===0?.9:.6);hit(B.b,'bell',i,b,()=>.8);hit(B.t,'tamb',i,b,()=>.7);
+    hit(B.tm,'tom',i,b,()=>.85);hit(B.fl,'floor',i,b,()=>.9);if(first&&i<16)hit(B.c,'crash',i,b,()=>.9);
   }
+  DRUMBUS=null;
 }
 // Wait (briefly) until the chosen recordings are decoded, so nothing plays in a stand-in sound.
 function waitFor(test,ms){return new Promise(res=>{const t0=performance.now();(function poll(){if(test()||performance.now()-t0>ms)return res();setTimeout(poll,80)})()})}
@@ -1111,14 +1133,14 @@ async function playRiff(contAt){
   const e16=60/S.tempo/4,song=loopMode===1;
   let t0=contAt!=null&&contAt>ctx.currentTime?contAt:ctx.currentTime+.08;
   OUTBUS=newBus();const bus0=OUTBUS;
-  if(S.drums&&contAt==null){const ck=KITS[riff.style]||'zep';for(let i=0;i<4;i++)drumHit(ck,'stick',t0+i*4*e16,i?.7:1);t0+=16*e16}
+  if(S.drums&&contAt==null){const ck=KITS[riff.style]||'zep',cb=ctx.createGain();cb.gain.value=S.drumVol;cb.connect(OUT());drumBuses.push(cb);DRUMBUS=cb;for(let i=0;i<4;i++)drumHit(ck,'stick',t0+i*4*e16,i?.7:1);DRUMBUS=null;t0+=16*e16}
   // in song mode the riff repeats on a grid of half bars so the loop stays in time
   const L16=Math.ceil(riff.slots/(riff.unit||2)*4/8)*8;
   const bus=bus0;
   let end=t0;const list=[];
   riff.notes.forEach((n,i)=>{const F=feelFor(riff,n,i),t=Math.max(t0,t0+n.start*e+F.jitter),len=Math.max(.07,n.dur*e*Math.min(.97,F.gate));playTone(riff.instrument,t,n.midi,riff.instrument==='voice'?Math.max(len,e*.95):len,F.v,n.slide||0);end=Math.max(end,t+len);list.push({t,end:t+Math.max(len,e*.6),i})});
   (riff.ghosts||[]).forEach(s=>{const prev=riff.notes.filter(n=>n.start<s).pop();if(prev)ghostNote(riff.instrument,t0+s*e+(Math.random()-.5)*.01,prev.midi)});
-  if(S.drums){const n16=song?L16:Math.ceil(riff.slots/(riff.unit||2)*4/16)*16;playDrums(t0,n16,riff.style||'rock',e16);end=Math.max(end,t0+n16*e16)}
+  if(S.drums){const n16=song?L16:Math.ceil(riff.slots/(riff.unit||2)*4/16)*16;playDrums(t0,n16,riff.style||'rock',e16,contAt==null);end=Math.max(end,t0+n16*e16)}
   const startAnim=!playSched,old=playSched&&playSched.riff===riff?playSched.list.filter(x=>x.end>ctx.currentTime):[];
   playSched={list:old.concat(list),stop:song?Math.max(end,t0+L16*e16):end,riff};if(startAnim)requestAnimationFrame(playAnim);
   if(S.drone){
@@ -1263,7 +1285,7 @@ function curBeatStyle(){return riff&&riff.style?riff.style:S.style!=='any'?S.sty
 function renderBeats(){
   const st=curBeatStyle(),list=BEATS[st],sel=(S.beats||{})[st]||0,nmS={rock:'Rock',funk:'Funk',pop:'Pop',walking:'Walking'}[st];
   const row=(arr,cls,arr2,cls2)=>Array.from({length:16},(_,i)=>`<i class="${arr&&arr.includes(i)?cls:arr2&&arr2.includes(i)?cls2:''}"></i>`).join('');
-  $('beatSeg').innerHTML=list.map((B,i)=>`<button class="tile" data-v="${i}" aria-pressed="${i===sel}"><b>${nmS} ${i+1}</b><small>${B.name}</small><span class="bgrid">${row(B.h||B.r,'h',B.o||B.p,'o')}${row(B.s||B.x,'s',B.gh,'g')}${row(B.k,'k')}</span></button>`).join('');
+  $('beatSeg').innerHTML=list.map((B,i)=>`<button class="tile" data-v="${i}" aria-pressed="${i===sel}"><b>${nmS} ${i+1}</b><small>${B.name}</small><span class="bgrid">${row(B.h||B.r,'h',(B.o||B.p||[]).concat(B.c||[]),'o')}${row(B.s||B.x||B.tm,'s',(B.gh||[]).concat(B.tm&&(B.s||B.x)?B.tm:[]),'g')}${row(B.k||B.fl,'k',B.fl&&B.k?B.fl:null,'k')}</span></button>`).join('');
   $('beatHint').textContent=`Beats for ${nmS}${S.style==='any'?' (the current riff’s style)':''}. Each style has its own recorded kit. Rows: cymbals, snare, kick.`;
 }
 function renderStyles(){
@@ -1306,6 +1328,7 @@ function setZone(){
   $('zone').setAttribute('d',`M${(100-dx).toFixed(1)} ${yy.toFixed(1)} A80 80 0 0 1 ${(100+dx).toFixed(1)} ${yy.toFixed(1)}`);
 }
 function syncControls(){
+  $('drumVol').value=Math.round(S.drumVol*100);$('drumVolLbl').textContent=Math.round(S.drumVol*100)+'%';
   press($('practiceSeg'),S.practice);renderSounds();renderStyles();renderBeats();renderEditor();renderToggles();
   press($('instSeg'),S.instrument);press($('lenSeg'),S.length);press($('tolSeg'),S.tol);$('tolCard').hidden=S.instrument!=='voice';setZone();
   press($('randSeg'),S.mode);press($('modeSeg'),S.mode);press($('keyWheel'),S.key);
@@ -1320,6 +1343,7 @@ pick($('instSeg'),v=>{fetchSamples(v,S.sounds[v]);S.instrument=v;S.octUp=v==='ba
 pick($('practiceSeg'),v=>{S.practice=v;streak=0;saveS();syncControls();newRiff()});
 pick($('soundSeg'),v=>{S.sounds[S.instrument]=v;saveS();fetchSamples(S.instrument,v);renderSounds();if(playSched||loopMode>0){const lm=loopMode;stopPlayback(true);loopMode=lm;renderToggles();playRiff()}else previewSound()});
 pick($('styleSeg'),v=>{S.style=v;saveS();renderStyles();if(S.practice==='riff')newRiff();renderBeats()});
+$('drumVol').oninput=e=>{S.drumVol=+e.target.value/100;$('drumVolLbl').textContent=e.target.value+'%';saveS();if(ctx)setDrumVol()};
 pick($('beatSeg'),v=>{S.beats=S.beats||{};S.beats[curBeatStyle()]=+v;saveS();renderBeats();
   if(!S.drums){S.drums=true;fetchDrums();renderToggles()}
   if(playSched||loopMode>0){const lm=loopMode;stopPlayback(true);loopMode=lm;renderToggles();playRiff()}else playRiff()});
