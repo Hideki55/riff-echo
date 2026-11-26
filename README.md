@@ -7,3 +7,5 @@ Live app: https://hideki55.github.io/riff-echo/
 ## Credits
 
 Real instrument sounds in `samples/` are single-note renders of the Musyng Kite soundfont from [gleitz/midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts), licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). See `samples/LICENSE.md`.
+
+Drum sounds in `samples/drums/` are trimmed hits from [Virtuosity Drums](https://github.com/sfzinstruments/virtuosity_drums) (CC0).
