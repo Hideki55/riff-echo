@@ -177,6 +177,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 .sounds .tile{padding:10px 12px}
 .sounds .tile b{font-size:16px}
 .sounds svg{width:18px;height:18px;color:var(--blue)}
+.sounds .tile.real small{color:var(--mint)}
 #confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
 #confetti i{position:absolute;left:50%;top:38%;width:9px;height:14px;border-radius:2px;background:var(--c);animation:conf 1.15s cubic-bezier(.15,.6,.3,1) forwards}
 @keyframes conf{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--x),var(--y)) rotate(var(--r));opacity:0}}
@@ -302,7 +303,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 
   <section class="card">
     <h2>Sound</h2>
-    <p class="hint">Tap a sound to hear it and use it. Each instrument remembers its own sound.</p>
+    <p class="hint">Tap a sound to hear it and use it. "Real" sounds are recordings of real instruments and download the first time you pick them (about 1 MB). Each instrument remembers its own sound.</p>
     <div class="sounds" id="soundSeg"></div>
   </section>
 
@@ -400,10 +401,11 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <ul class="saved-list" id="savedList"></ul>
   </section>
   <p class="muted" id="verLbl" style="text-align:center;margin:18px 0 0;font-size:12px"></p>
+  <p class="muted" style="text-align:center;margin:4px 0 0;font-size:12px">Real instrument sounds: Musyng Kite soundfont via <a href="https://github.com/gleitz/midi-js-soundfonts" style="color:inherit">midi-js-soundfonts</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/" style="color:inherit">CC BY-SA 3.0</a>.</p>
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-0018';
+const APP_VERSION='2026.11.26-0031';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -661,9 +663,10 @@ function genSingle(o,prevPc){
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const S=Object.assign({practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'ah'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
+const S=Object.assign({practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
 let saved=store.get('riffecho.saved',[]);
-S.sounds=Object.assign({bass:'finger',guitar:'clean',voice:'ah'},S.sounds||{});
+S.sounds=Object.assign({bass:'finger',guitar:'clean',voice:'choir'},S.sounds||{});
+
 const saveS=()=>store.set('riffecho.settings',S);
 
 const MOOD_TILES=[
@@ -832,16 +835,43 @@ function ensureCtx(){
   if(!unlockEl){try{unlockEl=new Audio(silentWav());unlockEl.loop=true;unlockEl.setAttribute('playsinline','');unlockEl.play().catch(()=>{})}catch(e){}}
   else if(unlockEl.paused)unlockEl.play().catch(()=>{});
   if(ctx&&ctx.state==='closed')ctx=null;
-  if(!ctx){const AC=window.AudioContext||window.webkitAudioContext;ctx=new AC()}
+  if(!ctx){const AC=window.AudioContext||window.webkitAudioContext;ctx=new AC();setTimeout(decodeSamples,0)}
   if(ctx.state!=='running')ctx.resume().catch(()=>{});
   return ctx;
 }
 const hz=m=>440*Math.pow(2,(m-69)/12);
 const ksCache=new Map();
 const SOUNDS={
-  bass:[{id:'finger',name:'Fingers',d:'Warm, round'},{id:'pick',name:'Pick',d:'Bright attack'},{id:'muted',name:'Palm mute',d:'Short, thumpy'},{id:'upright',name:'Upright',d:'Woody, jazzy'},{id:'synth',name:'Synth',d:'Retro buzz'}],
-  guitar:[{id:'clean',name:'Clean',d:'Bright steel'},{id:'nylon',name:'Nylon',d:'Soft classical'},{id:'muted',name:'Palm mute',d:'Chuggy'},{id:'drive',name:'Overdrive',d:'Gritty rock'},{id:'synth',name:'Synth',d:'Retro buzz'}],
-  voice:[{id:'ah',name:'Ah',d:'Open vowel'},{id:'oo',name:'Oo',d:'Soft, round'},{id:'hum',name:'Hum',d:'Mellow'},{id:'choir',name:'Choir',d:'Three voices'}]};
+  bass:[{id:'finger',name:'Fingers',d:'Real bass',real:1},{id:'pick',name:'Pick',d:'Real bass',real:1},{id:'slap',name:'Slap',d:'Real bass',real:1},{id:'fretless',name:'Fretless',d:'Real bass',real:1},{id:'upright',name:'Upright',d:'Real acoustic',real:1},{id:'pluck',name:'Plucked',d:'Synth string'},{id:'muted',name:'Palm mute',d:'Synth, thumpy'},{id:'synth',name:'Retro',d:'Synth buzz'}],
+  guitar:[{id:'clean',name:'Clean',d:'Real electric',real:1},{id:'steel',name:'Acoustic',d:'Real acoustic',real:1},{id:'nylon',name:'Nylon',d:'Real classical',real:1},{id:'muted',name:'Muted',d:'Real palm mute',real:1},{id:'drive',name:'Overdrive',d:'Real crunch',real:1},{id:'pluck',name:'Plucked',d:'Synth string'},{id:'synth',name:'Retro',d:'Synth buzz'}],
+  voice:[{id:'choir',name:'Choir "aah"',d:'Real voices',real:1},{id:'oohs',name:'Choir "ooh"',d:'Real voices',real:1},{id:'ah',name:'Solo "ah"',d:'Synth voice'},{id:'oo',name:'Solo "oo"',d:'Synth voice'},{id:'hum',name:'Hum',d:'Synth, mellow'}]};
+// Real recordings (Musyng Kite soundfont, CC BY-SA 3.0), one file per note, loaded when a sound is chosen
+const SAMPLED={'bass:finger':'electric_bass_finger','bass:pick':'electric_bass_pick','bass:slap':'slap_bass_1','bass:fretless':'fretless_bass','bass:upright':'acoustic_bass',
+  'guitar:clean':'electric_guitar_clean','guitar:steel':'acoustic_guitar_steel','guitar:nylon':'acoustic_guitar_nylon','guitar:muted':'electric_guitar_muted','guitar:drive':'overdriven_guitar',
+  'voice:choir':'choir_aahs','voice:oohs':'voice_oohs'};
+const SRANGE={bass:[28,69],guitar:[40,88],voice:[36,84]};
+const FLATN=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const sampleRaw=new Map(),sampleBuf=new Map(),sampleState={};
+function fetchSamples(inst,id){
+  const folder=SAMPLED[inst+':'+id];if(!folder||sampleState[folder]||!/^https?:/.test(location.protocol))return;
+  sampleState[folder]='loading';const [lo,hi]=SRANGE[inst];let left=hi-lo+1,ok=0;
+  for(let m=lo;m<=hi;m++){fetch(`samples/${folder}/${FLATN[m%12]}${Math.floor(m/12)-1}.mp3`).then(r=>r.ok?r.arrayBuffer():null).then(ab=>{if(ab){sampleRaw.set(folder+m,ab);ok++}}).catch(()=>{}).finally(()=>{if(--left===0){sampleState[folder]=ok?'fetched':'failed';decodeSamples()}})}
+}
+async function decodeSamples(){
+  if(!ctx)return;
+  for(const [k,ab] of [...sampleRaw]){sampleRaw.delete(k);
+    try{const b=await new Promise((res,rej)=>ctx.decodeAudioData(ab,res,rej));const d=b.getChannelData(0);let pk=0;const n=Math.min(d.length,Math.floor(b.sampleRate*.6));for(let i=0;i<n;i++){const v=Math.abs(d[i]);if(v>pk)pk=v}
+      sampleBuf.set(k,{b,g:pk>0?.62/pk:1})}catch(e){}}
+  renderSounds();
+}
+function playSample(t,folder,midi,len,vel,slide,inst){
+  const o=sampleBuf.get(folder+midi);if(!o)return false;
+  const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=o.b;
+  const rel=inst==='voice'?.18:inst==='guitar'?.12:.07,peak=o.g*vel*(inst==='voice'?.75:.85),end=Math.min(o.b.duration-.02,len+rel);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.004);g.gain.setValueAtTime(peak,t+Math.max(.01,end-rel));g.gain.linearRampToValueAtTime(0,t+end);
+  if(slide){s.playbackRate.setValueAtTime(Math.pow(2,slide/12),t);s.playbackRate.setValueAtTime(Math.pow(2,slide/12),t+.015);s.playbackRate.linearRampToValueAtTime(1,t+.075)}
+  s.connect(g);g.connect(ctx.destination);s.start(t);s.stop(t+end+.02);return true;
+}
 const PLUCK={
   'bass:finger':{t60:3,bright:.6,pick:.16,shelf:5,midF:700,mid:3,lp:3200,gain:.55},
   'bass:pick':{t60:2.4,bright:.86,pick:.07,shelf:3,midF:1300,mid:4,lp:5200,gain:.48},
@@ -851,6 +881,8 @@ const PLUCK={
   'guitar:nylon':{t60:2.6,bright:.45,pick:.3,shelf:2,midF:900,mid:1,lp:3500,gain:.55},
   'guitar:muted':{t60:.25,bright:.55,pick:.15,shelf:2,midF:800,mid:2,lp:2500,gain:.65},
   'guitar:drive':{t60:3,bright:.8,pick:.1,shelf:0,midF:900,mid:5,lp:3800,gain:.2,drive:true}};
+// synth stand-ins while recordings load (or if they can't)
+Object.assign(PLUCK,{'bass:pluck':PLUCK['bass:finger'],'bass:slap':PLUCK['bass:pick'],'bass:fretless':PLUCK['bass:upright'],'guitar:pluck':PLUCK['guitar:clean'],'guitar:steel':PLUCK['guitar:clean']});
 let driveCurve=null;
 function pluck(t,midi,len,p,key,vel,slide){
   vel=vel??1;
@@ -898,12 +930,15 @@ function singer(t,midi,len,kind){
 function playTone(inst,t,midi,len,vel,slide){
   vel=vel??1;
   const snd=S.sounds[inst]||SOUNDS[inst][0].id;
-  if(inst==='voice'){singCore.vel=.75+.25*vel;singer(t,midi,len,snd);singCore.vel=1;return}
   if(inst==='bass'&&S.octUp)midi+=12;
+  const folder=SAMPLED[inst+':'+snd];
+  if(folder&&playSample(t,folder,midi,len,vel,slide,inst))return;
+  if(folder)fetchSamples(inst,snd);
+  if(inst==='voice'){singCore.vel=.75+.25*vel;singer(t,midi,len,snd==='oohs'?'oo':snd==='choir'?'choir':snd);singCore.vel=1;return}
   if(snd==='synth')return synthTone(t,midi,len,.32*vel,slide);
   pluck(t,midi,len,PLUCK[inst+':'+snd]||PLUCK[inst==='bass'?'bass:finger':'guitar:clean'],inst+':'+snd+':',vel,slide);
 }
-function ghostNote(inst,t,midi){if(inst==='voice')return;if(inst==='bass'&&S.octUp)midi+=12;pluck(t,midi,.07,PLUCK[inst+':muted'],inst+':muted:',.35)}
+function ghostNote(inst,t,midi){if(inst==='voice')return;if(inst==='bass'&&S.octUp)midi+=12;const f=SAMPLED[inst+':'+S.sounds[inst]];if(f&&playSample(t,f,midi,.05,.3,0,inst))return;pluck(t,midi,.07,PLUCK[inst+':muted'],inst+':muted:',.35)}
 // how a human would play it: accent by beat position, length by style, a little timing drift
 const GATE={funk:.5,rock:.8,pop:.88,walking:.95};
 function feelFor(r,n,i){
@@ -1117,7 +1152,8 @@ function celebrate(big){
 function renderToggles(){const lb=$('loopBtn');lb.setAttribute('aria-pressed',loopMode>0);lb.querySelector('span').textContent=['Off','Loop','Call & Response'][loopMode];$('drumBtn').setAttribute('aria-pressed',!!S.drums)}
 function renderSounds(){
   const inst=S.instrument;
-  $('soundSeg').innerHTML=SOUNDS[inst].map(s=>`<button class="tile" data-v="${s.id}" aria-pressed="${S.sounds[inst]===s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg><b>${s.name}</b><small>${s.d}</small></button>`).join('');
+  const st=s=>{const f=SAMPLED[inst+':'+s.id];if(!f)return '';const any=[...sampleBuf.keys()].some(k=>k.startsWith(f));return any?'':sampleState[f]==='loading'||sampleState[f]==='fetched'?' · loading…':''};
+  $('soundSeg').innerHTML=SOUNDS[inst].map(s=>`<button class="tile${s.real?' real':''}" data-v="${s.id}" aria-pressed="${S.sounds[inst]===s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg><b>${s.name}</b><small>${s.d}${st(s)}</small></button>`).join('');
 }
 async function previewSound(){
   ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
@@ -1177,9 +1213,9 @@ function syncControls(){
   $('sub').textContent=({bass:'Bass',guitar:'Guitar',voice:'Voice'})[S.instrument]+' · any octave counts';
 }
 const pick=(el,fn)=>el.onclick=e=>{const b=e.target.closest('[data-v]');if(b)fn(b.dataset.v)};
-pick($('instSeg'),v=>{S.instrument=v;S.octUp=v==='bass';ed.notes=[];saveS();syncControls();newRiff()});
+pick($('instSeg'),v=>{fetchSamples(v,S.sounds[v]);S.instrument=v;S.octUp=v==='bass';ed.notes=[];saveS();syncControls();newRiff()});
 pick($('practiceSeg'),v=>{S.practice=v;streak=0;saveS();syncControls();newRiff()});
-pick($('soundSeg'),v=>{S.sounds[S.instrument]=v;saveS();renderSounds();previewSound()});
+pick($('soundSeg'),v=>{S.sounds[S.instrument]=v;saveS();fetchSamples(S.instrument,v);renderSounds();previewSound()});
 pick($('styleSeg'),v=>{S.style=v;saveS();renderStyles();if(S.practice==='riff')newRiff()});
 pick($('edLen'),v=>{ed.len=+v;renderEditor()});
 $('edRest').onclick=()=>{if(ed.notes.length<24){ed.notes.push({rest:true,len:ed.len});renderEditor()}};
@@ -1251,6 +1287,7 @@ async function checkUpdate(){
   }catch(e){}
 }
 $('verLbl').textContent='Version '+APP_VERSION;
+for(const i of ['bass','guitar','voice'])if(i===S.instrument)fetchSamples(i,S.sounds[i]);
 if(/^https?:/.test(location.protocol)){checkUpdate();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()})}
 syncControls();
 loadRiff(genRiff(S),false);

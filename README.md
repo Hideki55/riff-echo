@@ -1,3 +1,9 @@
 # Riff Echo
 
-Ear-training app: hear a riff, play or sing it back. Open on your phone at the GitHub Pages link.
+Ear-training app: hear a riff, play or sing it back.
+
+Live app: https://hideki55.github.io/riff-echo/
+
+## Credits
+
+Real instrument sounds in `samples/` are single-note renders of the Musyng Kite soundfont from [gleitz/midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts), licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). See `samples/LICENSE.md`.
