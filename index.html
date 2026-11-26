@@ -241,7 +241,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     </div>
     <div class="bubbles" id="leds" aria-live="polite"></div>
     <div class="att off" id="att"><span id="attL">Attempt</span><div class="bar"><i id="attFill"></i></div><span id="attT"></span></div>
-    <div class="tabtog"><button id="loopBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9a3 3 0 0 1 3-3h12M16 3l3 3-3 3M20 13v2a3 3 0 0 1-3 3H5M8 21l-3-3 3-3"/></svg><span>Loop</span></button><button id="drumBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v6c0 1.7 3.6 3 8 3s8-1.3 8-3V9M15 3l5 4M9 3 4 7"/></svg><span>Drums</span></button><button id="tabBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 10h18M3 14h18M3 18h18"/></svg><span>Fretboard</span></button></div>
+    <div class="tabtog"><button id="loopBtn" aria-pressed="false" aria-label="Loop mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9a3 3 0 0 1 3-3h12M16 3l3 3-3 3M20 13v2a3 3 0 0 1-3 3H5M8 21l-3-3 3-3"/></svg><span>Off</span></button><button id="drumBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v6c0 1.7 3.6 3 8 3s8-1.3 8-3V9M15 3l5 4M9 3 4 7"/></svg><span>Drums</span></button><button id="tabBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 10h18M3 14h18M3 18h18"/></svg><span>Fretboard</span></button></div>
     <div class="tabbox" id="riffTab" hidden><div class="tl"><span id="riffLbl">Riff on the fretboard</span><span><span id="handLbl"></span><button class="alt" id="altBtn" hidden>Position 1/2</button></span></div><div id="riffTabSvg"></div></div>
     <p class="status" id="status">Tap Listen so the app can hear you.</p>
     <div class="dial" aria-label="What the app hears">
@@ -679,7 +679,7 @@ $('keyWheel').innerHTML=FIFTHS.map((pc,i)=>{const a=i/12*2*Math.PI,x=50+40*Math.
   const n=SHARP[pc]===FLAT[pc]?SHARP[pc]:([1,3,8,10].includes(pc)?FLAT[pc]:SHARP[pc]);
   return `<button class="wk" data-v="${pc}" style="left:${x}%;top:${y}%">${n}</button>`}).join('')+`<button class="wk any" data-v="random">Any<br>key</button>`;
 
-let riff=null,target=[],played=[],playedM=[],livePos=[],groups=[],riffPos=[],progress=0,tries=0,done=false,startT=0,keyPeek=false,tabPeek=false,liveBase=1,playIdx=-1,playSched=null,vbuf=[],holdTimer=null,firstFound=false,attemptStart=null,loopOn=false,loopTimer=null,alts=[],altIdx=0,streak=0;
+let riff=null,target=[],played=[],playedM=[],livePos=[],groups=[],riffPos=[],progress=0,tries=0,done=false,startT=0,keyPeek=false,tabPeek=false,liveBase=1,playIdx=-1,playSched=null,vbuf=[],holdTimer=null,firstFound=false,attemptStart=null,loopMode=0,loopTimer=null,alts=[],altIdx=0,streak=0;
 const ed={notes:[],win:0,oct:3,len:2};
 const LENS=[1,2,3,4,8],LENNAME={1:'16th',2:'8th',3:'dotted 8th',4:'quarter',8:'half'};
 let ctx=null,analyser=null,stream=null,buf=null,listening=false,muteUntil=0,wake=null;
@@ -971,29 +971,39 @@ async function audition(idx){
   muteUntil=Math.max(muteUntil,t+len+.3);cand=null;candN=0;vbuf=[];
   const startAnim=!playSched;playSched={list:[{t,end:t+len,i:idx}],stop:t+len,riff};if(startAnim)requestAnimationFrame(playAnim);
 }
-async function playRiff(){
+async function playRiff(contAt){
   if(!riff)return;ensureCtx();
   if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
   if(loopTimer){clearTimeout(loopTimer);loopTimer=null}
-  const e=60/S.tempo/(riff.unit||2),shift=(S.octUp&&riff.instrument==='bass')?12:0;let t0=ctx.currentTime+.08;
-  const e16=60/S.tempo/4;
-  if(S.drums){for(let i=0;i<4;i++)hat(t0+i*4*e16,.22);t0+=16*e16}
+  const e=60/S.tempo/(riff.unit||2),shift=(S.octUp&&riff.instrument==='bass')?12:0;
+  const e16=60/S.tempo/4,song=loopMode===1;
+  let t0=contAt!=null&&contAt>ctx.currentTime?contAt:ctx.currentTime+.08;
+  if(S.drums&&contAt==null){for(let i=0;i<4;i++)hat(t0+i*4*e16,.22);t0+=16*e16}
+  // in song mode the riff repeats on a grid of half bars so the loop stays in time
+  const L16=Math.ceil(riff.slots/(riff.unit||2)*4/8)*8;
   let end=t0;const list=[];
   riff.notes.forEach((n,i)=>{const F=feelFor(riff,n,i),t=Math.max(t0,t0+n.start*e+F.jitter),len=Math.max(.07,n.dur*e*Math.min(.97,F.gate));playTone(riff.instrument,t,n.midi,riff.instrument==='voice'?Math.max(len,e*.95):len,F.v,n.slide||0);end=Math.max(end,t+len);list.push({t,end:t+Math.max(len,e*.6),i})});
   (riff.ghosts||[]).forEach(s=>{const prev=riff.notes.filter(n=>n.start<s).pop();if(prev)ghostNote(riff.instrument,t0+s*e+(Math.random()-.5)*.01,prev.midi)});
-  if(S.drums){const n16=Math.ceil(riff.slots/(riff.unit||2)*4/16)*16;playDrums(t0,n16,riff.style||'rock',e16);end=Math.max(end,t0+n16*e16)}
-  const startAnim=!playSched;playSched={list,stop:end,riff};if(startAnim)requestAnimationFrame(playAnim);
+  if(S.drums){const n16=song?L16:Math.ceil(riff.slots/(riff.unit||2)*4/16)*16;playDrums(t0,n16,riff.style||'rock',e16);end=Math.max(end,t0+n16*e16)}
+  const startAnim=!playSched,old=playSched&&playSched.riff===riff?playSched.list.filter(x=>x.end>ctx.currentTime):[];
+  playSched={list:old.concat(list),stop:song?Math.max(end,t0+L16*e16):end,riff};if(startAnim)requestAnimationFrame(playAnim);
   if(S.drone){
     const rootM=riff.notes[0].midi-((riff.notes[0].midi-riff.root)%12+12)%12+shift;
     const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=hz(rootM+12);
     g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(.09,t0+.15);g.gain.setValueAtTime(.09,end);g.gain.linearRampToValueAtTime(0,end+.3);
     o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(end+.35);end+=.3;
   }
-  muteUntil=end+.35;cand=null;candN=0;
-  if(listening)setStatus('Listen…');
+  muteUntil=Math.max(song?muteUntil:0,end+.35);cand=null;candN=0;
   const myRiff=riff;
+  if(song){
+    const next=t0+L16*e16;
+    setStatus('Looping. Play along, then switch the loop off to take your turn.');
+    loopTimer=setTimeout(()=>{loopTimer=null;if(loopMode===1&&riff===myRiff&&!done)playRiff(next)},Math.max(0,(next-ctx.currentTime-.35)*1000));
+    return;
+  }
+  if(listening)setStatus('Listen…');
   setTimeout(()=>{if(riff!==myRiff)return;if(!done)statusIdle();startHold();
-    if(loopOn&&!done){if(listening)setStatus('Your turn, or keep listening…');loopTimer=setTimeout(()=>{loopTimer=null;if(loopOn&&!done&&riff===myRiff)playRiff()},Math.max(1500,riffSecs()*1000))}},(muteUntil-ctx.currentTime)*1000);
+    if(loopMode===2&&!done){if(listening)setStatus('Your turn, or keep listening…');loopTimer=setTimeout(()=>{loopTimer=null;if(loopMode===2&&!done&&riff===myRiff)playRiff()},Math.max(1500,riffSecs()*1000))}},(muteUntil-ctx.currentTime)*1000);
 }
 
 async function startListening(){
@@ -1063,7 +1073,7 @@ function loop(){
 function heard(pc,m){
   if(!riff||done)return;
   if(played[played.length-1]===pc)return;
-  if(loopOn){loopOn=false;if(loopTimer){clearTimeout(loopTimer);loopTimer=null}renderToggles()}
+  if(loopMode===2){loopMode=0;if(loopTimer){clearTimeout(loopTimer);loopTimer=null}renderToggles()}
   if(timerOn()&&attemptStart===null){attemptStart=performance.now()-150;tries++;requestAnimationFrame(attTick)}
   let lp=null;if(riff.instrument!=='voice'){const st=liveStep(m,riff.instrument,liveBase);liveBase=st.base;lp=st.p}
   played.push(pc);playedM.push(m);livePos.push(lp);
@@ -1100,7 +1110,7 @@ function celebrate(big){
     c.appendChild(p);setTimeout(()=>p.remove(),1400)}
   const h=document.querySelector('.hero');h.classList.remove('cheer');void h.offsetWidth;h.classList.add('cheer');
 }
-function renderToggles(){$('loopBtn').setAttribute('aria-pressed',loopOn);$('drumBtn').setAttribute('aria-pressed',!!S.drums)}
+function renderToggles(){const lb=$('loopBtn');lb.setAttribute('aria-pressed',loopMode>0);lb.querySelector('span').textContent=['Off','Loop','Repeat'][loopMode];$('drumBtn').setAttribute('aria-pressed',!!S.drums)}
 function renderSounds(){
   const inst=S.instrument;
   $('soundSeg').innerHTML=SOUNDS[inst].map(s=>`<button class="tile" data-v="${s.id}" aria-pressed="${S.sounds[inst]===s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg><b>${s.name}</b><small>${s.d}</small></button>`).join('');
@@ -1187,7 +1197,13 @@ $('edSave').onclick=()=>{
   if(S.practice!=='riff'){S.practice='riff';saveS();syncControls()}
   loadRiff(r,true);window.scrollTo({top:0,behavior:'smooth'});
 };
-$('loopBtn').onclick=()=>{loopOn=!loopOn;renderToggles();if(loopOn&&!playSched)playRiff();else if(!loopOn&&loopTimer){clearTimeout(loopTimer);loopTimer=null}};
+$('loopBtn').onclick=()=>{
+  loopMode=(loopMode+1)%3;renderToggles();
+  if(loopTimer){clearTimeout(loopTimer);loopTimer=null}
+  if(loopMode===1){if(!playSched)playRiff();else{const nx=playSched.stop;loopTimer=setTimeout(()=>{loopTimer=null;if(loopMode===1)playRiff(nx)},Math.max(0,(nx-ctx.currentTime-.35)*1000))}}
+  else if(loopMode===2){if(!playSched)playRiff();else{const r0=riff;loopTimer=setTimeout(()=>{loopTimer=null;if(loopMode===2&&riff===r0&&!done)playRiff()},Math.max(0,(playSched.stop-ctx.currentTime)*1000)+Math.max(1500,riffSecs()*1000))}}
+  else{statusIdle()}
+};
 $('drumBtn').onclick=()=>{S.drums=!S.drums;saveS();renderToggles()};
 $('altBtn').onclick=()=>{if(alts.length<2)return;altIdx=(altIdx+1)%alts.length;riffPos=alts[altIdx];liveBase=riffPos.base[0];renderRiffTab()};
 pick($('lenSeg'),v=>{S.length=v;saveS();syncControls();newRiff()});
