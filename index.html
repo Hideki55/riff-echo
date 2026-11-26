@@ -159,7 +159,9 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 .how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;text-align:center;margin-top:8px}
 .how div{background:var(--soft);border-radius:18px;padding:12px 8px;font-size:13px;font-weight:700;color:var(--muted)}
 .how b{display:block;font-family:Gabarito,sans-serif;font-size:22px;color:var(--ink);font-weight:600}
-.tabtog{gap:8px;flex-wrap:wrap}
+.tabtog{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:420px;margin-inline:auto}
+.tabtog button{justify-content:center;text-align:center;line-height:1.15;padding:4px 6px!important;min-height:48px!important;border-radius:16px!important;font-size:13.5px!important;gap:5px!important}
+.tabtog button svg{flex:none;width:16px;height:16px}
 .practice{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border-radius:16px;padding:4px;margin:0 0 12px}
 .practice button{font:inherit;font-family:Gabarito,Figtree,sans-serif;font-weight:700;font-size:16px;border:0;background:transparent;color:var(--muted);min-height:44px;border-radius:12px;cursor:pointer}
 .practice button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 2px 0 var(--line)}
@@ -1110,7 +1112,7 @@ function celebrate(big){
     c.appendChild(p);setTimeout(()=>p.remove(),1400)}
   const h=document.querySelector('.hero');h.classList.remove('cheer');void h.offsetWidth;h.classList.add('cheer');
 }
-function renderToggles(){const lb=$('loopBtn');lb.setAttribute('aria-pressed',loopMode>0);lb.querySelector('span').textContent=['Off','Loop','Repeat'][loopMode];$('drumBtn').setAttribute('aria-pressed',!!S.drums)}
+function renderToggles(){const lb=$('loopBtn');lb.setAttribute('aria-pressed',loopMode>0);lb.querySelector('span').textContent=['Off','Loop','Call & Response'][loopMode];$('drumBtn').setAttribute('aria-pressed',!!S.drums)}
 function renderSounds(){
   const inst=S.instrument;
   $('soundSeg').innerHTML=SOUNDS[inst].map(s=>`<button class="tile" data-v="${s.id}" aria-pressed="${S.sounds[inst]===s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg><b>${s.name}</b><small>${s.d}</small></button>`).join('');
