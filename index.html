@@ -555,7 +555,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0216';
+const APP_VERSION='2026.11.27-0226';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1751,7 +1751,9 @@ const SLCOL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var
 // one yardstick row (16 steps) as SVG; get(i) returns the step for column i
 function yardRow(get,y0,opts){
   const W=20,X0=16,cnt=['1','e','&','a'];let h='';
-  if(opts.label){h+=`<text x="${X0}" y="${y0+10}" font-size="10" font-weight="800" fill="${opts.labelC||'var(--muted)'}" letter-spacing=".06em">${opts.label}</text>`;y0+=14}
+  if(opts.label){const ck=opts.check!=null,c=opts.labelC||'var(--muted)';
+    if(ck)h+=`<g data-bar="${opts.bar}" style="cursor:pointer" role="checkbox" aria-checked="${opts.check}"><rect x="${X0-6}" y="${y0-4}" width="200" height="22" fill="transparent"/><circle cx="${X0+5}" cy="${y0+6.5}" r="7" fill="${opts.check?c:'#fff'}" stroke="${c}" stroke-width="2"/>${opts.check?`<path d="M${X0+1.8} ${y0+6.8}l2.3 2.4 4.4-4.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:''}`;
+    h+=`<text x="${X0+(ck?17:0)}" y="${y0+10}" font-size="10" font-weight="800" fill="${c}" letter-spacing=".06em">${opts.label}</text>`;if(ck)h+='</g>';y0+=14}
   const pill=(x,w,dash,op)=>`<rect x="${x}" y="${y0+6}" width="${w}" height="30" rx="${dash?8:15}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" opacity="${op}"${dash?' stroke-dasharray="3 3"':''}/>`;
   for(let i=0;i<16;i++){const a=get(i),b=get(i+1),op=opts.fade(i)?.45:1;
     if(a.k===0&&b&&b.blk===a.blk&&b.k===1&&b.bar===a.bar){if(i<15)h+=pill(X0+i*W+3,2*W-6,0,op);else if(opts.wrap)h+=pill(X0+15*W+3,W-3,1,op)+pill(X0,W-3,1,1)}}
@@ -1886,7 +1888,8 @@ async function slapPlay(kind){
     let st;
     if(kind==='drill'){if(SL.adv&&slBars>0&&slBars%SL.adv===0){SL.bm=(SL.bm+1)%(2*slLen());saveS()}
       const g16=slapSteps();st=Array.from({length:16},(_,i)=>g16[i%g16.length]);st.src=g16}
-    else{if(!SR.riff)SR.riff=genSlapRiff();st=SR.riff.steps}
+    else{if(!SR.riff)SR.riff=genSlapRiff();const all=SR.riff.steps,nb=all.length/16,on=srBarsOn(nb);st=[];st.idx=[];
+      for(let b=0;b<nb;b++)if(on[b])for(let i=0;i<16;i++){st.push(all[b*16+i]);st.idx.push(b*16+i)}}
     const N=st.length,rings=slRings(st);slSteps.push({t0,e16,st});
     for(let i=0;i<N;i++)slapHit(st[i],t0+i*e16,e16,i%4===0,rings[i]);
     if(P.back==='drums'){const keep=DRUMBUS,sb=slBeatSel(P);playDrums(t0,N,sb.st,e16,slBars===0,sb.B);
@@ -1898,6 +1901,7 @@ async function slapPlay(kind){
   cycle();
   const tick=()=>{if(g!==slGen)return;const now=ctx.currentTime;while(slSteps.length>1&&now>=slSteps[1].t0)slSteps.shift();
     const B=slSteps[0];let i=-1;if(B&&now>=B.t0)i=Math.min(B.st.length-1,Math.floor((now-B.t0)/B.e16));
+    if(B&&B.st.idx&&i>=0)i=B.st.idx[i];
     if(B&&(i!==slPlayingStep||B.st!==slapPlay.last)){slPlayingStep=i;slapPlay.last=B.st;if(kind==='drill')renderYard(B.st.src);else renderSR()}
     slRaf=requestAnimationFrame(tick)};
   slRaf=requestAnimationFrame(tick);
@@ -2039,11 +2043,13 @@ function genSlapRiff(){
   }));
   return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi]};
 }
+function srBarsOn(nb){const a=SR.barOn||[];const on=Array.from({length:nb},(_,b)=>a[b]!==false);return on.some(Boolean)?on:on.map(()=>true)}
 function renderSR(){
   const r=SR.riff||(SR.riff=genSlapRiff()),st=r.steps,nb=st.length/16,nm=namesFor(r.root,r.mode);
   const RH=nb>1?122:108,LB=['CALL','RESPONSE','CALL','RESPONSE (ENDING)'];
   let h=`<svg viewBox="0 0 352 ${RH*nb}" role="img">`;
-  for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{RH:108,wrap:false,fade:()=>false,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:SR.showNames?nm:null,label:nb>1?`BAR ${b+1} · ${LB[b]}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
+  const on=srBarsOn(nb);
+  for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{RH:108,wrap:false,fade:()=>!on[b],check:nb>1?on[b]:null,bar:b,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:SR.showNames?nm:null,label:nb>1?`BAR ${b+1} · ${LB[b]}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
   $('srStick').innerHTML=h+'</svg>';
   $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}`;
   const cur=slKind==='riff'&&slPlayingStep>=0?st[slPlayingStep]:null;
@@ -2061,9 +2067,11 @@ function renderSRControls(){
   $('srTempo').value=SR.tempo;$('srTempoVal').textContent=SR.tempo;
 }
 function srEnter(){fetchSamples('bass','slap');fetchDead();fetchKit('pearl');renderSRControls();renderSR();renderSRSaved()}
-const srNew=()=>{SR.riff=genSlapRiff();saveS();renderSR();renderSRSaved();if(slBus&&slKind==='riff')slRestart()};
+const srNew=()=>{SR.riff=genSlapRiff();SR.barOn=null;saveS();renderSR();renderSRSaved();if(slBus&&slKind==='riff')slRestart()};
 $('srPlay').onclick=()=>slBus&&slKind==='riff'?slapStop():slapPlay('riff');
 $('srNew').onclick=srNew;
+$('srStick').onclick=e=>{const g=e.target.closest('[data-bar]');if(!g)return;const nb=SR.riff.steps.length/16,on=srBarsOn(nb),b=+g.dataset.bar;
+  if(on[b]&&on.filter(Boolean).length===1){toast('Keep at least one bar on');return}on[b]=!on[b];SR.barOn=on;saveS();renderSR();if(slKind==='riff')slRestart()};
 chg('srStyle',v=>{SR.style=v;const X=SR_STYLES[v];if(X.tempo){SR.tempo=X.tempo;SR.beat=X.beat;SR.back=SR.back==='none'?'drums':SR.back}saveS();renderSRControls();srNew()});
 chg('srKeySel',v=>{SR.key=v;srNew()});chg('srModeSel',v=>{SR.mode=v;srNew()});
 chg('srBars',v=>{SR.bars=+v;srNew()});chg('srSpace',v=>{SR.space=+v;srNew()});chg('srGhosts',v=>{SR.ghosts=+v;srNew()});
@@ -2104,7 +2112,7 @@ $('srSavedList').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.ren!=null){srRen=+b.dataset.ren;srConfirm=-1;renderSRSaved();return}
   if(b.dataset.load!=null){const s=srSaved[+b.dataset.load];
-    Object.assign(SR,{style:s.style||'mix',tempo:s.tempo,back:s.back,beat:s.beat,space:s.space,ghosts:s.ghosts,showNames:s.showNames!==false,riff:JSON.parse(JSON.stringify(s.riff))});SL.tone=s.tone||SL.tone;saveS();
+    Object.assign(SR,{barOn:null,style:s.style||'mix',tempo:s.tempo,back:s.back,beat:s.beat,space:s.space,ghosts:s.ghosts,showNames:s.showNames!==false,riff:JSON.parse(JSON.stringify(s.riff))});SL.tone=s.tone||SL.tone;saveS();
     renderSRControls();renderSR();renderSRSaved();window.scrollTo({top:0,behavior:'smooth'});slapPlay('riff');return}
   if(b.dataset.del!=null){const d=+b.dataset.del;
     if(srConfirm!==d){srConfirm=d;renderSRSaved();setTimeout(()=>{if(srConfirm===d){srConfirm=-1;renderSRSaved()}},3000);return}
