@@ -555,7 +555,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0303';
+const APP_VERSION='2026.11.27-0308';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1923,7 +1923,8 @@ const SR_STYLES={
     A:['T---','T-P-','T--P','T-T-','T-tP'],B:['--P-','T-tP','-TP-','P---','T-TP','--T-','tTP-','-P-T'],oct:.8,ghost:.1,thumbDeg:{0:6,7:2,10:2,5:1},chrom:.05},
   // Mark King plays 'linear' bars: every 16th is filled (left-hand slaps and dead thumbs work like a hi-hat) and the
   // ringing notes sit on syncopated spots across the bar, or in repeating groups of three 16ths
-  king:{name:'Mark King: machine-gun 16ths',tempo:118,beat:'funk:0',modes:{1:3,5:2,0:1},shape:'WXYZ',linear:true,hook:.45,
+  king:{name:'Mark King: machine-gun 16ths',tempo:118,beat:'funk:0',modes:{1:3,5:2,0:1,4:1},shape:'WXYZ',linear:true,hook:.45,rootLock:.85,maxRing:12,
+    keys:{4:7,9:2,2:1,0:.5,7:.5,5:.5,11:.3,1:.2,3:.2,6:.2,8:.2,10:.2},
     A:['TtPt','TStP','TtTP','TtPS'],B:['tTPt','TStP','tTtP','TPtP','StPt','TtPP','tPTP'],oct:.65,ghost:.05,thumbDeg:{0:6,7:2,10:1.5,3:1},chrom:.05},
   flea:{name:'Flea: punk-funk',tempo:108,beat:'funk:1',modes:{1:3,5:3,4:1},shape:'ABAC',
     A:['T-TP','TTP-','T-PT','TtP-','TP-P'],B:['-TPT','TP-P','T-tT','tTP-','TPTP','-PTP','HOP-','TT-P'],oct:.5,ghost:.12,thumbDeg:{0:5,7:2,10:2,3:1.5,5:1},chrom:.3,open:.4},
@@ -1936,12 +1937,15 @@ const SR_STYLES={
 // One bar of Mark King-style linear 16ths: a syncopated skeleton of ringing notes, every other 16th filled with
 // dead thumbs (t) and left-hand slaps (S); or the 3-against-4 grouping (thumb, slap, pop) repeated across the bar.
 function kingBar(canHammer){
-  const SK=[[0,3,6,10,12],[0,3,7,10,14],[0,6,8,11,14],[0,3,6,9,12,14],[0,2,7,10,13],[0,4,7,10,13,15],[0,3,8,11,14],'3s','3s'];
-  const sk=SK[rnd(SK.length)];let s='';
-  if(sk==='3s'){const g=Math.random()<.5?'TSP':'TtP';for(let i=0;i<16;i++)s+=i<12?g[i%3]:['TSTP','TStP','TSPT'][rnd(3)][i-12];}
-  else for(let i=0;i<16;i++)s+=sk.includes(i)?(i===0?'T':i%2?(Math.random()<.7?'P':'T'):(Math.random()<.55?'T':'P')):(i%2?'S':'t');
-  // now and then a thumbed note hammers onto the next 16th instead of a dead note
-  if(canHammer)s=s.replace(/T[tS]/g,(m,o)=>o>0&&o%4!==3&&Math.random()<.18?'HO':m);
+  // beat motifs: ringing root thumbs (T) hammered out between left-hand slaps (S) and dead thumbs (t)
+  const M=['TSTT','TTST','TSTS','TtTS','TSTt','STTS','TTSS','TSTT','TSSt'];
+  const pick=()=>M[rnd(M.length)];let s;
+  if(Math.random()<.18){const g=Math.random()<.5?'TSP':'TST';s='';for(let i=0;i<12;i++)s+=g[i%3];s+=['TSTP','TSTT','TTSP'][rnd(3)]}
+  else{const a=pick(),b=pick(),c=pick();s=(a[0]==='T'?a:'T'+a.slice(1))+b+a+c}
+  // a few pops (octave, 7th) on syncopated 16ths, never on the one
+  const n=1+rnd(3),spots=[3,6,7,10,11,13,14,15].sort(()=>Math.random()-.5).slice(0,n);
+  for(const i of spots)if(s[i-1]!=='P')s=s.slice(0,i)+'P'+s.slice(i+1);
+  if(canHammer)s=s.replace(/T[tS]/g,(m,o)=>o>0&&o%4!==3&&Math.random()<.1?'HO':m);
   return s;
 }
 function srBox(root){
@@ -1951,7 +1955,7 @@ function srBox(root){
 function posFor(m,strings,lo,hi){let best=null;for(const s of strings){const f=m-TUNING.bass[s];if(f<0||f>MAXF.bass)continue;const d=f===0?.5:f<lo?lo-f:f>hi?f-hi:0;if(!best||d<best.d)best={s,f,d}}return best&&best.d<=2?{s:best.s,f:best.f}:null}
 function genStyledRiff(st){
   const ST=SR_STYLES[st],mk=Object.keys(ST.modes).map(Number);
-  const root=SR.key==='random'?rnd(12):+SR.key,mode=SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
+  const root=SR.key==='random'?(ST.keys?slPick(Object.keys(ST.keys).map(Number),Object.values(ST.keys)):rnd(12)):+SR.key,mode=SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
   const sc=scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
   const {lo,hi,rootM}=srBox(root);
   const spots=[];for(let s=0;s<4;s++)for(const f of [0,lo,lo+1,lo+2,lo+3]){const m=TUNING.bass[s]+f;if(inS(m))spots.push({s,f,m})}
@@ -2003,6 +2007,7 @@ function genStyledRiff(st){
           out.push({s:'H',m:hm.h.m,pos:{s:hm.h.s,f:hm.h.f}},{s:'O',m:hm.o.m,pos:{s:hm.o.s,f:hm.o.f}});k++;lastT=hm.h.m;continue}
         if(c==='T'){let p;
           if(first){const d=pl.resp?center:0;p=thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||thumbs.find(q=>q.m===rootM)||thumbs[0]}
+          else if(ST.rootLock&&Math.random()<ST.rootLock){const d=pl.resp?center:0;p=thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>(a.f===0?-1:0)-(b.f===0?-1:0)||Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||slPick(thumbs,thumbs.map(tW))}
           else p=pedal&&Math.random()<ST.pedal?pedal:slPick(thumbs,thumbs.map(tW));
           lastT=p.m;out.push({s:'T',m:p.m,pos:{s:p.s,f:p.f},muted:!first&&Math.random()<ST.ghost});continue}
         if(c==='P'){let p=null;const pi=(cell.slice(0,k).match(/P/g)||[]).length;
@@ -2037,7 +2042,7 @@ function genStyledRiff(st){
     if(opts.length){const o=opts[0].q&&Math.random()<.6?opts[0]:opts[rnd(opts.length)];Object.assign(lastS,{s:o.m>first.m+6?'P':'T',m:o.m,pos:o.q,muted:false})}}
   // keep it playable and funky: at most 10 ringing notes per bar; extras on weak 16ths become dead notes
   for(let b=0;b<steps.length/16;b++){const seg=steps.slice(b*16,b*16+16);let ring=seg.filter(x=>x.m!=null&&!x.muted&&x.s!=='O').length;
-    for(const i of [1,3,9,11,5,13,7,15])if(ring>10){const x=seg[i];if(x.m!=null&&!x.muted&&x.s!=='H'&&x.s!=='O'){x.muted=true;ring--}}}
+    for(const i of [1,3,9,11,5,13,7,15])if(ring>(ST.maxRing||10)){const x=seg[i];if(x.m!=null&&!x.muted&&x.s!=='H'&&x.s!=='O'){x.muted=true;ring--}}}
   // accents: the one hits hardest, octave pops cut through, dead notes sit back
   steps.forEach((x,i)=>{x.vel=x.s==='-'?0:x.muted?.78:i%16===0?1.08:i%4===0?.98:x.s==='P'?(deg(x.m)===0?1.05:.96):i%2===0?.9:.84});
   return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi],style:st};
