@@ -441,7 +441,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Slap rhythm</h1><span class="muted" id="slMode"></span></div>
     <section class="card hero slhero" aria-label="Slap groove">
       <div class="ystick" id="ystick" aria-label="Rhythm yardstick: one bar of 16th notes. Tap a block to change it."></div>
-      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H/O hammer-on</span><span>filled = ringing note · hollow = muted</span></div>
+      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H thumb + O hammer-on</span><span>filled = ringing note · hollow = muted</span></div>
       <div class="slmodes">
         <div class="mstep"><span>Block mode</span><button class="round" id="bmDown" aria-label="Previous block mode">‹</button><b id="bmVal">1</b><button class="round" id="bmUp" aria-label="Next block mode">›</button></div>
         <div class="mstep"><span>16th shift</span><button class="round" id="ssDown" aria-label="Shift left one 16th">‹</button><b id="ssVal">0</b><button class="round" id="ssUp" aria-label="Shift right one 16th">›</button></div>
@@ -476,6 +476,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <p class="hint">One bar of 4/4 laid out like a ruler. Tall marks are the beats (1 2 3 4), medium marks the “&amp;”s, short marks the “e” and “a” 16ths, so you can see how far apart the notes are.</p>
         <p class="hint">Each groove is eight two-note building blocks: <b>HO</b> thumb then hammer-on, <b>TT</b> two thumbs (some charts write EE), <b>ST</b> left-hand slap then thumb, <b>PT</b> pop then thumb, <b>TP</b> thumb then pop.</p>
         <p class="hint"><b>Rhythmic modes:</b> loop the groove until every sound is even. Then use Block mode to start on the 2nd, 3rd … 8th block, and 16th shift to slide the whole pattern one dash so a different sound lands on beat 1. Tap any block on the yardstick to swap it.</p>
+        <p class="hint">Extra block (off by default, not part of Wellington’s five): <b>PO</b>, pop then hammer-on, since a hammer-on can start from a popped note as well as a thumbed one.</p>
         <p class="hint">“Muted” means you still slap or pop while the left hand rests on the strings, so you get a percussive dead note (outlined circles). “As taught” plays thumbs on open E and hammer-ons D→E, with ST, PT and TP muted. Concept from Anthony Wellington (Bassology) and Victor Wooten’s Groove Workshop.</p>
       </div>
     </details>
@@ -487,7 +488,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Slap riffs</h1><span class="muted" id="srKey"></span></div>
     <section class="card hero slhero" aria-label="Slap riff">
       <div class="ystick" id="srStick"></div>
-      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H/O hammer-on</span><span>filled = ringing note · hollow / x = muted</span></div>
+      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>O hammer-on (arc from the slapped or popped note)</span><span>filled = ringing note · hollow / x = muted</span></div>
       <div class="tabbox srboard" id="srBoard" aria-label="Riff on the fretboard"></div>
       <div class="btns sl">
         <button class="big play" id="srPlay"><svg><use href="#i-play"/></svg><span>Play</span></button>
@@ -516,7 +517,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <details class="card more">
       <summary>How slap riffs work</summary>
       <div class="morebody">
-        <p class="hint">Each riff uses the same building blocks as the rhythm drills, with real notes from the key and mode. Thumbs (T) take the low notes on the E and A strings, favouring the root and fifth. Pops (P) take the high notes on the D and G strings, favouring the octave, third, fifth and seventh. Hammer-ons (H→O) go up one or two frets within the scale. Everything sits in one four-fret hand position around the root, shown on the fretboard.</p>
+        <p class="hint">Each riff uses the same building blocks as the rhythm drills, with real notes from the key and mode. Thumbs (T) take the low notes on the E and A strings, favouring the root and fifth. Pops (P) take the high notes on the D and G strings, favouring the octave, third, fifth and seventh. Hammer-ons (O, joined by an arc) start from a thumbed note on the E or A string, a popped note on the G string, or either on the D string. They go up one or two frets, or from an open string up into the hand position. Everything sits in one four-fret hand position around the root, shown on the fretboard.</p>
         <p class="hint"><b>In the style of</b> picks rhythm cells, note choices, tempo and drum beat typical of each player’s approach (for example octave pops for Larry Graham, linear 16ths for Mark King (every 16th filled with left-hand slaps and dead thumbs, ringing notes on syncopated spots or in groups of three), open-string pedals and odd intervals for Les Claypool). They’re style sketches, not transcriptions of anyone’s songs.</p>
         <p class="hint"><b>Length:</b> a 1-bar riff answers itself (beats 3–4 echo beats 1–2 with a new ending). With 2 bars, bar 1 is the <b>call</b>, ending away from the root so it sounds unfinished, and bar 2 is the <b>response</b>: it echoes the call’s rhythm on different notes (leaning on the 4th or 5th) and comes home to the root. 4 bars play call, response, call, then a busier final response. Dead notes add percussion between the pitched notes.</p>
       </div>
@@ -556,7 +557,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-1522';
+const APP_VERSION='2026.11.27-1540';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1712,13 +1713,13 @@ if(S.drums)fetchDrums();
 if(/^https?:/.test(location.protocol)){checkUpdate();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()})}
 // ---- Slap practice: Wellington yardstick + building blocks ----
 // Blocks are two 16ths. "-" is a rest (space), so grooves are not all constant 16ths.
-const SL_BLOCKS={HO:['H','O'],TT:['T','T'],ST:['S','T'],PT:['P','T'],TP:['T','P'],'T-':['T','-'],'-T':['-','T'],'P-':['P','-'],'-P':['-','P'],'--':['-','-']};
-const SL_CORE=['HO','TT','ST','PT','TP'],SL_REST=['T-','-T','P-','-P','--'];
+const SL_BLOCKS={HO:['H','O'],PO:['P','O'],TT:['T','T'],ST:['S','T'],PT:['P','T'],TP:['T','P'],'T-':['T','-'],'-T':['-','T'],'P-':['P','-'],'-P':['-','P'],'--':['-','-']};
+const SL_CORE=['HO','TT','ST','PT','TP'],SL_ALL=SL_CORE.concat(['PO']),SL_REST=['T-','-T','P-','-P','--'];
 const SL_EXAMPLE=['HO','TT','ST','PT','TP','TT','ST','PT'];
 const SPACE_P=[0,.3,.5];
 const SLD={tempo:80,blocks:SL_EXAMPLE.slice(),bm:0,ss:0,back:'drums',beat:'funk:0',sound:'taught',adv:0,use:SL_CORE.slice(),preset:'',space:0,tone:'thunk'};
 S.slap=Object.assign({},SLD,S.slap||{});
-const SL=S.slap;if(!SL.toneV2){SL.tone='real';SL.toneV2=1}SL.use=SL.use.filter(k=>SL_CORE.includes(k));if(!SL.use.length)SL.use=SL_CORE.slice();
+const SL=S.slap;if(!SL.toneV2){SL.tone='real';SL.toneV2=1}SL.use=SL.use.filter(k=>SL_ALL.includes(k));if(!SL.use.length)SL.use=SL_CORE.slice();
 const SRD={tempo:84,key:'random',mode:'random',bars:1,space:1,ghosts:1,back:'drums',beat:'funk:0',riff:null,showNames:true};
 S.sriff=Object.assign({},SRD,S.sriff||{});
 const SR=S.sriff;
@@ -1749,13 +1750,13 @@ function slapRandom(nb){
   return out;
 }
 function slFit(){const n=2*slLen();if(SL.blocks.length>n)SL.blocks=SL.blocks.slice(0,n);else if(SL.blocks.length<n)SL.blocks=SL.blocks.concat(SL.preset==='wellington'?SL_EXAMPLE.slice(SL.blocks.length,n):slapRandom(n/2).slice(SL.blocks.length));SL.bm%=n;SL.ss%=2*n}
-const slTaughtPitched=c=>c==='HO'||c==='TT'||c==='T-'||c==='-T';
+const slTaughtPitched=c=>c==='HO'||c==='PO'||c==='TT'||c==='T-'||c==='-T';
 function slapSteps(){
   slFit();const n=SL.blocks.length,L=2*n,flat=[];
   for(let i=0;i<n;i++){const bi=(i+SL.bm)%n;SL_BLOCKS[SL.blocks[bi]].forEach((s,k)=>flat.push({s,blk:bi,k,code:SL.blocks[bi]}))}
   const out=[];for(let i=0;i<L;i++)out.push(Object.assign({},flat[((i-SL.ss)%L+L)%L]));
   for(const x of out){x.muted=SL.sound==='muted'?true:SL.sound==='notes'?false:!slTaughtPitched(x.code);
-    if(!x.muted)x.m=x.s==='P'?40:x.s==='H'?38:x.s==='O'?40:x.s==='T'?28:null}
+    if(!x.muted)x.m=x.code==='PO'?(x.s==='P'?45:47):x.s==='P'?40:x.s==='H'?38:x.s==='O'?40:x.s==='T'?28:null}
   return out;
 }
 const SLCOL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var(--mint)'};
@@ -1768,6 +1769,9 @@ function yardRow(get,y0,opts){
   const pill=(x,w,dash,op)=>`<rect x="${x}" y="${y0+6}" width="${w}" height="30" rx="${dash?8:15}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" opacity="${op}"${dash?' stroke-dasharray="3 3"':''}/>`;
   for(let i=0;i<16;i++){const a=get(i),b=get(i+1),op=opts.fade(i)?.45:1;
     if(a.k===0&&b&&b.blk===a.blk&&b.k===1&&b.bar===a.bar){if(i<15)h+=pill(X0+i*W+3,2*W-6,0,op);else if(opts.wrap)h+=pill(X0+15*W+3,W-3,1,op)+pill(X0,W-3,1,1)}}
+  // slur: the hammer-on (O) is sounded by the left hand from the note before it
+  for(let i=0;i<15;i++){const a=get(i),b=get(i+1);if(b&&b.s==='O'&&a.s!=='-'){const x1=X0+i*W+W/2,x2=x1+W,op=opts.fade(i)?.45:1;
+    h+=`<path d="M${x1} ${y0+11}Q${x1+W/2} ${y0+1} ${x2} ${y0+11}" fill="none" stroke="var(--mint)" stroke-width="2.4" stroke-linecap="round" opacity="${op}"/>`}}
   // ringing notes held through rests
   for(let i=0;i<16;i++){const a=get(i);if(a.s==='-'||a.muted)continue;let j=i+1;while(j<16&&get(j).s==='-')j++;
     if(j>i+1)h+=`<rect x="${X0+i*W+W/2}" y="${y0+18}" width="${(j-i-1)*W+2}" height="6" rx="3" fill="${SLCOL[a.s]}" opacity="${opts.fade(i)?.25:.5}"/>`}
@@ -1795,7 +1799,7 @@ function renderSlap(){
   $('slTempo').value=SL.tempo;$('slTempoVal').textContent=SL.tempo;
   $('slBack').value=SL.back;$('slBars').value=slLen();$('slTone').value=SL.tone||'real';$('slSound').value=SL.sound;$('slAdv').value=SL.adv;$('slPreset').value=SL.preset;$('slSpace').value=SL.space||0;
   $('slBeat').innerHTML=beatOpts();$('slBeat').value=slBeatKey(SL);$('slBeat').disabled=SL.back!=='drums';
-  $('slUse').innerHTML=SL_CORE.map(k=>`<button class="slchip" data-v="${k}" aria-pressed="${SL.use.includes(k)}">${k}</button>`).join('');
+  $('slUse').innerHTML=SL_ALL.map(k=>`<button class="slchip" data-v="${k}" aria-pressed="${SL.use.includes(k)}">${k}</button>`).join('');
   renderSlPlay();
 }
 function renderSlPlay(){for(const [id,k] of [['slPlay','drill'],['srPlay','riff']]){const b=$(id);if(!b)continue;const on=!!slBus&&slKind===k;b.querySelector('use').setAttribute('href',on?'#i-stop':'#i-play');b.querySelector('span').textContent=on?'Stop':'Play';b.classList.toggle('stopping',on)}}
@@ -1965,14 +1969,14 @@ function kingBar(canHammer){
 //  - the thumb strikes at most 3 times in a row (4 at slow tempos); pops at most twice in a row (index, middle)
 function slHands(st,tempo){
   const N=st.length,thumb=x=>x.s==='T'||x.s==='H',pop=x=>x.s==='P',maxT=tempo<=96?4:3;
-  const dead=(x,s)=>Object.assign(x,{s,muted:true,m:undefined,pos:undefined});
+  const dead=(x,s)=>x.ham?x:Object.assign(x,{s,muted:true,m:undefined,pos:undefined});
   for(let pass=0;pass<2;pass++)for(let i=0;i<N;i++){
     const x=st[i],prev=st[(i-1+N)%N];
     if(x.s==='S'&&(prev.s==='S'||prev.s==='O'||i%16===0)){dead(x,thumb(prev)?'P':'T');continue}
     if(thumb(x)){let r=1;while(r<6&&thumb(st[(i-r+N)%N]))r++;
       if(r>maxT){if(x.muted&&x.s==='T')dead(x,prev.s==='S'||prev.s==='O'?'P':'S');
         else{let fixed=false;for(let k=1;k<r;k++){const y=st[(i-k+N)%N],yp=st[(i-k-1+N)%N];if(y.s==='T'&&y.muted&&yp.s!=='S'&&yp.s!=='O'){dead(y,'S');fixed=true;break}}
-          if(!fixed&&x.s==='T'&&i%16!==0)dead(x,prev.s==='S'||prev.s==='O'?'P':'S')}}}
+          if(!fixed&&x.s==='T'&&!x.ham&&i%16!==0)dead(x,prev.s==='S'||prev.s==='O'?'P':'S')}}}
     if(pop(x)){let r=1;while(r<4&&pop(st[(i-r+N)%N]))r++;
       if(r>2){if(x.muted)dead(x,'T');else{const y=prev;if(y.muted)dead(y,'T')}}}
   }
@@ -2004,7 +2008,9 @@ function genStyledRiff(st){
     const shapes=[[0,10,7],[7,10,0],[0,0,10],[0,7,0],[10,0,7],[3,0,10],[0,5,7]];const sh=shapes[rnd(shapes.length)];
     return sh.map(d=>P.filter(p=>deg(p.m)===d).sort((a,b)=>Math.abs(a.m-(oct?oct.m:rootM+12))-Math.abs(b.m-(oct?oct.m:rootM+12)))[0]).filter(Boolean)})();
   const hookP=ST.hook??.6;
-  const hams=spots.filter(p=>p.s<=2&&p.f>0).map(p=>{const o=spots.find(q=>q.s===p.s&&q.f>p.f&&q.f-p.f<=2);return o?{h:p,o}:null}).filter(Boolean);
+  // hammer-ons: from a fretted note up 1-2 frets, or from an open string up into the hand position; on the E/A strings
+  // the first note is thumbed, on the G string popped, on the D string either
+  const hams=spots.map(p=>{const o=spots.find(q=>q.s===p.s&&q.f>p.f&&(p.f===0?q.f>=lo&&q.m-p.m<=5:q.f-p.f<=2));return o?{h:p,o,pop:p.s===3||p.s===2&&Math.random()<.5}:null}).filter(Boolean);
   const pedal=ST.pedal?(inS(28)||st==='claypool'?{s:0,f:0,m:28}:{s:1,f:0,m:33}):null;
   const okCell=c=>hams.length||!/H/.test(c);
   const pickCell=(L,first)=>{const c=L.filter(c=>okCell(c)&&(!first||c[0]==='T'));return (c.length?c:['T-P-'])[rnd(c.length||1)]};
@@ -2032,8 +2038,9 @@ function genStyledRiff(st){
         if(c==='S'){out.push({s:'S',muted:true});continue}
         if(c==='t'||c==='p'){out.push({s:c.toUpperCase(),muted:true});continue}
         if(c==='H'){const want=first?(pl.resp?rootM+(center||0)-(center>6?12:0):rootM):null;
-          const hm=(want!=null&&hams.find(x=>deg(x.h.m)===deg(want)))||slPick(hams,hams.map(x=>tW(x.h)));
-          out.push({s:'H',m:hm.h.m,pos:{s:hm.h.s,f:hm.h.f}},{s:'O',m:hm.o.m,pos:{s:hm.o.s,f:hm.o.f}});k++;lastT=hm.h.m;continue}
+          const hw=x=>x.pop?pW(x.h)*.8+.1:tW(x.h);
+          const hm=(want!=null&&hams.find(x=>!x.pop&&deg(x.h.m)===deg(want)))||slPick(hams,hams.map(hw));
+          out.push({s:hm.pop?'P':'T',ham:true,m:hm.h.m,pos:{s:hm.h.s,f:hm.h.f}},{s:'O',m:hm.o.m,pos:{s:hm.o.s,f:hm.o.f}});k++;if(!hm.pop)lastT=hm.h.m;continue}
         if(c==='T'){let p;
           if(first){const d=pl.resp?center:0;p=thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||thumbs.find(q=>q.m===rootM)||thumbs[0]}
           else if(ST.rootLock&&Math.random()<ST.rootLock){const d=pl.resp?center:0;p=thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>(a.f===0?-1:0)-(b.f===0?-1:0)||Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||slPick(thumbs,thumbs.map(tW))}
@@ -2053,7 +2060,7 @@ function genStyledRiff(st){
   // endings: a call ends "open" (not on the root); a response, and the whole riff, comes home to the root
   const setNote=(x,m)=>{const q=posFor(m,x.s==='P'?[2,3]:[0,1,2],lo,hi);if(q){x.m=m;x.pos=q;return true}return false};
   if(nb>1)for(let b=0;b<nb;b++){
-    const seg=steps.slice(b*16,b*16+16),lastI=seg.map((x,i)=>x.m!=null&&!x.muted&&x.s!=='H'&&x.s!=='O'?i:-1).filter(i=>i>=0).pop();if(lastI==null)continue;
+    const seg=steps.slice(b*16,b*16+16),lastI=seg.map((x,i)=>x.m!=null&&!x.muted&&!x.ham&&x.s!=='O'?i:-1).filter(i=>i>=0).pop();if(lastI==null)continue;
     const x=seg[lastI];
     if(b%2===1){if(deg(x.m)!==0)setNote(x,x.s==='P'?rootM+12:rootM)}
     else if(deg(x.m)===0){const opts=[10,11,7,3,4].filter(d=>sc.includes((root+d)%12));for(const d of opts){if(setNote(x,x.s==='P'?rootM+12+d-(d>7?12:0):rootM+d-(d>7?12:0)))break}}
@@ -2072,7 +2079,7 @@ function genStyledRiff(st){
   slHands(steps,SR.tempo);
   // keep it playable and funky: at most 10 ringing notes per bar; extras on weak 16ths become dead notes
   for(let b=0;b<steps.length/16;b++){const seg=steps.slice(b*16,b*16+16);let ring=seg.filter(x=>x.m!=null&&!x.muted&&x.s!=='O').length;
-    for(const i of [1,3,9,11,5,13,7,15])if(ring>(ST.maxRing||10)){const x=seg[i];if(x.m!=null&&!x.muted&&x.s!=='H'&&x.s!=='O'){x.muted=true;ring--}}}
+    for(const i of [1,3,9,11,5,13,7,15])if(ring>(ST.maxRing||10)){const x=seg[i];if(x.m!=null&&!x.muted&&!x.ham&&x.s!=='O'){x.muted=true;ring--}}}
   // accents: the one hits hardest, octave pops cut through, dead notes sit back
   steps.forEach((x,i)=>{x.vel=x.s==='-'?0:x.muted?.78:i%16===0?1.08:i%4===0?.98:x.s==='P'?(deg(x.m)===0?1.05:.96):i%2===0?.9:.84});
   return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi],style:st};
@@ -2089,7 +2096,9 @@ function genSlapRiff(){
   const thumbs=spots.filter(p=>p.s<=1),pops=spots.filter(p=>p.s>=2&&p.m>rootM+4);
   const tW=p=>(deg(p.m)===0?5:deg(p.m)===7?2.5:[10,11].includes(deg(p.m))?1.5:1)*(p.f===0?.6:1)*(p.m<rootM-7?.4:1);
   const pW=p=>(deg(p.m)===0?5:[3,4,7,10,11].includes(deg(p.m))?2:.8)*(Math.abs(p.m-rootM-12)<=5?1.5:.7);
-  const hams=spots.filter(p=>p.s<=2&&p.f>0).map(p=>{const o=spots.find(q=>q.s===p.s&&q.f>p.f&&q.f-p.f<=2);return o?{h:p,o}:null}).filter(Boolean);
+  // hammer-ons: from a fretted note up 1-2 frets, or from an open string up into the hand position; on the E/A strings
+  // the first note is thumbed, on the G string popped, on the D string either
+  const hams=spots.map(p=>{const o=spots.find(q=>q.s===p.s&&q.f>p.f&&(p.f===0?q.f>=lo&&q.m-p.m<=5:q.f-p.f<=2));return o?{h:p,o,pop:p.s===3||p.s===2&&Math.random()<.5}:null}).filter(Boolean);
   const pickT=first=>first?thumbs.find(p=>p.m===rootM)||thumbs[0]:slPick(thumbs,thumbs.map(tW));
   const pickP=()=>pops.length?slPick(pops,pops.map(pW)):slPick(thumbs,thumbs.map(tW));
   const use=hams.length?SL_CORE:SL_CORE.filter(b=>b!=='HO');
