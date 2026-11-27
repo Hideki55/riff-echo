@@ -556,7 +556,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-1203';
+const APP_VERSION='2026.11.27-1522';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1725,12 +1725,18 @@ const SR=S.sriff;
 let slGen=0,slBus=null,slTimer=null,slRaf=0,slSteps=[],slBars=0,slPlayingStep=-1,slNoise=null,slKind=null;
 const slPick=(arr,w)=>{let s=0;for(const x of w)s+=x;let r=Math.random()*s;for(let i=0;i<arr.length;i++){r-=w[i];if(r<=0)return arr[i]}return arr[arr.length-1]};
 // random blocks; the first block of each bar always starts with a thumb or hammer so beat 1 is played
+// hand rules for the drills: thumb at most 3 times in a row, no left-hand slap straight after a hammer-on
+function slBlocksOK(out,b,last){
+  const prev=out.slice(-2).join('')+b,wrap=last?b+out.slice(0,2).join(''):'';
+  return !/[TH]{4}/.test(prev)&&!/OS/.test(prev)&&!(wrap&&(/[TH]{4}/.test(wrap)||/OS/.test(wrap)));
+}
 function slBlocks(n,use,space,first){
   const out=[];
   for(let i=0;i<n;i++){let b,tries=0;
     do{b=Math.random()<SPACE_P[space]?SL_REST[rnd(SL_REST.length)]:use[rnd(use.length)];tries++}
     while(tries<30&&((i===0&&first)&&!(b[0]==='T'||b[0]==='H'&&use.includes('HO'))&&use.some(x=>x[0]==='T'||x[0]==='H')
-      ||i>=2&&out[i-1]===b&&out[i-2]===b||b==='--'&&(out[i-1]||'').endsWith('-')||n===2&&i===1&&b===out[0]));
+      ||i>=2&&out[i-1]===b&&out[i-2]===b||b==='--'&&(out[i-1]||'').endsWith('-')||n===2&&i===1&&b===out[0]
+      ||!slBlocksOK(out,b,i===n-1)));
     out.push(b)}
   return out;
 }
@@ -1943,7 +1949,7 @@ const SR_STYLES={
 // dead thumbs (t) and left-hand slaps (S); or the 3-against-4 grouping (thumb, slap, pop) repeated across the bar.
 function kingBar(canHammer){
   // beat motifs: ringing root thumbs (T) hammered out between left-hand slaps (S) and dead thumbs (t)
-  const M=['TSTT','TTST','TSTS','TtTS','TSTt','STTS','TTSS','TSTT','TSSt'];
+  const M=['TSTT','TTST','TSTS','TtTS','TSTt','STTS','TStS','TSTT','TStT'];
   const pick=()=>M[rnd(M.length)];let s;
   if(Math.random()<.18){const g=Math.random()<.5?'TSP':'TST';s='';for(let i=0;i<12;i++)s+=g[i%3];s+=['TSTP','TSTT','TTSP'][rnd(3)]}
   else{const a=pick(),b=pick(),c=pick();s=(a[0]==='T'?a:'T'+a.slice(1))+b+a+c}
@@ -1952,6 +1958,24 @@ function kingBar(canHammer){
   for(const i of spots)if(s[i-1]!=='P')s=s.slice(0,i)+'P'+s.slice(i+1);
   if(canHammer)s=s.replace(/T[tS]/g,(m,o)=>o>0&&o%4!==3&&Math.random()<.1?'HO':m);
   return s;
+}
+// Make a line playable by two hands (it loops, so the end leads into the start):
+//  - the left-hand slap (S) is a filler between right-hand strokes: never twice in a row, never right after a
+//    hammer-on (that hand is holding the note), never on the one
+//  - the thumb strikes at most 3 times in a row (4 at slow tempos); pops at most twice in a row (index, middle)
+function slHands(st,tempo){
+  const N=st.length,thumb=x=>x.s==='T'||x.s==='H',pop=x=>x.s==='P',maxT=tempo<=96?4:3;
+  const dead=(x,s)=>Object.assign(x,{s,muted:true,m:undefined,pos:undefined});
+  for(let pass=0;pass<2;pass++)for(let i=0;i<N;i++){
+    const x=st[i],prev=st[(i-1+N)%N];
+    if(x.s==='S'&&(prev.s==='S'||prev.s==='O'||i%16===0)){dead(x,thumb(prev)?'P':'T');continue}
+    if(thumb(x)){let r=1;while(r<6&&thumb(st[(i-r+N)%N]))r++;
+      if(r>maxT){if(x.muted&&x.s==='T')dead(x,prev.s==='S'||prev.s==='O'?'P':'S');
+        else{let fixed=false;for(let k=1;k<r;k++){const y=st[(i-k+N)%N],yp=st[(i-k-1+N)%N];if(y.s==='T'&&y.muted&&yp.s!=='S'&&yp.s!=='O'){dead(y,'S');fixed=true;break}}
+          if(!fixed&&x.s==='T'&&i%16!==0)dead(x,prev.s==='S'||prev.s==='O'?'P':'S')}}}
+    if(pop(x)){let r=1;while(r<4&&pop(st[(i-r+N)%N]))r++;
+      if(r>2){if(x.muted)dead(x,'T');else{const y=prev;if(y.muted)dead(y,'T')}}}
+  }
 }
 function srBox(root){
   const fe=((root-4)%12+12)%12,fa=((root-9)%12+12)%12,rs=fe<=7?0:1,rf=rs===0?fe:fa;
@@ -2045,6 +2069,7 @@ function genStyledRiff(st){
   if(first.m!=null&&(lastS.s==='-'||lastS.muted)&&Math.random()<(ST.antic??.45)){
     const opts=[first.m-1,first.m-5,first.m+12].map(m=>({m,q:posFor(m,m>first.m+6?[2,3]:[0,1,2],lo,hi)})).filter(o=>o.q);
     if(opts.length){const o=opts[0].q&&Math.random()<.6?opts[0]:opts[rnd(opts.length)];Object.assign(lastS,{s:o.m>first.m+6?'P':'T',m:o.m,pos:o.q,muted:false})}}
+  slHands(steps,SR.tempo);
   // keep it playable and funky: at most 10 ringing notes per bar; extras on weak 16ths become dead notes
   for(let b=0;b<steps.length/16;b++){const seg=steps.slice(b*16,b*16+16);let ring=seg.filter(x=>x.m!=null&&!x.muted&&x.s!=='O').length;
     for(const i of [1,3,9,11,5,13,7,15])if(ring>(ST.maxRing||10)){const x=seg[i];if(x.m!=null&&!x.muted&&x.s!=='H'&&x.s!=='O'){x.muted=true;ring--}}}
