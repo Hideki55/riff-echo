@@ -440,7 +440,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Slap rhythm</h1><span class="muted" id="slMode"></span></div>
     <section class="card hero slhero" aria-label="Slap groove">
       <div class="ystick" id="ystick" aria-label="Rhythm yardstick: one bar of 16th notes. Tap a block to change it."></div>
-      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H/O hammer-on</span></div>
+      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H/O hammer-on</span><span>filled = ringing note · hollow = muted</span></div>
       <div class="slmodes">
         <div class="mstep"><span>Block mode</span><button class="round" id="bmDown" aria-label="Previous block mode">‹</button><b id="bmVal">1</b><button class="round" id="bmUp" aria-label="Next block mode">›</button></div>
         <div class="mstep"><span>16th shift</span><button class="round" id="ssDown" aria-label="Shift left one 16th">‹</button><b id="ssVal">0</b><button class="round" id="ssUp" aria-label="Shift right one 16th">›</button></div>
@@ -486,7 +486,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Slap riffs</h1><span class="muted" id="srKey"></span></div>
     <section class="card hero slhero" aria-label="Slap riff">
       <div class="ystick" id="srStick"></div>
-      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H/O hammer-on</span><span>outlined / x = dead note</span></div>
+      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H/O hammer-on</span><span>filled = ringing note · hollow / x = muted</span></div>
       <div class="tabbox srboard" id="srBoard" aria-label="Riff on the fretboard"></div>
       <div class="btns sl">
         <button class="big play" id="srPlay"><svg><use href="#i-play"/></svg><span>Play</span></button>
@@ -551,7 +551,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0143';
+const APP_VERSION='2026.11.27-0149';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
