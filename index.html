@@ -154,6 +154,40 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 .tog:has(input:checked) .sw{background:var(--mint)}
 .tog:has(input:checked) .sw::after{transform:translateX(16px)}
 /* saved */
+.view[hidden]{display:none!important}
+.bar{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:8px;margin:2px 0 12px}
+.back{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:var(--ink);background:var(--soft)}
+.back:focus-visible,.hcard:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.vt{font-size:24px;margin:0;line-height:1.1}
+.beta,.next{font-style:normal;font-family:Figtree,sans-serif;font-size:12px;font-weight:800;vertical-align:middle;padding:2px 8px;border-radius:999px;background:var(--sun);color:var(--ink);margin-left:6px}
+.next{background:var(--soft);color:var(--muted)}
+.homegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:6px}
+.hcard{display:grid;align-content:start;gap:6px;padding:16px;border-radius:22px;border:2px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;min-height:170px}
+.hcard b{font-family:Gabarito,sans-serif;font-size:19px;line-height:1.15}
+.hcard small{color:var(--muted);font-weight:700;font-size:13.5px;line-height:1.35}
+.hcard .hic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--blue)}
+.hcard .hic svg{width:24px;height:24px}
+.hcard.ear{grid-column:1/-1;background:var(--coral);border-color:var(--coral);color:#fff;min-height:0}
+.hcard.ear small{color:#ffe9e6}.hcard.ear .hic{background:rgba(255,255,255,.22);color:#fff}
+.hcard.soon{opacity:.75}
+.homesaved{display:block;margin:16px 4px 0;font-weight:800;color:var(--blue);text-decoration:none}
+.qs h2,.more summary{font-family:Gabarito,sans-serif;font-size:19px;font-weight:600}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 10px;margin-top:10px}
+.fld{display:grid;gap:4px;font-size:13px;font-weight:800;color:var(--muted)}
+.fld.full{grid-column:1/-1}
+.fld select{font:inherit;font-size:16px;font-weight:700;color:var(--ink);min-height:46px;border-radius:12px;border:2px solid var(--line);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6a86' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 10px center/16px no-repeat;padding:0 32px 0 12px;-webkit-appearance:none;appearance:none;width:100%;text-overflow:ellipsis}
+.fld select:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.trow{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:12px;margin-top:14px}
+.tl2{font-size:13px;font-weight:800;color:var(--muted)}
+.trow .tempo{grid-template-columns:44px 1fr 44px;gap:8px}
+.trow .round{width:44px;height:44px;font-size:24px}
+.trow .bpm .n{font-size:30px}
+.more summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:28px}
+.more summary::-webkit-details-marker{display:none}
+.more summary::after{content:"+";font-size:26px;line-height:1;color:var(--muted)}
+.more[open] summary::after{content:"–"}
+.morebody{margin-top:12px}
+.lbl2{font-size:13px;font-weight:800;color:var(--muted);margin:14px 0 2px}
 .toast{position:fixed;left:50%;width:max-content;box-sizing:border-box;bottom:max(18px,env(safe-area-inset-bottom));transform:translate(-50%,140%);background:var(--ink);color:#fff;border-radius:16px;padding:12px 14px 12px 18px;display:flex;gap:12px;align-items:center;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .25s;z-index:20;max-width:calc(100vw - 28px)}
 .toast.show{transform:translate(-50%,0)}
 .toast span{min-width:0}
@@ -260,11 +294,24 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
   <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
 </svg>
 <main>
-  <header class="top">
-    <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><circle cx="7" cy="17" r="3.4"/><path d="M9.4 17V5.2l9-2v11.3" stroke="#fff" stroke-width="2.4" fill="none"/><circle cx="16" cy="14.5" r="3.4"/></svg></div>
-    <div><h1>Riff Echo</h1><small id="sub">Bass · any octave counts</small></div>
-  </header>
+  <!-- ===== HOME ===== -->
+  <div class="view" id="viewHome">
+    <header class="top">
+      <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><circle cx="7" cy="17" r="3.4"/><path d="M9.4 17V5.2l9-2v11.3" stroke="#fff" stroke-width="2.4" fill="none"/><circle cx="16" cy="14.5" r="3.4"/></svg></div>
+      <div><h1>Riff Echo</h1><small>Practice tools for bass, guitar and voice</small></div>
+    </header>
+    <div class="homegrid">
+      <a class="hcard ear" href="#ear"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15a6 6 0 1 1 11.3-2.8c0 2.3-2.3 3.3-3.3 4.6-.8 1-.6 3.2-2.5 3.2-1.6 0-2.3-1.2-2.3-1.2"/><path d="M9.5 12a2.5 2.5 0 0 1 5 0"/></svg></span><b>Ear training</b><small>Hear a riff, then play or sing it back. Riffs, single notes, call and response.</small></a>
+      <a class="hcard" href="#create"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></span><b>Riff creator <em class="beta">Beta</em></b><small>Build your own riffs note by note on the fretboard.</small></a>
+      <div class="hcard soon"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18V8l8-4 8 4v10"/><path d="M8 18v-6h8v6"/></svg></span><b>Backing tracks <em class="next">Next</em></b><small>Chord progressions with drums, guitar and bass, plus suggested bass lines.</small></div>
+      <div class="hcard soon"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h16M7 8v8M12 6v12M17 9v6"/></svg></span><b>Slap practice <em class="next">Soon</em></b><small>Generated slap lines using the ruler concept.</small></div>
+    </div>
+    <a class="homesaved" href="#ear" id="homeSaved"></a>
+  </div>
 
+  <!-- ===== EAR TRAINING ===== -->
+  <div class="view" id="viewEar" hidden>
+    <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Ear training</h1><span class="muted" id="sub"></span></div>
   <div class="practice" id="practiceSeg" role="group" aria-label="Practice type"><button data-v="riff">Riffs</button><button data-v="single">Single notes</button></div>
   <section class="card hero" aria-label="Practice">
     <div id="confetti"></div>
@@ -303,109 +350,37 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <span class="muted" id="tries"></span>
   </div>
 
-  <section class="card">
-    <h2>How it works</h2>
-    <div class="how">
-      <div><b>1</b>Hear the riff</div>
-      <div><b>2</b>Noodle until you find it</div>
-      <div><b>3</b>Play it all the way through</div>
+  <section class="card qs" aria-label="Riff settings">
+    <h2>Riff settings</h2>
+    <div class="fields">
+      <label class="fld"><span>Instrument</span><select id="instSel"></select></label>
+      <label class="fld"><span>Sound</span><select id="soundSel"></select></label>
+      <label class="fld"><span>Style</span><select id="styleSel"></select></label>
+      <label class="fld"><span>Mood</span><select id="modeSel"></select></label>
+      <label class="fld"><span>Key</span><select id="keySel"></select></label>
+      <label class="fld"><span>Length</span><select id="lenSel"></select></label>
+      <label class="fld full"><span>Drum beat</span><select id="beatSel"></select></label>
     </div>
-    <p class="hint" style="margin:12px 2px 0">Tap any bubble to hear that note on its own. Playing the first note starts a new attempt. Any octave counts, and a repeated note only has to be played once.</p>
-  </section>
-
-  <section class="card">
-    <h2>Instrument</h2>
-    <p class="hint">Sets the note range and how the riff sounds. Voice riffs stay within one octave.</p>
-    <div class="insts" id="instSeg">
-      <button class="tile" data-v="bass">
-        <svg viewBox="0 0 160 64" aria-hidden="true"><rect x="4" y="18" width="128" height="28" rx="6" fill="#f5f6fb"/><path d="M132 14h20a6 6 0 0 1 6 6v24a6 6 0 0 1-6 6h-20z" fill="#ffc93c"/><g stroke="#c9cbe0" stroke-width="2"><path d="M30 18v28M58 18v28M86 18v28M110 18v28"/></g><g stroke="#1d1b3a" stroke-width="2.6"><path d="M4 23h150M4 29.5h150M4 36h150M4 42h150"/></g></svg>
-        <b>Bass</b><small>4 strings</small>
-      </button>
-      <button class="tile" data-v="guitar">
-        <svg viewBox="0 0 160 64" aria-hidden="true"><rect x="4" y="18" width="128" height="28" rx="6" fill="#f5f6fb"/><path d="M132 14h20a6 6 0 0 1 6 6v24a6 6 0 0 1-6 6h-20z" fill="#ff5a4e"/><g stroke="#c9cbe0" stroke-width="2"><path d="M30 18v28M58 18v28M86 18v28M110 18v28"/></g><g stroke="#1d1b3a" stroke-width="1.7"><path d="M4 22h150M4 26.5h150M4 31h150M4 35.5h150M4 40h150M4 44h150"/></g></svg>
-        <b>Guitar</b><small>6 strings</small>
-      </button>
-      <button class="tile" data-v="voice">
-        <svg viewBox="0 0 160 64" aria-hidden="true"><rect x="66" y="6" width="28" height="36" rx="14" fill="#3b6cff"/><path d="M58 32a22 22 0 0 0 44 0M80 54v6" stroke="#1d1b3a" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M14 32c6-14 10-14 16 0s10 14 16 0M114 32c6-14 10-14 16 0s10 14 16 0" stroke="#ffc93c" stroke-width="4" fill="none" stroke-linecap="round"/></svg>
-        <b>Voice</b><small>Sing it back</small>
-      </button>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>Sound</h2>
-    <p class="hint">Tap a sound to hear it and use it. "Real" sounds are recordings of real instruments and download the first time you pick them (about 1 MB). Each instrument remembers its own sound.</p>
-    <div class="sounds" id="soundSeg"></div>
-    <p class="hint" style="margin:14px 0 4px">Volume (above 100% boosts, with a limiter so it doesn't distort). While listening, the app boosts itself further, because iPhone turns playback down when the mic is on.</p>
-    <div class="sens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M16 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></svg><input type="range" id="vol" min="20" max="150" step="5" aria-label="Volume"><span class="muted" id="volLbl" style="min-width:44px;text-align:right"></span></div>
-  </section>
-
-  <section class="card">
-    <h2>Mood</h2>
-    <p class="hint">Each mode has its own colour. The bars show how bright or dark it sounds.</p>
-    <div class="randoms" id="randSeg"></div>
-    <div class="scale"><span><svg width="14" height="14"><use href="#i-sun"/></svg>Brightest</span><span>Darkest<svg width="14" height="14"><use href="#i-moon"/></svg></span></div>
-    <div class="modes" id="modeSeg"></div>
-  </section>
-
-  <section class="card">
-    <h2>Style</h2>
-    <p class="hint">Sets the riff's groove and the drum beat. The strips show a typical rhythm (one square = one 16th note).</p>
-    <div class="styles" id="styleSeg"></div>
-  </section>
-
-  <section class="card">
-    <h2>Drum beat &amp; volume</h2>
-    <p class="hint" id="beatHint">Pick the groove for each style. Each style has its own drum kit. Rows show kick, snare and cymbals over one bar.</p>
-    <div class="beats" id="beatSeg"></div>
-    <div class="sens" style="margin-top:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v6c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/></svg><input type="range" id="drumVol" min="0" max="100" step="5" aria-label="Drum volume"><span class="muted" id="drumVolLbl" style="min-width:44px;text-align:right"></span></div>
-  </section>
-
-  <section class="card">
-    <h2>Key</h2>
-    <p class="hint">Neighbouring keys on the wheel share the most notes.</p>
-    <div class="wheel" id="keyWheel"></div>
-  </section>
-
-  <section class="card">
-    <h2>Riff length</h2>
-    <p class="hint">Longer riffs are harder to remember.</p>
-    <div class="pills" id="lenSeg">
-      <button class="pill" data-v="short"><span class="dots"><i></i><i></i><i></i></span><b>Short</b><small>3–4 notes</small></button>
-      <button class="pill" data-v="medium"><span class="dots"><i></i><i></i><i></i><i></i><i></i></span><b>Medium</b><small>5–7 notes</small></button>
-      <button class="pill" data-v="long"><span class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><b>Long</b><small>8–12 notes</small></button>
-    </div>
-  </section>
-
-  <section class="card" id="tolCard" hidden>
-    <h2>Pitch tolerance</h2>
-    <p class="hint">How close your voice must be to the note (100 cents = one semitone). Standard matches EarMaster's quarter-tone rule. Relaxed allows the 50–70 cents listeners usually tolerate in singing. Your pitch is averaged over each note, so vibrato is fine. The green zone on the tuning dial shows your setting.</p>
-    <div class="pills" id="tolSeg">
-      <button class="pill" data-v="30"><b>Strict</b><small>±30 cents</small></button>
-      <button class="pill" data-v="50"><b>Standard</b><small>±50 cents</small></button>
-      <button class="pill" data-v="70"><b>Relaxed</b><small>±70 cents</small></button>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>Tempo</h2>
-    <div class="tempo">
+    <div class="trow"><span class="tl2">Tempo</span><div class="tempo">
       <button class="round" id="tDown" aria-label="Slower">−</button>
       <div class="bpm"><div class="n" id="tempoVal">90</div><div class="w"><i class="pulse" id="pulse"></i><span id="tempoWord">Groove</span></div></div>
       <button class="round" id="tUp" aria-label="Faster">+</button>
-    </div>
+    </div></div>
     <input type="range" id="tempo" min="50" max="180" step="2" aria-label="Tempo">
   </section>
 
-  <section class="card">
-    <h2>Mic sensitivity</h2>
-    <p class="hint">When you play, the level bar on the tuning dial should pass the red line. When you're quiet, it shouldn't.</p>
-    <div class="sens"><svg><use href="#i-mic"/></svg><input type="range" id="sens" min="1" max="10" step="1" aria-label="Mic sensitivity"><svg style="color:var(--ink)"><use href="#i-mic"/></svg></div>
-  </section>
-
-  <section class="card">
-    <h2>Helpers</h2>
-    <div class="togs">
+  <details class="card more">
+    <summary>More settings</summary>
+    <div class="morebody">
+      <div class="fields" id="tolCard" hidden><label class="fld full"><span>Pitch tolerance (voice)</span><select id="tolSel"></select></label></div>
+      <p class="lbl2">Volume</p>
+      <div class="sens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M16 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></svg><input type="range" id="vol" min="20" max="150" step="5" aria-label="Volume"><span class="muted" id="volLbl" style="min-width:44px;text-align:right"></span></div>
+      <p class="lbl2">Drum volume</p>
+      <div class="sens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v6c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/></svg><input type="range" id="drumVol" min="0" max="100" step="5" aria-label="Drum volume"><span class="muted" id="drumVolLbl" style="min-width:44px;text-align:right"></span></div>
+      <p class="lbl2">Mic sensitivity <span class="muted">(the level bar should pass the red line when you play)</span></p>
+      <div class="sens"><svg><use href="#i-mic"/></svg><input type="range" id="sens" min="1" max="10" step="1" aria-label="Mic sensitivity"><svg style="color:var(--ink)"><use href="#i-mic"/></svg></div>
+      <p class="lbl2">Helpers</p>
+      <div class="togs">
       <label class="tog"><input type="checkbox" id="showKey"><span class="sw"></span><span class="ic"><svg><use href="#i-eye"/></svg></span><b>Always show key</b><small>Or tap the key to peek</small></label>
       <label class="tog"><input type="checkbox" id="showNotes"><span class="sw"></span><span class="ic"><svg><use href="#i-tag"/></svg></span><b>Note names</b><small>Hint inside each bubble</small></label>
       <label class="tog"><input type="checkbox" id="drone"><span class="sw"></span><span class="ic"><svg><use href="#i-wave"/></svg></span><b>Root drone</b><small>Hear the mode's home note</small></label>
@@ -415,11 +390,36 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <label class="tog"><input type="checkbox" id="holdFirst"><span class="sw"></span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4"/></svg></span><b>Hold first note</b><small>Repeats the starting note until you find it</small></label>
       <label class="tog"><input type="checkbox" id="autoNext"><span class="sw"></span><span class="ic"><svg><use href="#i-next"/></svg></span><b>Auto next</b><small>New riff 2s after a win</small></label>
     </div>
+    </div>
+  </details>
+
+  <section class="card">
+    <h2 id="savedH">Saved riffs</h2>
+    <ul class="saved-list" id="savedList"></ul>
   </section>
 
-  <section class="card" id="makeCard">
-    <h2>Make your own riff</h2>
-    <p class="hint">Tap notes in order. Each tap plays the note. Your riff is saved with your other riffs.</p>
+  <details class="card more">
+    <summary>How it works &amp; tips</summary>
+    <div class="morebody">
+    <div class="how">
+      <div><b>1</b>Hear the riff</div>
+      <div><b>2</b>Noodle until you find it</div>
+      <div><b>3</b>Play it all the way through</div>
+    </div>
+    <p class="hint" style="margin:12px 2px 0">Tap any bubble to hear that note on its own. Playing the first note starts a new attempt. Any octave counts, and a repeated note only has to be played once.</p>
+  
+      <p class="hint">Tips: tap any note bubble to hear it. Loop plays the riff continuously; Call &amp; Response plays it, then waits for your turn. Real instrument sounds download the first time you pick them. While listening, the app boosts its own volume because iPhone turns playback down when the mic is on.</p>
+    </div>
+  </details>
+  </div>
+
+  <!-- ===== RIFF CREATOR ===== -->
+  <div class="view" id="viewCreate" hidden>
+    <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Riff creator <em class="beta">Beta</em></h1></div>
+    <section class="card" id="makeCard">
+      <div class="fields"><label class="fld"><span>Instrument</span><select id="edInstSel"></select></label></div>
+      <p class="hint" style="margin-top:10px">Tap notes in order; each tap plays the note. Pick a length first, add rests, and tap any block below to change its length.</p>
+      
     <div class="ednav"><button class="btn" id="edPrev" aria-label="Lower">◀</button><span class="muted" id="edWin"></span><button class="btn" id="edNext" aria-label="Higher">▶</button></div>
     <div id="edBoard"></div>
     <p class="hint" style="margin:12px 0 6px">Length of the next note or rest</p>
@@ -435,19 +435,18 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <p class="hint" style="margin:6px 0 0">Tap a block to change its length. Grey blocks are rests. Thin lines mark beats, thick lines mark bars. Swipe sideways for longer riffs.</p>
     <div class="edrow"><input id="edName" placeholder="Name your riff (optional)" maxlength="40"></div>
     <div class="edacts"><button class="btn" id="edUndo">Undo</button><button class="btn" id="edClear">Clear</button><button class="btn" id="edPlay">Play</button><button class="btn saved" id="edSave">Save riff</button></div>
-  </section>
+  
+    </section>
+    <p class="hint" style="text-align:center">Saved riffs appear in <a href="#ear" style="color:var(--blue);font-weight:800">Ear training</a> under Saved riffs.</p>
+  </div>
 
-  <section class="card">
-    <h2 id="savedH">Saved riffs</h2>
-    <ul class="saved-list" id="savedList"></ul>
-  </section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <p class="muted" id="verLbl" style="text-align:center;margin:18px 0 0;font-size:12px"></p>
   <p class="muted" style="text-align:center;margin:4px 0 0;font-size:12px">Real instrument sounds: Musyng Kite, FatBoy (CC BY-SA 3.0) and FluidR3 (CC BY 3.0) soundfonts via <a href="https://github.com/gleitz/midi-js-soundfonts" style="color:inherit">midi-js-soundfonts</a>. Drums: AVL Drumkits by Glen MacArthur (CC BY-SA) and Virtuosity Drums (CC0).</p>
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-2317';
+const APP_VERSION='2026.11.27-0033';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -761,11 +760,14 @@ const MOOD_TILES=[
 const RAND_TILES=[{v:'random',name:'Surprise',ic:'i-dice'},{v:'majorish',name:'Any bright',ic:'i-sun'},{v:'minorish',name:'Any dark',ic:'i-moon'}];
 const FIFTHS=[0,7,2,9,4,11,6,1,8,3,10,5];
 
-$('randSeg').innerHTML=RAND_TILES.map(t=>`<button class="tile" data-v="${t.v}"><svg><use href="#${t.ic}"/></svg><b style="font-size:15px">${t.name}</b></button>`).join('');
-$('modeSeg').innerHTML=MOOD_TILES.map(t=>`<button class="tile" data-v="${t.v}" style="--c:${t.c}"><b>${t.name}</b><small>${t.mood}</small><span class="meter">${Array.from({length:7},(_,i)=>`<i class="${i<t.b?'f':''}"></i>`).join('')}</span></button>`).join('');
-$('keyWheel').innerHTML=FIFTHS.map((pc,i)=>{const a=i/12*2*Math.PI,x=50+40*Math.sin(a),y=50-40*Math.cos(a);
-  const n=SHARP[pc]===FLAT[pc]?SHARP[pc]:([1,3,8,10].includes(pc)?FLAT[pc]:SHARP[pc]);
-  return `<button class="wk" data-v="${pc}" style="left:${x}%;top:${y}%">${n}</button>`}).join('')+`<button class="wk any" data-v="random">Any<br>key</button>`;
+// ---- dropdown options ----
+const opt=(v,l)=>`<option value="${v}">${l}</option>`;
+$('instSel').innerHTML=opt('bass','Bass')+opt('guitar','Guitar')+opt('voice','Voice');
+$('edInstSel').innerHTML=$('instSel').innerHTML;
+$('modeSel').innerHTML=`<optgroup label="Random">${opt('random','Surprise me')+opt('majorish','Any bright mode')+opt('minorish','Any dark mode')}</optgroup><optgroup label="Brightest to darkest">${MOOD_TILES.map(m=>opt(m.v,`${m.name}: ${m.mood.toLowerCase()}`)).join('')}</optgroup>`;
+$('keySel').innerHTML=opt('random','Any key')+SHARP.map((n,pc)=>opt(pc,SHARP[pc]===FLAT[pc]?n:([1,3,8,10].includes(pc)?FLAT[pc]+' / '+n:n+' / '+FLAT[pc]))).join('');
+$('lenSel').innerHTML=opt('short','Short (3–4 notes)')+opt('medium','Medium (5–7)')+opt('long','Long (8–12)');
+$('tolSel').innerHTML=opt(30,'Strict ±30 cents')+opt(50,'Standard ±50 cents')+opt(70,'Relaxed ±70 cents');
 
 let riff=null,target=[],played=[],playedM=[],livePos=[],groups=[],riffPos=[],progress=0,tries=0,done=false,startT=0,keyPeek=false,tabPeek=false,liveBase=1,playIdx=-1,playSched=null,vbuf=[],vt=new VoiceTracker(),holdTimer=null,firstFound=false,attemptStart=null,loopMode=0,loopTimer=null,alts=[],altIdx=0,streak=0;
 const ed={notes:[],win:0,oct:3,len:2};
@@ -895,7 +897,7 @@ function renderSaved(){
     <button class="btn" data-load="${i}">Play</button><button class="btn x${confirmDel===i?' sure':''}" data-del="${i}" aria-label="Delete">${confirmDel===i?'Delete?':'✕'}</button></li>`}).join('');
   const ri=$('renIn');if(ri){ri.focus();ri.select();const done=()=>{if(renaming<0||!saved[renaming])return;const v=ri.value.trim();if(v)saved[renaming].title=v;renaming=-1;store.set('riffecho.saved',saved);renderSaved()};ri.onkeydown=e=>{if(e.key==='Enter')done();if(e.key==='Escape'){renaming=-1;renderSaved()}};ri.onblur=done}
 }
-function renderAll(){renderAtt();if($('beatSeg'))renderBeats();renderKey();renderLeds();renderRiffTab();renderHeard();statusIdle();renderTries();renderSave();renderSaved()}
+function renderAll(){renderAtt();if($('beatSel'))renderBeats();renderKey();renderLeds();renderRiffTab();renderHeard();statusIdle();renderTries();renderSave();renderSaved()}
 
 function loadRiff(r,autoplay){
   if(ctx&&buses.length){const lm=loopMode;stopPlayback(true);loopMode=lm}
@@ -1420,9 +1422,10 @@ function celebrate(big){
 }
 function renderToggles(){if($('crRow')){$('crRow').hidden=loopMode!==2;press($('crSeg'),S.crReps||1);$('crAuto').setAttribute('aria-pressed',!!S.crAuto)}if(typeof renderPlayBtn==='function'&&$('playBtn'))renderPlayBtn();const lb=$('loopBtn');lb.setAttribute('aria-pressed',loopMode>0);lb.querySelector('span').textContent=['Off','Loop','Call & Response'][loopMode];$('drumBtn').setAttribute('aria-pressed',!!S.drums)}
 function renderSounds(){
-  const inst=S.instrument;
-  const st=s=>{const f=SAMPLED[inst+':'+s.id];if(!f)return '';const any=[...sampleBuf.keys()].some(k=>k.startsWith(f));return any?'':sampleState[f]==='loading'||sampleState[f]==='fetched'?' · loading…':''};
-  $('soundSeg').innerHTML=SOUNDS[inst].map(s=>`<button class="tile${s.real?' real':''}" data-v="${s.id}" aria-pressed="${S.sounds[inst]===s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg><b>${s.name}</b><small>${s.d}${st(s)}</small></button>`).join('');
+  const inst=S.instrument,st=s=>{const f=SAMPLED[inst+':'+s.id];if(!f)return '';return [...sampleBuf.keys()].some(k=>k.startsWith(f))?'':sampleState[f]==='loading'||sampleState[f]==='fetched'?' (loading…)':''};
+  const L=SOUNDS[inst],o=s=>opt(s.id,s.name+st(s));
+  $('soundSel').innerHTML=`<optgroup label="Real recordings">${L.filter(s=>s.real).map(o).join('')}</optgroup><optgroup label="Synth">${L.filter(s=>!s.real).map(o).join('')}</optgroup>`;
+  $('soundSel').value=S.sounds[inst];
 }
 async function previewSound(){
   ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
@@ -1434,14 +1437,11 @@ async function previewSound(){
 const STYLE_TILES=[{v:'any',name:'Any style',cell:null},{v:'rock',name:'Rock',cell:[0,2,4,6]},{v:'funk',name:'Funk',cell:[0,3,6]},{v:'pop',name:'Pop',cell:[0,4,6]},{v:'walking',name:'Walking',cell:[0,4]},{v:'metal',name:'Metal',cell:[0,2,3,4,6,7]}];
 function curBeatStyle(){return riff&&riff.style?riff.style:S.style!=='any'?S.style:'rock'}
 function renderBeats(){
-  const st=curBeatStyle(),list=BEATS[st],sel=(S.beats||{})[st]||0,nmS={rock:'Rock',funk:'Funk',pop:'Pop',walking:'Walking',metal:'Metal'}[st];
-  const row=(arr,cls,arr2,cls2)=>Array.from({length:16},(_,i)=>`<i class="${arr&&arr.includes(i)?cls:arr2&&arr2.includes(i)?cls2:''}"></i>`).join('');
-  $('beatSeg').innerHTML=list.map((B,i)=>`<button class="tile" data-v="${i}" aria-pressed="${i===sel}"><b>${nmS} ${i+1}</b><small>${B.name}</small><span class="bgrid">${row(B.h||B.r,'h',(B.o||B.p||[]).concat(B.c||[]),'o')}${row(B.s||B.x||B.tm,'s',(B.gh||[]).concat(B.tm&&(B.s||B.x)?B.tm:[]),'g')}${row(B.k||B.fl,'k',B.fl&&B.k?B.fl:null,'k')}</span></button>`).join('');
-  $('beatHint').textContent=`Beats for ${nmS}${S.style==='any'?' (the current riff’s style)':''}. Each style has its own recorded kit. Rows: cymbals, snare, kick.`;
+  const st=curBeatStyle(),list=BEATS[st],nmS={rock:'Rock',funk:'Funk',pop:'Pop',walking:'Walking',metal:'Metal'}[st];
+  $('beatSel').innerHTML=list.map((B,i)=>opt(i,`${nmS} ${i+1}: ${B.name}`)).join('');
+  $('beatSel').value=(S.beats||{})[st]||0;
 }
-function renderStyles(){
-  $('styleSeg').innerHTML=STYLE_TILES.map(s=>`<button class="tile" data-v="${s.v}" aria-pressed="${S.style===s.v}"><b>${s.name}</b>${s.cell?`<span class="grid16">${Array.from({length:16},(_,i)=>`<i class="${s.cell.includes(i%8)?'on':''}"></i>`).join('')}</span>`:'<small>A different groove each time</small>'}</button>`).join('');
-}
+function renderStyles(){$('styleSel').innerHTML=STYLE_TILES.map(s=>opt(s.v,s.v==='any'?'Any style':s.name)).join('');$('styleSel').value=S.style}
 // ---- custom riff editor ----
 function edMidi(inst,s,f){return TUNING[inst][s]+f}
 function renderEditor(){
@@ -1482,22 +1482,24 @@ function syncControls(){
   $('vol').value=Math.round(S.vol*100);$('volLbl').textContent=Math.round(S.vol*100)+'%';
   $('drumVol').value=Math.round(S.drumVol*100);$('drumVolLbl').textContent=Math.round(S.drumVol*100)+'%';
   press($('practiceSeg'),S.practice);renderSounds();renderStyles();renderBeats();renderEditor();renderToggles();
-  press($('instSeg'),S.instrument);press($('lenSeg'),S.length);press($('tolSeg'),S.tol);$('tolCard').hidden=S.instrument!=='voice';setZone();
-  press($('randSeg'),S.mode);press($('modeSeg'),S.mode);press($('keyWheel'),S.key);
+  $('instSel').value=S.instrument;$('edInstSel').value=S.instrument;$('lenSel').value=S.length;$('tolSel').value=S.tol;$('tolCard').hidden=S.instrument!=='voice';setZone();
+  $('modeSel').value=S.mode;$('keySel').value=S.key;
   $('tempo').value=S.tempo;$('sens').value=S.sens;
   $('tempoVal').textContent=S.tempo;$('tempoShow').textContent=S.tempo;$('tempoWord').textContent=tempoWord(S.tempo);
   $('pulse').style.setProperty('--beat',(60/S.tempo).toFixed(3)+'s');
   for(const k of ['showKey','showNotes','drone','octUp','autoNext','holdFirst','timer','pauseMic'])$(k).checked=S[k];
-  $('sub').textContent=({bass:'Bass',guitar:'Guitar',voice:'Voice'})[S.instrument]+' · any octave counts';
+  $('sub').textContent=({bass:'Bass',guitar:'Guitar',voice:'Voice'})[S.instrument];renderHomeSaved();
 }
 const pick=(el,fn)=>el.onclick=e=>{const b=e.target.closest('[data-v]');if(b)fn(b.dataset.v)};
-pick($('instSeg'),v=>{fetchSamples(v,S.sounds[v]);S.instrument=v;S.octUp=v==='bass';ed.notes=[];saveS();syncControls();newRiff()});
+const chg=(id,fn)=>$(id).onchange=e=>fn(e.target.value);
+const setInst=v=>{fetchSamples(v,S.sounds[v]);S.instrument=v;S.octUp=v==='bass';ed.notes=[];saveS();syncControls();if(route==='ear')newRiff();else loadRiff(S.practice==='single'?genSingle(S,-1):genRiff(S),false)};
+chg('instSel',setInst);chg('edInstSel',setInst);
 pick($('practiceSeg'),v=>{S.practice=v;streak=0;saveS();syncControls();newRiff()});
-pick($('soundSeg'),v=>{S.sounds[S.instrument]=v;saveS();fetchSamples(S.instrument,v);renderSounds();if(playSched||loopMode>0){const lm=loopMode;stopPlayback(true);loopMode=lm;renderToggles();playRiff()}else previewSound()});
-pick($('styleSeg'),v=>{S.style=v;saveS();renderStyles();if(S.practice==='riff')newRiff();renderBeats()});
+chg('soundSel',v=>{S.sounds[S.instrument]=v;saveS();fetchSamples(S.instrument,v);renderSounds();if(playSched||loopMode>0){const lm=loopMode;stopPlayback(true);loopMode=lm;renderToggles();playRiff()}else previewSound()});
+chg('styleSel',v=>{S.style=v;saveS();renderStyles();if(S.practice==='riff')newRiff();renderBeats()});
 $('vol').oninput=e=>{S.vol=+e.target.value/100;$('volLbl').textContent=e.target.value+'%';saveS();if(ctx)setVol()};
 $('drumVol').oninput=e=>{S.drumVol=+e.target.value/100;$('drumVolLbl').textContent=e.target.value+'%';saveS();if(ctx)setDrumVol()};
-pick($('beatSeg'),v=>{S.beats=S.beats||{};S.beats[curBeatStyle()]=+v;saveS();renderBeats();
+chg('beatSel',v=>{S.beats=S.beats||{};S.beats[curBeatStyle()]=+v;saveS();renderBeats();
   if(!S.drums){S.drums=true;fetchDrums();renderToggles()}
   if(playSched||loopMode>0){const lm=loopMode;stopPlayback(true);loopMode=lm;renderToggles();playRiff()}else playRiff()});
 pick($('edLen'),v=>{ed.len=+v;renderEditor()});
@@ -1512,13 +1514,14 @@ $('edPrev').onclick=()=>{if(S.instrument==='voice')ed.oct=Math.max(2,ed.oct-1);e
 $('edNext').onclick=()=>{if(S.instrument==='voice')ed.oct=Math.min(5,ed.oct+1);else ed.win=Math.min(15,ed.win+5);renderEditor()};
 $('edUndo').onclick=()=>{ed.notes.pop();renderEditor()};
 $('edClear').onclick=()=>{ed.notes=[];renderEditor()};
-$('edPlay').onclick=()=>{if(edNoteCount()<1)return;loadRiff(edRiff(),true);window.scrollTo({top:0,behavior:'smooth'})};
+$('edPlay').onclick=()=>{if(edNoteCount()<1)return;loadRiff(edRiff(),true)};
 $('edSave').onclick=()=>{
   if(edNoteCount()<2){toast('Add at least 2 notes to save a riff.');return}
   const r=edRiff();r.title=$('edName').value.trim()||`My riff ${saved.filter(s=>s.custom).length+1}`;r.tempo=S.tempo;r.savedAt=Date.now();
-  saved.unshift(r);store.set('riffecho.saved',saved);ed.notes=[];$('edName').value='';renderEditor();toast(`Saved as "${r.title}". It's playing now.`,{label:'View',fn:goSaved});
+  saved.unshift(r);store.set('riffecho.saved',saved);ed.notes=[];$('edName').value='';renderEditor();renderHomeSaved();
   if(S.practice!=='riff'){S.practice='riff';saveS();syncControls()}
-  loadRiff(r,true);window.scrollTo({top:0,behavior:'smooth'});
+  loadRiff(r,false);
+  toast(`Saved as "${r.title}"`,{label:'Practice it',fn:()=>{go('ear');setTimeout(()=>{window.scrollTo({top:0});playRiff()},60)}});
 };
 pick($('crSeg'),v=>{S.crReps=+v;saveS();renderToggles()});
 $('crAuto').onclick=()=>{S.crAuto=!S.crAuto;saveS();renderToggles()};
@@ -1531,11 +1534,10 @@ $('loopBtn').onclick=()=>{
 };
 $('drumBtn').onclick=()=>{S.drums=!S.drums;if(S.drums)fetchDrums();saveS();renderToggles()};
 $('altBtn').onclick=()=>{if(alts.length<2)return;altIdx=(altIdx+1)%alts.length;riffPos=alts[altIdx];liveBase=riffPos.base[0];renderRiffTab()};
-pick($('lenSeg'),v=>{S.length=v;saveS();syncControls();newRiff()});
-pick($('tolSeg'),v=>{S.tol=+v;saveS();syncControls()});
-pick($('randSeg'),v=>{S.mode=v;saveS();syncControls();newRiff()});
-pick($('modeSeg'),v=>{S.mode=v;saveS();syncControls();newRiff()});
-pick($('keyWheel'),v=>{S.key=v;saveS();syncControls();newRiff()});
+chg('lenSel',v=>{S.length=v;saveS();syncControls();newRiff()});
+chg('tolSel',v=>{S.tol=+v;saveS();syncControls()});
+chg('modeSel',v=>{S.mode=v;saveS();syncControls();newRiff()});
+chg('keySel',v=>{S.key=v;saveS();syncControls();newRiff()});
 const setTempo=v=>{S.tempo=Math.max(50,Math.min(180,v));saveS();syncControls()};
 $('tempo').oninput=e=>setTempo(+e.target.value);
 $('tDown').onclick=()=>setTempo(S.tempo-4);
@@ -1554,7 +1556,7 @@ function toast(msg,action){
   if(action){const b=document.createElement('button');b.textContent=action.label;b.onclick=()=>{el.classList.remove('show');action.fn()};el.appendChild(b)}
   el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),4000);
 }
-const goSaved=()=>$('savedList').closest('.card').scrollIntoView({behavior:'smooth',block:'start'});
+const goSaved=()=>{if(route!=='ear')go('ear');setTimeout(()=>$('savedList').closest('.card').scrollIntoView({behavior:'smooth',block:'start'}),60)};
 $('myBtn').onclick=goSaved;
 $('saveBtn').onclick=()=>{
   if(!riff)return;const i=saved.findIndex(s=>s.id===riff.id);
@@ -1591,8 +1593,22 @@ $('verLbl').textContent='Version '+APP_VERSION;
 for(const i of ['bass','guitar','voice'])if(i===S.instrument)fetchSamples(i,S.sounds[i]);
 if(S.drums)fetchDrums();
 if(/^https?:/.test(location.protocol)){checkUpdate();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()})}
+// ---- simple page routing (#home, #ear, #create) ----
+let route='home';
+function renderHomeSaved(){const a=$('homeSaved');if(!a)return;a.textContent=saved.length?`My saved riffs (${saved.length}) →`:'';a.hidden=!saved.length}
+function go(r){if(location.hash!=='#'+r)location.hash=r;else showRoute()}
+function showRoute(){
+  const r=(location.hash||'#home').slice(1),next=['home','ear','create'].includes(r)?r:'home';
+  if(route==='ear'&&next!=='ear'){if(playSched||loopMode>0)stopPlayback(false);if(listening)stopListening()}
+  route=next;
+  $('viewHome').hidden=route!=='home';$('viewEar').hidden=route!=='ear';$('viewCreate').hidden=route!=='create';
+  if(route==='create')renderEditor();if(route==='home')renderHomeSaved();
+  window.scrollTo({top:0});
+}
+window.addEventListener('hashchange',showRoute);
 syncControls();
 loadRiff(genRiff(S),false);
+showRoute();
 }
 </script>
 </body>
