@@ -428,7 +428,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-2047';
+const APP_VERSION='2026.11.26-2107';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -898,7 +898,25 @@ function silentWav(){
   v.setUint32(24,8000,true);v.setUint32(28,16000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
   return URL.createObjectURL(new Blob([b],{type:'audio/wav'}));
 }
-function setSession(){try{if(navigator.audioSession)navigator.audioSession.type=(listening||stream)?'play-and-record':'playback'}catch(e){}}
+function setSession(){try{if(navigator.audioSession)navigator.audioSession.type=((listening&&!micPaused)||stream)?'play-and-record':'playback'}catch(e){}}
+// iPhone turns playback down (call mode) while the mic is open. The app ignores the mic while it
+// plays anyway, so it lets go of the mic for the length of the sound and picks it up again after.
+let micPaused=false,resumeTimer=null,micSrc=null;
+const MIC_OPTS={audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}};
+function pauseMicFor(until){
+  if(!listening)return;
+  if(!micPaused&&stream){stream.getTracks().forEach(t=>t.stop());stream=null;try{micSrc&&micSrc.disconnect()}catch(e){}micSrc=null;micPaused=true;setSession()}
+  clearTimeout(resumeTimer);resumeTimer=setTimeout(resumeMic,Math.max(0,(until-ctx.currentTime)*1000));
+}
+async function resumeMic(){
+  resumeTimer=null;if(!listening||!micPaused)return;
+  if(ctx.currentTime<muteUntil-.05){resumeTimer=setTimeout(resumeMic,(muteUntil-ctx.currentTime)*1000);return}
+  try{if(navigator.audioSession)navigator.audioSession.type='play-and-record'}catch(e){}
+  try{let s;try{s=await navigator.mediaDevices.getUserMedia(MIC_OPTS)}catch(e){s=await navigator.mediaDevices.getUserMedia({audio:true})}
+    if(!listening){s.getTracks().forEach(t=>t.stop());return}
+    stream=s;micSrc=ctx.createMediaStreamSource(stream);micSrc.connect(analyser);micPaused=false;vt.reset();cand=null;candN=0;
+  }catch(e){micPaused=false;stopListening();setStatus('Tap Listen to keep going.')}
+}
 function ensureCtx(){
   setSession();
   if(!unlockEl){try{unlockEl=new Audio(silentWav());unlockEl.loop=true;unlockEl.setAttribute('playsinline','');unlockEl.play().catch(()=>{})}catch(e){}}
@@ -918,6 +936,7 @@ function stopPlayback(keepLoop){
   if(!keepLoop)loopMode=0;
   if(ctx){const now=ctx.currentTime;for(const g of buses){try{g.gain.cancelScheduledValues(now);g.gain.setValueAtTime(g.gain.value,now);g.gain.linearRampToValueAtTime(0,now+.04);setTimeout(()=>{try{g.disconnect()}catch(e){}},120)}catch(e){}}muteUntil=Math.min(muteUntil,now+.15)}
   buses=[];playSched=null;
+  if(micPaused){clearTimeout(resumeTimer);resumeTimer=setTimeout(resumeMic,200)}
   if(playIdx!==-1){playIdx=-1;renderLeds();renderRiffTab()}
   renderToggles();renderPlayBtn();if(!done)statusIdle();
 }
@@ -1174,14 +1193,14 @@ function holdTick(){
   if(!holdActive()){renderLeds();return}
   if(playSched||ctx.currentTime<muteUntil){holdTimer=setTimeout(holdTick,(muteUntil-ctx.currentTime)*1000+400);return}
   const t=ctx.currentTime+.05,len=.5;noteSound(riff.notes[0].midi,t,len);
-  muteUntil=t+len+.3;cand=null;candN=0;vbuf=[];
+  muteUntil=t+len+.3;cand=null;candN=0;vbuf=[];pauseMicFor(muteUntil);
   renderLeds();holdTimer=setTimeout(holdTick,1900);
 }
 async function audition(idx){
   if(!riff||idx<0||idx>=riff.notes.length)return;
   ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
   const t=ctx.currentTime+.04,len=riff.instrument==='voice'?.8:.6;noteSound(riff.notes[idx].midi,t,len);
-  muteUntil=Math.max(muteUntil,t+len+.3);cand=null;candN=0;vbuf=[];
+  muteUntil=Math.max(muteUntil,t+len+.3);cand=null;candN=0;vbuf=[];pauseMicFor(muteUntil);
   const startAnim=!playSched;playSched={list:[{t,end:t+len,i:idx}],stop:t+len,riff};if(startAnim)requestAnimationFrame(playAnim);
 }
 async function playRiff(contAt){
@@ -1214,7 +1233,7 @@ async function playRiff(contAt){
     o.connect(g);g.connect(OUT());o.start(t0);o.stop(end+.35);end+=.3;
   }
   OUTBUS=null;setTimeout(()=>{const i=buses.indexOf(bus);if(i>=0){buses.splice(i,1);try{bus.disconnect()}catch(e){}}},Math.max(0,(end-ctx.currentTime+1.5)*1000));
-  muteUntil=Math.max(song?muteUntil:0,end+.35);cand=null;candN=0;vt.reset();renderPlayBtn();
+  muteUntil=Math.max(song?muteUntil:0,end+.35);cand=null;candN=0;vt.reset();pauseMicFor(muteUntil);renderPlayBtn();
   const myRiff=riff;
   if(song){
     const next=t0+L16*e16;
@@ -1231,7 +1250,7 @@ async function startListening(){
   // The mic must be requested while the audio session allows recording, or iOS refuses without asking.
   try{if(navigator.audioSession)navigator.audioSession.type='play-and-record'}catch(e){}
   try{
-    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    stream=await navigator.mediaDevices.getUserMedia(MIC_OPTS);
   }catch(e){
     try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e2){
       setSession();
@@ -1245,15 +1264,15 @@ async function startListening(){
   ensureCtx();
   if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
   $('err').style.display='none';
-  const src=ctx.createMediaStreamSource(stream);
-  analyser=ctx.createAnalyser();analyser.fftSize=4096;src.connect(analyser);
+  micSrc=ctx.createMediaStreamSource(stream);micPaused=false;
+  analyser=ctx.createAnalyser();analyser.fftSize=4096;micSrc.connect(analyser);
   buf=new Float32Array(analyser.fftSize);listening=true;setSession();
   $('listenBtn').classList.add('live');$('listenBtn').querySelector('span').textContent='Listening';
   try{wake=await navigator.wakeLock?.request('screen')}catch(e){}
   statusIdle();requestAnimationFrame(loop);startHold();
 }
 function stopListening(){
-  listening=false;stream?.getTracks().forEach(t=>t.stop());stream=null;setSession();
+  listening=false;clearTimeout(resumeTimer);resumeTimer=null;micPaused=false;stream?.getTracks().forEach(t=>t.stop());stream=null;setSession();
   try{wake?.release()}catch(e){}wake=null;
   $('listenBtn').classList.remove('live');$('listenBtn').querySelector('span').textContent='Listen';
   $('noteBig').textContent='–';$('level').style.width='0';setNeedle(0);statusIdle();
@@ -1337,7 +1356,7 @@ async function previewSound(){
   const inst=S.instrument,root=riff&&riff.root>=0?riff.root:0,base=inst==='voice'?48+root:inst==='guitar'?45+((root-9+12)%12):28+((root-4+12)%12);
   const t=ctx.currentTime+.05,step=inst==='voice'?.34:.24;
   [0,4,7,12,7].forEach((iv,i)=>playTone(inst,t+i*step,base+iv,inst==='voice'?.32:step*1.1));
-  muteUntil=Math.max(muteUntil,t+5*step+.4);
+  muteUntil=Math.max(muteUntil,t+5*step+.4);pauseMicFor(muteUntil);
 }
 const STYLE_TILES=[{v:'any',name:'Any style',cell:null},{v:'rock',name:'Rock',cell:[0,2,4,6]},{v:'funk',name:'Funk',cell:[0,3,6]},{v:'pop',name:'Pop',cell:[0,4,6]},{v:'walking',name:'Walking',cell:[0,4]},{v:'metal',name:'Metal',cell:[0,2,3,4,6,7]}];
 function curBeatStyle(){return riff&&riff.style?riff.style:S.style!=='any'?S.style:'rock'}
@@ -1413,7 +1432,7 @@ $('edBoard').onclick=async e=>{const b=e.target.closest('button');if(!b)return;
   if(edNoteCount()>=16)return;
   ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(_){}}
   let m;if(b.dataset.m){m=+b.dataset.m;ed.notes.push({m,len:ed.len})}else{const s=+b.dataset.s,f=+b.dataset.f;ed.notes.push({s,f,len:ed.len});m=edMidi(S.instrument,s,f)}
-  const t=ctx.currentTime+.03;playTone(S.instrument,t,m,.45);muteUntil=Math.max(muteUntil,t+.8);renderEditor()};
+  const t=ctx.currentTime+.03;playTone(S.instrument,t,m,.45);muteUntil=Math.max(muteUntil,t+.8);pauseMicFor(muteUntil);renderEditor()};
 $('edPrev').onclick=()=>{if(S.instrument==='voice')ed.oct=Math.max(2,ed.oct-1);else ed.win=Math.max(0,ed.win-5);renderEditor()};
 $('edNext').onclick=()=>{if(S.instrument==='voice')ed.oct=Math.min(5,ed.oct+1);else ed.win=Math.min(15,ed.win+5);renderEditor()};
 $('edUndo').onclick=()=>{ed.notes.pop();renderEditor()};
