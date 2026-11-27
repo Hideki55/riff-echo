@@ -458,7 +458,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <div class="fields">
         <label class="fld"><span>Groove length</span><select id="slBars"><option value="1">1 beat (repeats 4×)</option><option value="2">2 beats (repeats 2×)</option><option value="4">4 beats (full bar)</option></select></label>
         <label class="fld"><span>Space (rests)</span><select id="slSpace"><option value="0">None: all 16ths (as taught)</option><option value="1">Some rests</option><option value="2">Lots of rests</option></select></label>
-        <label class="fld"><span>Dead-note tone</span><select id="slTone"><option value="thunk">Thunky</option><option value="click">Clicky</option></select></label>
+        <label class="fld"><span>Dead-note tone</span><select id="slTone"><option value="real">Recorded (real bass)</option><option value="thunk">Synth: thunky</option><option value="click">Synth: clicky</option></select></label>
         <label class="fld"><span>Backing</span><select id="slBack"><option value="drums">Drums</option><option value="click">Click only</option><option value="none">Nothing</option></select></label>
         <label class="fld"><span>Drum beat</span><select id="slBeat"></select></label>
         <label class="fld"><span>Sounds</span><select id="slSound"><option value="taught">As taught (mixed)</option><option value="muted">All muted</option><option value="notes">All notes</option></select></label>
@@ -497,12 +497,13 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <section class="card qs" aria-label="Slap riff settings">
       <h2>Settings</h2>
       <div class="fields">
+        <label class="fld full"><span>In the style of</span><select id="srStyle"></select></label>
         <label class="fld"><span>Key</span><select id="srKeySel"></select></label>
         <label class="fld"><span>Mode</span><select id="srModeSel"></select></label>
         <label class="fld"><span>Length</span><select id="srBars"><option value="1">1 bar</option><option value="2">2 bars</option></select></label>
         <label class="fld"><span>Space (rests)</span><select id="srSpace"><option value="0">None: all 16ths</option><option value="1">Some rests</option><option value="2">Lots of rests</option></select></label>
         <label class="fld"><span>Dead notes</span><select id="srGhosts"><option value="0">Few</option><option value="1">Some</option><option value="2">Lots</option></select></label>
-        <label class="fld"><span>Dead-note tone</span><select id="srTone"><option value="thunk">Thunky</option><option value="click">Clicky</option></select></label>
+        <label class="fld"><span>Dead-note tone</span><select id="srTone"><option value="real">Recorded (real bass)</option><option value="thunk">Synth: thunky</option><option value="click">Synth: clicky</option></select></label>
         <label class="fld"><span>Backing</span><select id="srBack"><option value="drums">Drums</option><option value="click">Click only</option><option value="none">Nothing</option></select></label>
         <label class="fld"><span>Drum beat</span><select id="srBeat"></select></label>
       </div>
@@ -515,6 +516,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <summary>How slap riffs work</summary>
       <div class="morebody">
         <p class="hint">Each riff uses the same building blocks as the rhythm drills, with real notes from the key and mode. Thumbs (T) take the low notes on the E and A strings, favouring the root and fifth. Pops (P) take the high notes on the D and G strings, favouring the octave, third, fifth and seventh. Hammer-ons (H→O) go up one or two frets within the scale. Everything sits in one four-fret hand position around the root, shown on the fretboard.</p>
+        <p class="hint"><b>In the style of</b> picks rhythm cells, note choices, tempo and drum beat typical of each player’s approach (for example octave pops for Larry Graham, constant 16ths with dead notes for Mark King, open-string pedals and odd intervals for Les Claypool). They’re style sketches, not transcriptions of anyone’s songs.</p>
         <p class="hint">The riff is built as a call and answer: beats 3–4 repeat the start of beats 1–2, then change the ending, so it sounds like a phrase rather than random notes. Dead notes add percussion between the pitched notes.</p>
       </div>
     </details>
@@ -549,11 +551,11 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <p class="muted" id="verLbl" style="text-align:center;margin:18px 0 0;font-size:12px"></p>
-  <p class="muted" style="text-align:center;margin:4px 0 0;font-size:12px">Real instrument sounds: Musyng Kite, FatBoy (CC BY-SA 3.0) and FluidR3 (CC BY 3.0) soundfonts via <a href="https://github.com/gleitz/midi-js-soundfonts" style="color:inherit">midi-js-soundfonts</a>. Drums: AVL Drumkits by Glen MacArthur (CC BY-SA) and Virtuosity Drums (CC0).</p>
+  <p class="muted" style="text-align:center;margin:4px 0 0;font-size:12px">Real instrument sounds: Musyng Kite, FatBoy (CC BY-SA 3.0) and FluidR3 (CC BY 3.0) soundfonts via <a href="https://github.com/gleitz/midi-js-soundfonts" style="color:inherit">midi-js-soundfonts</a>. Drums: AVL Drumkits by Glen MacArthur (CC BY-SA) and Virtuosity Drums (CC0). Dead notes: Karoryfer Swagbass &amp; Fashionbass (CC0).</p>
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0155';
+const APP_VERSION='2026.11.27-0206';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1711,7 +1713,7 @@ const SL_EXAMPLE=['HO','TT','ST','PT','TP','TT','ST','PT'];
 const SPACE_P=[0,.3,.5];
 const SLD={tempo:80,blocks:SL_EXAMPLE.slice(),bm:0,ss:0,back:'drums',beat:'funk:0',sound:'taught',adv:0,use:SL_CORE.slice(),preset:'',space:0,tone:'thunk'};
 S.slap=Object.assign({},SLD,S.slap||{});
-const SL=S.slap;SL.use=SL.use.filter(k=>SL_CORE.includes(k));if(!SL.use.length)SL.use=SL_CORE.slice();
+const SL=S.slap;if(!SL.toneV2){SL.tone='real';SL.toneV2=1}SL.use=SL.use.filter(k=>SL_CORE.includes(k));if(!SL.use.length)SL.use=SL_CORE.slice();
 const SRD={tempo:84,key:'random',mode:'random',bars:1,space:1,ghosts:1,back:'drums',beat:'funk:0',riff:null,showNames:true};
 S.sriff=Object.assign({},SRD,S.sriff||{});
 const SR=S.sriff;
@@ -1777,7 +1779,7 @@ const beatOpts=()=>['funk','pop','rock','metal'].map(st=>`<optgroup label="${st[
 function renderSlap(){
   renderYard();
   $('slTempo').value=SL.tempo;$('slTempoVal').textContent=SL.tempo;
-  $('slBack').value=SL.back;$('slBars').value=slLen();$('slTone').value=SL.tone||'thunk';$('slSound').value=SL.sound;$('slAdv').value=SL.adv;$('slPreset').value=SL.preset;$('slSpace').value=SL.space||0;
+  $('slBack').value=SL.back;$('slBars').value=slLen();$('slTone').value=SL.tone||'real';$('slSound').value=SL.sound;$('slAdv').value=SL.adv;$('slPreset').value=SL.preset;$('slSpace').value=SL.space||0;
   $('slBeat').innerHTML=beatOpts();$('slBeat').value=slBeatKey(SL);$('slBeat').disabled=SL.back!=='drums';
   $('slUse').innerHTML=SL_CORE.map(k=>`<button class="slchip" data-v="${k}" aria-pressed="${SL.use.includes(k)}">${k}</button>`).join('');
   renderSlPlay();
@@ -1786,7 +1788,7 @@ function renderSlPlay(){for(const [id,k] of [['slPlay','drill'],['srPlay','riff'
 function slBeatKey(P){const k=String(P.beat);return /:/.test(k)?k:'funk:'+(+k||0)}
 function slBeatSel(P){const [st,i]=slBeatKey(P).split(':');return {st,B:(BEATS[st]||BEATS.funk)[+i]||BEATS.funk[0]}}
 function slRestart(){if(slBus){const k=slKind;slapStop();slapPlay(k)}}
-function slapEnter(){fetchSamples('bass','slap');fetchKit('pearl');renderSlap()}
+function slapEnter(){fetchSamples('bass','slap');fetchDead();fetchKit('pearl');renderSlap()}
 function slNoiseBuf(){if(!slNoise){const n=Math.floor(ctx.sampleRate*.12),b=ctx.createBuffer(1,n,ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;slNoise=b}return slNoise}
 // Pitched notes use the slap-bass recording. Muted ("dead") notes keep only the attack of the recording,
 // cut short the way a resting left hand chokes the string, plus the click of string on frets and the body thud.
@@ -1822,7 +1824,27 @@ function slClack(t,freqs,tau,vel){
   s.start(t);s.stop(t+tau*8);
 }
 const jit=()=>.95+Math.random()*.1;
-const SL_MUTED={
+// ---- recorded dead notes (Karoryfer Swagbass / Fashionbass, CC0) ----
+const DEAD_FILES={T:'thumb',P:'pop',S:'lh',O:'soft'},deadBuf={};let deadState='';
+function fetchDead(){
+  if(deadState||!/^https?:/.test(location.protocol))return;deadState='loading';const raw={};let left=20;
+  for(const k in DEAD_FILES)for(let i=1;i<=5;i++)fetch(`samples/dead/${DEAD_FILES[k]}${i}.mp3`).then(r=>r.ok?r.arrayBuffer():null).then(ab=>{if(ab)(raw[k]=raw[k]||[]).push(ab)}).catch(()=>{}).finally(()=>{if(--left===0){deadState='fetched';fetchDead.raw=raw;decodeDead()}});
+}
+async function decodeDead(){
+  if(!ctx||deadState!=='fetched')return;deadState='decoding';const raw=fetchDead.raw;
+  for(const k in raw){deadBuf[k]=[];for(const ab of raw[k]){try{const b=await new Promise((res,rej)=>ctx.decodeAudioData(ab,res,rej));const d=b.getChannelData(0);let pk=0;for(let i=0;i<d.length;i++)pk=Math.max(pk,Math.abs(d[i]));deadBuf[k].push({b,g:pk?.7/pk:1})}catch(e){}}}
+  deadState='ready';
+}
+function deadReady(){fetchDead();if(deadState==='fetched')decodeDead();return waitFor(()=>deadState==='ready'||!/^https?:/.test(location.protocol),5000)}
+const DEAD_GAIN={T:1.15,P:1,S:.85,O:.55};
+function playDead(k,t,v){
+  const L=deadBuf[k];if(!L||!L.length)return false;const o=L[rnd(L.length)];
+  const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=o.b;s.playbackRate.value=.97+Math.random()*.06;
+  g.gain.value=o.g*v*DEAD_GAIN[k];s.connect(g);g.connect(slBus);s.start(t);
+  if(k==='P')slClack(t,[1700,2800,4300],.008,.5*v); // a touch of string-on-fret snap
+  return true;
+}
+const SL_SYN={
   T:(t,v)=>{const c=SL.tone==='click';
     if(!c)slKS(t,41.2*jit(),.07,.72,.13,v*.9,2200);
     slSamp(t,28,0,v*(c?1.2:.75),c?['highpass',350,.7]:null,0,c?.006:.004);slClack(t,[1150,1900,3100],c?.016:.011,(c?1.6:.9)*v)},
@@ -1834,6 +1856,8 @@ const SL_MUTED={
     slNoiseHit(t,c?.03:.04,700,.8,(c?1:.7)*v);slClack(t,[1300,2200,3400],.01,(c?1.4:.8)*v)},
   H:(t,v)=>{if(SL.tone!=='click')slKS(t,55*jit(),.07,.72,.13,v*.9,2200);slSamp(t,33,0,v*.75,null,0,.004);slClack(t,[1150,1900,3100],.011,.9*v)},
   O:(t,v)=>{if(SL.tone!=='click')slKS(t,82.4,.03,.4,.2,v*.8,1500);slClack(t,[1400,2300],.008,.8*v)}};
+// Recorded is the default; the two synth versions stay as alternatives (and as a fallback before the files load).
+const SL_MUTED={};for(const k of ['T','P','S','H','O'])SL_MUTED[k]=(t,v)=>{if((SL.tone||'real')==='real'&&playDead(k==='H'?'T':k,t,v))return;SL_SYN[k](t,v)};
 function slapHit(x,t,e16,acc,ringSteps){
   if(x.s==='-')return;
   const v=(acc?1:.86)*(.94+Math.random()*.08),ring=e16*Math.min(6,Math.max(1.05,(ringSteps||1)*.97));
@@ -1853,7 +1877,7 @@ async function slapPlay(kind){
   if(slBus)slapStop();
   ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
   const g=++slGen;slKind=kind;slBus=newBus();renderSlPlay();
-  await Promise.all([soundReady('bass','slap'),P.back==='drums'?kitReady(slBeatSel(P).st):Promise.resolve()]);
+  await Promise.all([soundReady('bass','slap'),deadReady(),P.back==='drums'?kitReady(slBeatSel(P).st):Promise.resolve()]);
   if(g!==slGen)return;
   slBars=0;let t0=ctx.currentTime+.12;
   const cycle=()=>{if(g!==slGen)return;
@@ -1884,7 +1908,76 @@ function slapStop(){
 }
 // ---- Slap riffs: real notes from a key and mode, laid out for thumb (low strings) and pops (high strings) ----
 const SR_MODE_W=[2,3,1,1,3,2,.5]; // Ionian..Locrian: funk favours Dorian and Mixolydian
+// ---- "In the style of": rhythm cells and note choices inspired by famous slap players ----
+// Cells are one beat (four 16ths): T thumb, t dead thumb, P pop, p dead pop, S left-hand slap, H O hammer-on, - rest.
+// These are general traits of each player's approach, not transcriptions of their songs.
+const SR_STYLES={
+  mix:{name:'Mixed (building blocks)'},
+  graham:{name:'Larry Graham: thump & pluck',tempo:100,beat:'funk:3',modes:{4:3,1:2,0:1},shape:'ABAC',
+    A:['T---','T-P-','T--P','T-T-','T-tP'],B:['--P-','T-tP','-TP-','P---','T-TP','--T-','tTP-','-P-T'],oct:.8,ghost:.1,thumbDeg:{0:6,7:2,10:2,5:1},chrom:.05},
+  king:{name:'Mark King: machine-gun 16ths',tempo:118,beat:'funk:0',modes:{1:3,5:2,0:1},shape:'AAAB',
+    A:['TtPt','TStP','TtTP','TtPS'],B:['tTPt','TStP','tTtP','TPtP','StPt','TtPP','tPTP'],oct:.65,ghost:.05,thumbDeg:{0:6,7:2,10:1.5,3:1},chrom:.05},
+  flea:{name:'Flea: punk-funk',tempo:108,beat:'funk:1',modes:{1:3,5:3,4:1},shape:'ABAC',
+    A:['T-TP','TTP-','T-PT','TtP-','TP-P'],B:['-TPT','TP-P','T-tT','tTP-','TPTP','-PTP','HOP-','TT-P'],oct:.5,ghost:.12,thumbDeg:{0:5,7:2,10:2,3:1.5,5:1},chrom:.3,open:.4},
+  claypool:{name:'Les Claypool: odd & hypnotic',tempo:128,beat:'funk:2',modes:{2:3,6:2,3:2},shape:'AAAB',
+    A:['T-TT','TTtP','THO-','TtTt','T-HO'],B:['TPTT','HOTt','TTHO','PTTP','tTPT','T-PP','HOHO'],oct:.3,ghost:.1,thumbDeg:{0:4,6:2,1:2,7:1},chrom:.3,pedal:.6,tritone:.3},
+  miller:{name:'Marcus Miller: smooth pocket',tempo:94,beat:'funk:7',modes:{1:3,5:2,4:1},shape:'ABAC',
+    A:['T--t','T-tP','T--P','T-P-'],B:['--P-','t-T-','tPt-','-tP-','T---','--PT','-T-P','t-tP'],oct:.45,ghost:.15,popDeg:{10:3,7:2.5,0:2,3:1.5},thumbDeg:{0:6,7:2,10:2,5:1},chrom:.1},
+  wooten:{name:'Victor Wooten: hammers & pops',tempo:100,beat:'funk:6',modes:{4:3,1:2,0:1},shape:'ABAC',
+    A:['THOP','TtHO','TPHO'],B:['HOtP','TtPt','PHOP','HOPt','tPHO','THOP','HOTP'],oct:.5,ghost:.08,thumbDeg:{0:5,7:2.5,5:1.5,10:1},chrom:.08}};
+function srBox(root){
+  const fe=((root-4)%12+12)%12,fa=((root-9)%12+12)%12,rs=fe<=7?0:1,rf=rs===0?fe:fa;
+  const lo=rf===0?1:Math.max(1,rf-rnd(2));return {rs,rf,lo,hi:lo+3,rootM:TUNING.bass[rs]+rf};
+}
+function posFor(m,strings,lo,hi){let best=null;for(const s of strings){const f=m-TUNING.bass[s];if(f<0||f>MAXF.bass)continue;const d=f===0?.5:f<lo?lo-f:f>hi?f-hi:0;if(!best||d<best.d)best={s,f,d}}return best&&best.d<=2?{s:best.s,f:best.f}:null}
+function genStyledRiff(st){
+  const ST=SR_STYLES[st],mk=Object.keys(ST.modes).map(Number);
+  const root=SR.key==='random'?rnd(12):+SR.key,mode=SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
+  const sc=scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
+  const {lo,hi,rootM}=srBox(root);
+  const spots=[];for(let s=0;s<4;s++)for(const f of [0,lo,lo+1,lo+2,lo+3]){const m=TUNING.bass[s]+f;if(inS(m))spots.push({s,f,m})}
+  const thumbs=spots.filter(p=>p.s<=1),pops=spots.filter(p=>p.s>=2&&p.m>rootM+4);
+  const tw=ST.thumbDeg||{0:5,7:2.5},pw=ST.popDeg||{0:4,10:2,7:2,3:1.5,4:1.5};
+  const tW=p=>(tw[deg(p.m)]||.7)*(p.f===0?.7:1)*(p.m<rootM-7?.4:1);
+  const pW=p=>(pw[deg(p.m)]||.7)*(Math.abs(p.m-rootM-12)<=5?1.4:.7);
+  const hams=spots.filter(p=>p.s<=2&&p.f>0).map(p=>{const o=spots.find(q=>q.s===p.s&&q.f>p.f&&q.f-p.f<=2);return o?{h:p,o}:null}).filter(Boolean);
+  const pedal=ST.pedal?(inS(28)||st==='claypool'?{s:0,f:0,m:28}:{s:1,f:0,m:33}):null;
+  // a cell with H/O needs a hammer-on available
+  const okCell=c=>hams.length||!/H/.test(c);
+  const pickCell=(L,first)=>{const c=L.filter(c=>okCell(c)&&(!first||c[0]==='T'));return (c.length?c:['T-P-'])[rnd(c.length||1)]};
+  const shape=ST.shape,cellOf={};
+  const labels=[];for(let b=0;b<+SR.bars;b++)for(let i=0;i<4;i++){let L=shape[i];if(b>0&&i===3)L='D'+b;labels.push(L)}
+  for(const L of labels)if(!cellOf[L])cellOf[L]=L==='A'?pickCell(ST.A,true):pickCell(ST.B.concat(ST.A),false);
+  // spacing setting: "None" fills rests with dead thumbs, "Lots" turns some dead notes into rests
+  const spaceAdj=c=>SR.space===0?c.replace(/-/g,()=>Math.random()<.6?'t':'-'):SR.space===2?c.replace(/[tp]/g,()=>Math.random()<.6?'-':'t'):c;
+  for(const L in cellOf)if(L!=='A')cellOf[L]=spaceAdj(cellOf[L]);
+  const memo={},steps=[];let lastT=rootM;
+  labels.forEach((L,bi)=>{
+    if(!memo[L]){const cell=cellOf[L],out=[];
+      for(let k=0;k<4;k++){const c=cell[k],first=L==='A'&&k===0;
+        if(c==='-'){out.push({s:'-'});continue}
+        if(c==='S'){out.push({s:'S',muted:true});continue}
+        if(c==='t'||c==='p'){out.push({s:c.toUpperCase(),muted:true});continue}
+        if(c==='H'){const hm=first?hams.find(x=>x.h.m===rootM)||slPick(hams,hams.map(x=>tW(x.h))):slPick(hams,hams.map(x=>tW(x.h)));
+          out.push({s:'H',m:hm.h.m,pos:{s:hm.h.s,f:hm.h.f}},{s:'O',m:hm.o.m,pos:{s:hm.o.s,f:hm.o.f}});k++;lastT=hm.h.m;continue}
+        if(c==='T'){let p=first?thumbs.find(q=>q.m===rootM)||thumbs[0]:(pedal&&Math.random()<ST.pedal?pedal:slPick(thumbs,thumbs.map(tW)));
+          lastT=p.m;out.push({s:'T',m:p.m,pos:{s:p.s,f:p.f},muted:!first&&Math.random()<ST.ghost});continue}
+        if(c==='P'){let p=null;
+          if(Math.random()<ST.oct){const q=posFor(lastT===28||lastT===33?lastT+12:lastT+12,[2,3],lo,hi);if(q)p={...q,m:lastT+12}}
+          if(!p&&ST.tritone&&Math.random()<ST.tritone){const q=posFor(rootM+18,[2,3],lo,hi);if(q)p={...q,m:rootM+18}}
+          if(!p)p=pops.length?slPick(pops,pops.map(pW)):slPick(thumbs,thumbs.map(tW));
+          out.push({s:'P',m:p.m,pos:{s:p.s,f:p.f},muted:Math.random()<ST.ghost*.6});continue}
+      }
+      memo[L]=out.slice(0,4)}
+    memo[L].forEach((x,k)=>steps.push(Object.assign({},x,{blk:bi*2+(k>>1),k:k&1,bar:Math.floor(bi/4)})));
+  });
+  // chromatic approach: a thumb on the last 16th before a beat slides in from a half step below the next thumb
+  for(let i=3;i<steps.length-1;i+=4){const a=steps[i],b=steps[i+1];
+    if(a.s==='T'&&!a.muted&&b.s==='T'&&!b.muted&&Math.random()<ST.chrom&&b.pos.f>0){a.m=b.m-1;a.pos={s:b.pos.s,f:b.pos.f-1}}}
+  return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi],style:st};
+}
 function genSlapRiff(){
+  if(SR.style&&SR.style!=='mix'&&SR_STYLES[SR.style])return genStyledRiff(SR.style);
   const root=SR.key==='random'?rnd(12):+SR.key,mode=SR.mode==='random'?slPick([0,1,2,3,4,5,6],SR_MODE_W):+SR.mode;
   const sc=scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
   // root on the E string if it sits in frets 0-7, else on the A string; a 4-fret box around it
@@ -1928,7 +2021,7 @@ function renderSR(){
   let h=`<svg viewBox="0 0 352 ${108*nb}" role="img">`;
   for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*108,{RH:108,wrap:false,fade:()=>false,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:SR.showNames?nm:null});
   $('srStick').innerHTML=h+'</svg>';
-  $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}${MODES[r.mode].label?' ('+MODES[r.mode].label+')':''}`;
+  $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}`;
   const cur=slKind==='riff'&&slPlayingStep>=0?st[slPlayingStep]:null;
   const items=st.filter(x=>x.pos).map(x=>({p:x.pos,label:nm[x.m%12],play:!!(cur&&cur.pos&&cur.pos.s===x.pos.s&&cur.pos.f===x.pos.f&&!cur.muted),old:x.muted}));
   $('srBoard').innerHTML=fretSVG(items,'bass');
@@ -1937,15 +2030,17 @@ function renderSR(){
 function renderSRControls(){
   $('srKeySel').innerHTML=$('keySel').innerHTML;$('srKeySel').value=SR.key;
   $('srModeSel').innerHTML=opt('random','Any (funky modes more often)')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode;
+  $('srStyle').innerHTML=Object.keys(SR_STYLES).map(k=>opt(k,SR_STYLES[k].name)).join('');$('srStyle').value=SR.style||'mix';
   $('srBars').value=SR.bars;$('srSpace').value=SR.space;$('srGhosts').value=SR.ghosts;$('srBack').value=SR.back;
   $('srBeat').innerHTML=beatOpts();$('srBeat').value=slBeatKey(SR);$('srBeat').disabled=SR.back!=='drums';
-  $('srTone').value=SL.tone||'thunk';$('srNames').checked=SR.showNames;
+  $('srTone').value=SL.tone||'real';$('srNames').checked=SR.showNames;
   $('srTempo').value=SR.tempo;$('srTempoVal').textContent=SR.tempo;
 }
-function srEnter(){fetchSamples('bass','slap');fetchKit('pearl');renderSRControls();renderSR();renderSRSaved()}
+function srEnter(){fetchSamples('bass','slap');fetchDead();fetchKit('pearl');renderSRControls();renderSR();renderSRSaved()}
 const srNew=()=>{SR.riff=genSlapRiff();saveS();renderSR();renderSRSaved();if(slBus&&slKind==='riff')slRestart()};
 $('srPlay').onclick=()=>slBus&&slKind==='riff'?slapStop():slapPlay('riff');
 $('srNew').onclick=srNew;
+chg('srStyle',v=>{SR.style=v;const X=SR_STYLES[v];if(X.tempo){SR.tempo=X.tempo;SR.beat=X.beat;SR.back=SR.back==='none'?'drums':SR.back}saveS();renderSRControls();srNew()});
 chg('srKeySel',v=>{SR.key=v;srNew()});chg('srModeSel',v=>{SR.mode=v;srNew()});
 chg('srBars',v=>{SR.bars=+v;srNew()});chg('srSpace',v=>{SR.space=+v;srNew()});chg('srGhosts',v=>{SR.ghosts=+v;srNew()});
 chg('srBack',v=>{SR.back=v;saveS();renderSRControls();if(slKind==='riff')slRestart()});
@@ -1965,14 +2060,14 @@ function renderSRSaved(){
   const cur=SR.riff&&srSaved.find(s=>s.riff.id===SR.riff.id);$('srSave').querySelector('span').textContent=cur?'Saved ✓':'Save';$('srSave').classList.toggle('saved',!!cur);
   if(!srSaved.length){L.innerHTML='<li style="border:0;padding:0;display:block"><p class="empty">Slap riffs you save land here, with their tempo and drums.</p></li>';return}
   const BN=k=>{const [st,i]=String(k).split(':');const B=(BEATS[st]||[])[+i];return B?st[0].toUpperCase()+st.slice(1)+' '+B.name:''};
-  L.innerHTML=srSaved.map((s,i)=>{const meta=[srTitle(s.riff),`${s.tempo} bpm`,s.back==='drums'?'Drums: '+BN(s.beat):s.back==='click'?'Click':'No drums',s.riff.steps.length>16?'2 bars':'1 bar'].join(' · ');
+  L.innerHTML=srSaved.map((s,i)=>{const meta=[srTitle(s.riff),s.style&&s.style!=='mix'?SR_STYLES[s.style].name.split(':')[0]+' style':'',`${s.tempo} bpm`,s.back==='drums'?'Drums: '+BN(s.beat):s.back==='click'?'Click':'No drums',s.riff.steps.length>16?'2 bars':'1 bar'].filter(Boolean).join(' · ');
     const name=srRen===i?`<input id="srRenIn" value="${esc(s.title)}" maxlength="40" aria-label="Riff name">`:`<span class="nm"><b>${esc(s.title)}</b><button class="ren" data-ren="${i}">Rename</button></span>`;
     return `<li><div>${name}<span class="muted">${esc(meta)}</span></div><button class="btn" data-load="${i}">Play</button><button class="btn x${srConfirm===i?' sure':''}" data-del="${i}" aria-label="Delete">${srConfirm===i?'Delete?':'✕'}</button></li>`}).join('');
   const inp=$('srRenIn');if(inp){inp.focus();inp.select();const done=()=>{if(srRen<0)return;const v=inp.value.trim();if(v)srSaved[srRen].title=v;srRen=-1;srStore();renderSRSaved()};inp.onblur=done;inp.onkeydown=e=>{if(e.key==='Enter')inp.blur()}}
 }
 $('srSave').onclick=()=>{
   if(!SR.riff)return;if(!SR.riff.id)SR.riff.id='s'+Date.now().toString(36)+rnd(1e6).toString(36);
-  const cfg={tempo:SR.tempo,back:SR.back,beat:slBeatKey(SR),tone:SL.tone||'thunk',space:SR.space,ghosts:SR.ghosts,showNames:SR.showNames};
+  const cfg={style:SR.style||'mix',tempo:SR.tempo,back:SR.back,beat:slBeatKey(SR),tone:SL.tone||'real',space:SR.space,ghosts:SR.ghosts,showNames:SR.showNames};
   const i=srSaved.findIndex(s=>s.riff.id===SR.riff.id);
   if(i>=0){Object.assign(srSaved[i],cfg);srStore();renderSRSaved();toast(`Updated tempo and drums for "${srSaved[i].title}"`);return}
   const base=srTitle(SR.riff),title=`${base} ${srSaved.filter(s=>s.title.startsWith(base)).length+1}`;
@@ -1985,7 +2080,7 @@ $('srSavedList').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.ren!=null){srRen=+b.dataset.ren;srConfirm=-1;renderSRSaved();return}
   if(b.dataset.load!=null){const s=srSaved[+b.dataset.load];
-    Object.assign(SR,{tempo:s.tempo,back:s.back,beat:s.beat,space:s.space,ghosts:s.ghosts,showNames:s.showNames!==false,riff:JSON.parse(JSON.stringify(s.riff))});SL.tone=s.tone||SL.tone;saveS();
+    Object.assign(SR,{style:s.style||'mix',tempo:s.tempo,back:s.back,beat:s.beat,space:s.space,ghosts:s.ghosts,showNames:s.showNames!==false,riff:JSON.parse(JSON.stringify(s.riff))});SL.tone=s.tone||SL.tone;saveS();
     renderSRControls();renderSR();renderSRSaved();window.scrollTo({top:0,behavior:'smooth'});slapPlay('riff');return}
   if(b.dataset.del!=null){const d=+b.dataset.del;
     if(srConfirm!==d){srConfirm=d;renderSRSaved();setTimeout(()=>{if(srConfirm===d){srConfirm=-1;renderSRSaved()}},3000);return}
