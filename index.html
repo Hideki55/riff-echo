@@ -493,6 +493,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <button class="big" id="srNew"><svg><use href="#i-dice"/></svg><span>New riff</span></button>
       </div>
     </section>
+    <div class="acts"><div class="actbtns"><button class="btn" id="srSave"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>Save</span></button><button class="btn" id="srMy">My slap riffs</button></div></div>
     <section class="card qs" aria-label="Slap riff settings">
       <h2>Settings</h2>
       <div class="fields">
@@ -509,6 +510,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <input type="range" id="srTempo" min="40" max="140" step="2" aria-label="Tempo">
       <div class="togs" style="margin-top:12px"><label class="tog"><input type="checkbox" id="srNames"><span class="sw"></span><span class="ic"><svg><use href="#i-tag"/></svg></span><b>Note names</b><small>Under each slap letter</small></label></div>
     </section>
+    <section class="card"><h2 id="srSavedH">Saved slap riffs</h2><ul class="saved-list" id="srSavedList"></ul></section>
     <details class="card more">
       <summary>How slap riffs work</summary>
       <div class="morebody">
@@ -551,7 +553,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0149';
+const APP_VERSION='2026.11.27-0155';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1359,7 +1361,7 @@ async function playRiff(contAt){
   if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
   if(gen!==playGen)return;
   if(contAt==null){
-    const r0=riff,need=[soundReady(riff.instrument,S.sounds[riff.instrument])];if(S.drums)need.push(kitReady(riff.style||'rock'));
+    const r0=riff,need=[soundReady(riff.instrument,S.sounds[riff.instrument])];if(S.drums)need.push(kitReady(curBeatStyle()));
     const slow=setTimeout(()=>setStatus('Loading sounds…'),250);await Promise.all(need);clearTimeout(slow);
     if(riff!==r0||gen!==playGen)return;
   }
@@ -1369,14 +1371,14 @@ async function playRiff(contAt){
   if(cr){if(contAt==null)crIdx=0;if(crIdx===0){crCycle++;resetAttemptState()}}
   let t0=contAt!=null&&contAt>ctx.currentTime?contAt:ctx.currentTime+.08;
   OUTBUS=newBus();const bus0=OUTBUS;
-  if(S.drums&&contAt==null){const ck=KITS[riff.style]||'zep',cb=ctx.createGain();cb.gain.value=S.drumVol;cb.connect(OUT());drumBuses.push(cb);DRUMBUS=cb;for(let i=0;i<4;i++)drumHit(ck,'stick',t0+i*4*e16,i?.7:1);DRUMBUS=null;t0+=16*e16}
+  if(S.drums&&contAt==null){const ck=KITS[curBeatStyle()]||'zep',cb=ctx.createGain();cb.gain.value=S.drumVol;cb.connect(OUT());drumBuses.push(cb);DRUMBUS=cb;for(let i=0;i<4;i++)drumHit(ck,'stick',t0+i*4*e16,i?.7:1);DRUMBUS=null;t0+=16*e16}
   // in song mode the riff repeats on a grid of half bars so the loop stays in time
   const L16=Math.ceil(riff.slots/(riff.unit||2)*4/8)*8;
   const bus=bus0;
   let end=t0;const list=[];
   riff.notes.forEach((n,i)=>{const F=feelFor(riff,n,i),t=Math.max(t0,t0+n.start*e+F.jitter),len=Math.max(.07,n.dur*e*Math.min(.97,F.gate));playTone(riff.instrument,t,n.midi,riff.instrument==='voice'?Math.max(len,e*.95):len,F.v,n.slide||0);end=Math.max(end,t+len);list.push({t,end:t+Math.max(len,e*.6),i})});
   (riff.ghosts||[]).forEach(s=>{const prev=riff.notes.filter(n=>n.start<s).pop();if(prev)ghostNote(riff.instrument,t0+s*e+(Math.random()-.5)*.01,prev.midi)});
-  if(S.drums){const n16=song||cr?L16:Math.ceil(riff.slots/(riff.unit||2)*4/16)*16;playDrums(t0,n16,riff.style||'rock',e16,contAt==null);end=Math.max(end,t0+n16*e16)}
+  if(S.drums){const n16=song||cr?L16:Math.ceil(riff.slots/(riff.unit||2)*4/16)*16;playDrums(t0,n16,curBeatStyle(),e16,contAt==null);end=Math.max(end,t0+n16*e16)}
   const startAnim=!playSched,old=playSched&&playSched.riff===riff?playSched.list.filter(x=>x.end>ctx.currentTime):[];
   playSched={list:old.concat(list),stop:song?Math.max(end,t0+L16*e16):end,riff};if(startAnim)requestAnimationFrame(playAnim);
   if(S.drone){
@@ -1540,7 +1542,10 @@ async function previewSound(){
   muteUntil=Math.max(muteUntil,t+5*step+.4);pauseMicFor(muteUntil);
 }
 const STYLE_TILES=[{v:'any',name:'Any style',cell:null},{v:'rock',name:'Rock',cell:[0,2,4,6]},{v:'funk',name:'Funk',cell:[0,3,6]},{v:'pop',name:'Pop',cell:[0,4,6]},{v:'walking',name:'Walking',cell:[0,4]},{v:'metal',name:'Metal',cell:[0,2,3,4,6,7]}];
-function curBeatStyle(){return riff&&riff.style?riff.style:S.style!=='any'?S.style:'rock'}
+function curBeatStyle(){const r=riff&&(riff.style||riff.drumStyle);return r?r:S.style!=='any'?S.style:'rock'}
+// drum setup stored with every saved riff
+function drumCfg(){const st=curBeatStyle();return {on:!!S.drums,style:st,beat:(S.beats||{})[st]||0,vol:S.drumVol}}
+function applyDrumCfg(d){if(!d)return;S.drums=!!d.on;S.beats=S.beats||{};S.beats[d.style]=d.beat;if(d.vol!=null)S.drumVol=d.vol;if(S.drums)fetchDrums();saveS();if(ctx)setDrumVol()}
 function renderBeats(){
   const st=curBeatStyle(),list=BEATS[st],nmS={rock:'Rock',funk:'Funk',pop:'Pop',walking:'Walking',metal:'Metal'}[st];
   $('beatSel').innerHTML=list.map((B,i)=>opt(i,`${nmS} ${i+1}: ${B.name}`)).join('');
@@ -1622,7 +1627,7 @@ $('edClear').onclick=()=>{ed.notes=[];renderEditor()};
 $('edPlay').onclick=()=>{if(edNoteCount()<1)return;loadRiff(edRiff(),true)};
 $('edSave').onclick=()=>{
   if(edNoteCount()<2){toast('Add at least 2 notes to save a riff.');return}
-  const r=edRiff();r.title=$('edName').value.trim()||`My riff ${saved.filter(s=>s.custom).length+1}`;r.tempo=S.tempo;r.savedAt=Date.now();
+  const r=edRiff();r.title=$('edName').value.trim()||`My riff ${saved.filter(s=>s.custom).length+1}`;r.tempo=S.tempo;r.savedAt=Date.now();r.drumStyle=S.style!=='any'?S.style:'rock';{const st=r.drumStyle;r.drums={on:!!S.drums,style:st,beat:(S.beats||{})[st]||0,vol:S.drumVol}}
   saved.unshift(r);store.set('riffecho.saved',saved);ed.notes=[];$('edName').value='';renderEditor();renderHomeSaved();
   if(S.practice!=='riff'){S.practice='riff';saveS();syncControls()}
   loadRiff(r,false);
@@ -1665,10 +1670,10 @@ const goSaved=()=>{if(route!=='ear')go('ear');setTimeout(()=>$('savedList').clos
 $('myBtn').onclick=goSaved;
 $('saveBtn').onclick=()=>{
   if(!riff)return;const i=saved.findIndex(s=>s.id===riff.id);
-  if(i>=0){toast(`Already saved as "${saved[i].title}"`,{label:'View',fn:goSaved});return}
+  if(i>=0){saved[i].drums=drumCfg();saved[i].tempo=S.tempo;store.set('riffecho.saved',saved);renderSaved();toast(`Updated drums and tempo for "${saved[i].title}"`,{label:'View',fn:goSaved});return}
   const SN={rock:'Rock',funk:'Funk',pop:'Pop',walking:'Walking',metal:'Metal'},base=riff.custom?'My riff':`${SN[riff.style]||'Riff'} riff`;
   const title=`${base} ${saved.filter(s=>s.title&&s.title.startsWith(base)).length+1}`;
-  saved.unshift(Object.assign({},riff,{title,tempo:S.tempo,savedAt:Date.now()}));
+  saved.unshift(Object.assign({},riff,{title,tempo:S.tempo,savedAt:Date.now(),drums:drumCfg()}));
   const ok=store.set('riffecho.saved',saved),back=store.get('riffecho.saved',[]);
   try{renderSave();renderSaved()}catch(e){showErr('list: '+e.message)}
   if(!ok||!back.some(s=>s.id===riff.id))toast(`Couldn't store it on this phone (${store.lastErr||'storage unavailable'})`);
@@ -1678,7 +1683,7 @@ $('savedList').onclick=e=>{
   const t=e.target.closest('button');if(!t)return;
   const l=t.dataset.load,d=t.dataset.del;
   if(t.dataset.ren!=null){renaming=+t.dataset.ren;confirmDel=-1;renderSaved();return}
-  if(l!=null){const r=saved[+l];if(r.tempo){S.tempo=r.tempo;saveS()}if(S.practice!=='riff'){S.practice='riff';saveS();syncControls()}if(r.instrument!==S.instrument){S.instrument=r.instrument;S.octUp=r.instrument==='bass';saveS();syncControls()}loadRiff(r,true);window.scrollTo({top:0,behavior:'smooth'})}
+  if(l!=null){const r=saved[+l];if(r.tempo){S.tempo=r.tempo;saveS()}if(r.drums){if(r.custom&&!r.drumStyle)r.drumStyle=r.drums.style;applyDrumCfg(r.drums)}if(S.practice!=='riff'){S.practice='riff';saveS();syncControls()}if(r.instrument!==S.instrument){S.instrument=r.instrument;S.octUp=r.instrument==='bass';saveS();syncControls()}loadRiff(r,true);window.scrollTo({top:0,behavior:'smooth'})}
   if(d!=null){if(confirmDel!==+d){confirmDel=+d;renderSaved();setTimeout(()=>{if(confirmDel===+d){confirmDel=-1;renderSaved()}},3000);return}
     const gone=saved.splice(+d,1)[0];confirmDel=-1;store.set('riffecho.saved',saved);renderSaved();renderSave();
     toast(`Deleted "${gone.title}"`,{label:'Undo',fn:()=>{saved.splice(+d,0,gone);store.set('riffecho.saved',saved);renderSaved();renderSave()}})}
@@ -1916,7 +1921,7 @@ function genSlapRiff(){
       memo.set(key,notes)}
     notes.forEach((x,k)=>steps.push(Object.assign({},x,{blk:bar*8+bi,k,bar})));
   }));
-  return {root,mode,steps,box:[lo,hi]};
+  return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi]};
 }
 function renderSR(){
   const r=SR.riff||(SR.riff=genSlapRiff()),st=r.steps,nb=st.length/16,nm=namesFor(r.root,r.mode);
@@ -1937,8 +1942,8 @@ function renderSRControls(){
   $('srTone').value=SL.tone||'thunk';$('srNames').checked=SR.showNames;
   $('srTempo').value=SR.tempo;$('srTempoVal').textContent=SR.tempo;
 }
-function srEnter(){fetchSamples('bass','slap');fetchKit('pearl');renderSRControls();renderSR()}
-const srNew=()=>{SR.riff=genSlapRiff();saveS();renderSR();if(slBus&&slKind==='riff')slRestart()};
+function srEnter(){fetchSamples('bass','slap');fetchKit('pearl');renderSRControls();renderSR();renderSRSaved()}
+const srNew=()=>{SR.riff=genSlapRiff();saveS();renderSR();renderSRSaved();if(slBus&&slKind==='riff')slRestart()};
 $('srPlay').onclick=()=>slBus&&slKind==='riff'?slapStop():slapPlay('riff');
 $('srNew').onclick=srNew;
 chg('srKeySel',v=>{SR.key=v;srNew()});chg('srModeSel',v=>{SR.mode=v;srNew()});
@@ -1949,6 +1954,44 @@ chg('srTone',v=>{SL.tone=v;saveS()});
 $('srNames').onchange=e=>{SR.showNames=e.target.checked;saveS();renderSR()};
 let srTT=0;const srT=v=>{SR.tempo=Math.max(40,Math.min(140,v));saveS();renderSRControls();clearTimeout(srTT);srTT=setTimeout(()=>{if(slKind==='riff')slRestart()},350)};
 $('srTUp').onclick=()=>srT(SR.tempo+2);$('srTDown').onclick=()=>srT(SR.tempo-2);$('srTempo').oninput=e=>srT(+e.target.value);
+
+// ---- saved slap riffs (riff + tempo + drums + feel settings) ----
+let srSaved=store.get('riffecho.slapsaved',[]),srConfirm=-1,srRen=-1;
+const srStore=()=>store.set('riffecho.slapsaved',srSaved);
+function srTitle(r){const nm=namesFor(r.root,r.mode);return `${nm[r.root]} ${MODES[r.mode].name}`}
+function renderSRSaved(){
+  const L=$('srSavedList');$('srSavedH').textContent=srSaved.length?`Saved slap riffs (${srSaved.length})`:'Saved slap riffs';
+  $('srMy').textContent=srSaved.length?`My slap riffs (${srSaved.length})`:'My slap riffs';
+  const cur=SR.riff&&srSaved.find(s=>s.riff.id===SR.riff.id);$('srSave').querySelector('span').textContent=cur?'Saved ✓':'Save';$('srSave').classList.toggle('saved',!!cur);
+  if(!srSaved.length){L.innerHTML='<li style="border:0;padding:0;display:block"><p class="empty">Slap riffs you save land here, with their tempo and drums.</p></li>';return}
+  const BN=k=>{const [st,i]=String(k).split(':');const B=(BEATS[st]||[])[+i];return B?st[0].toUpperCase()+st.slice(1)+' '+B.name:''};
+  L.innerHTML=srSaved.map((s,i)=>{const meta=[srTitle(s.riff),`${s.tempo} bpm`,s.back==='drums'?'Drums: '+BN(s.beat):s.back==='click'?'Click':'No drums',s.riff.steps.length>16?'2 bars':'1 bar'].join(' · ');
+    const name=srRen===i?`<input id="srRenIn" value="${esc(s.title)}" maxlength="40" aria-label="Riff name">`:`<span class="nm"><b>${esc(s.title)}</b><button class="ren" data-ren="${i}">Rename</button></span>`;
+    return `<li><div>${name}<span class="muted">${esc(meta)}</span></div><button class="btn" data-load="${i}">Play</button><button class="btn x${srConfirm===i?' sure':''}" data-del="${i}" aria-label="Delete">${srConfirm===i?'Delete?':'✕'}</button></li>`}).join('');
+  const inp=$('srRenIn');if(inp){inp.focus();inp.select();const done=()=>{if(srRen<0)return;const v=inp.value.trim();if(v)srSaved[srRen].title=v;srRen=-1;srStore();renderSRSaved()};inp.onblur=done;inp.onkeydown=e=>{if(e.key==='Enter')inp.blur()}}
+}
+$('srSave').onclick=()=>{
+  if(!SR.riff)return;if(!SR.riff.id)SR.riff.id='s'+Date.now().toString(36)+rnd(1e6).toString(36);
+  const cfg={tempo:SR.tempo,back:SR.back,beat:slBeatKey(SR),tone:SL.tone||'thunk',space:SR.space,ghosts:SR.ghosts,showNames:SR.showNames};
+  const i=srSaved.findIndex(s=>s.riff.id===SR.riff.id);
+  if(i>=0){Object.assign(srSaved[i],cfg);srStore();renderSRSaved();toast(`Updated tempo and drums for "${srSaved[i].title}"`);return}
+  const base=srTitle(SR.riff),title=`${base} ${srSaved.filter(s=>s.title.startsWith(base)).length+1}`;
+  srSaved.unshift(Object.assign({id:SR.riff.id,title,riff:JSON.parse(JSON.stringify(SR.riff)),savedAt:Date.now()},cfg));
+  const ok=srStore();renderSRSaved();
+  toast(ok?`Saved as "${title}"`:`Couldn't store it on this phone (${store.lastErr||'storage unavailable'})`,ok?{label:'View',fn:()=>$('srSavedList').closest('.card').scrollIntoView({behavior:'smooth',block:'start'})}:undefined);
+};
+$('srMy').onclick=()=>$('srSavedList').closest('.card').scrollIntoView({behavior:'smooth',block:'start'});
+$('srSavedList').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.ren!=null){srRen=+b.dataset.ren;srConfirm=-1;renderSRSaved();return}
+  if(b.dataset.load!=null){const s=srSaved[+b.dataset.load];
+    Object.assign(SR,{tempo:s.tempo,back:s.back,beat:s.beat,space:s.space,ghosts:s.ghosts,showNames:s.showNames!==false,riff:JSON.parse(JSON.stringify(s.riff))});SL.tone=s.tone||SL.tone;saveS();
+    renderSRControls();renderSR();renderSRSaved();window.scrollTo({top:0,behavior:'smooth'});slapPlay('riff');return}
+  if(b.dataset.del!=null){const d=+b.dataset.del;
+    if(srConfirm!==d){srConfirm=d;renderSRSaved();setTimeout(()=>{if(srConfirm===d){srConfirm=-1;renderSRSaved()}},3000);return}
+    const gone=srSaved.splice(d,1)[0];srConfirm=-1;srStore();renderSRSaved();
+    toast(`Deleted "${gone.title}"`,{label:'Undo',fn:()=>{srSaved.splice(d,0,gone);srStore();renderSRSaved()}})}
+};
 // ---- rhythm drill controls ----
 $('slPlay').onclick=()=>slBus&&slKind==='drill'?slapStop():slapPlay('drill');
 const slR=()=>{if(slKind==='drill')slRestart()};
