@@ -555,7 +555,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0226';
+const APP_VERSION='2026.11.27-0252';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1863,7 +1863,7 @@ const SL_SYN={
 const SL_MUTED={};for(const k of ['T','P','S','H','O'])SL_MUTED[k]=(t,v)=>{if((SL.tone||'real')==='real'&&playDead(k==='H'?'T':k,t,v))return;SL_SYN[k](t,v)};
 function slapHit(x,t,e16,acc,ringSteps){
   if(x.s==='-')return;
-  const v=(acc?1:.86)*(.94+Math.random()*.08),ring=e16*Math.min(6,Math.max(1.05,(ringSteps||1)*.97));
+  const v=(x.vel!=null?x.vel:acc?1:.86)*(.94+Math.random()*.08),ring=e16*Math.min(6,Math.max(1.05,(ringSteps||1)*.97));
   if(x.muted||x.m==null)return SL_MUTED[x.s](t,v);
   switch(x.s){
     case 'T':slSamp(t,x.m,ring,v);break;
@@ -1947,8 +1947,17 @@ function genStyledRiff(st){
   // the response leans on another chord tone (4th or 5th) before coming home to the root
   const respC=[7,5].find(d=>sc.includes((root+d)%12));
   let center=0;
-  const tW=p=>(deg(p.m)===center?(center?8:1)*(tw[0]||5)/(center?2:1):(tw[deg(p.m)]||.7))*(p.f===0?.7:1)*(p.m<rootM-7?.4:1);
-  const pW=p=>(pw[deg(p.m)]||.7)*(center&&deg(p.m)===center?3:1)*(Math.abs(p.m-rootM-12)<=5?1.4:.7);
+  // Funk lines live on root, octave, 5th and 7th, plus the 3rd and 4th (pentatonic/blues); other scale notes are rare passing tones
+  const strong=new Set([0,3,4,5,7,10,11].filter(d=>sc.includes((root+d)%12)));
+  const colour=m=>strong.has(deg(m))?1:.25;
+  const tW=p=>(deg(p.m)===center?(center?8:1)*(tw[0]||5)/(center?2:1):(tw[deg(p.m)]||.7))*(p.f===0?.7:1)*(p.m<rootM-7?.4:1)*colour(p.m);
+  const pW=p=>(pw[deg(p.m)]||.7)*(center&&deg(p.m)===center?3:1)*(Math.abs(p.m-rootM-12)<=5?1.4:.7)*colour(p.m);
+  // a short pop melody (the hook) reused by every cell, so repeats are recognisable: e.g. octave → b7 → 5
+  const popTones=pops.filter(p=>strong.has(deg(p.m)));
+  const hookSeq=(()=>{const P=popTones.length?popTones:pops;if(!P.length)return [];const oct=P.filter(p=>deg(p.m)===0).sort((a,b)=>a.m-b.m)[0];
+    const shapes=[[0,10,7],[7,10,0],[0,0,10],[0,7,0],[10,0,7],[3,0,10],[0,5,7]];const sh=shapes[rnd(shapes.length)];
+    return sh.map(d=>P.filter(p=>deg(p.m)===d).sort((a,b)=>Math.abs(a.m-(oct?oct.m:rootM+12))-Math.abs(b.m-(oct?oct.m:rootM+12)))[0]).filter(Boolean)})();
+  const hookP=ST.hook??.6;
   const hams=spots.filter(p=>p.s<=2&&p.f>0).map(p=>{const o=spots.find(q=>q.s===p.s&&q.f>p.f&&q.f-p.f<=2);return o?{h:p,o}:null}).filter(Boolean);
   const pedal=ST.pedal?(inS(28)||st==='claypool'?{s:0,f:0,m:28}:{s:1,f:0,m:33}):null;
   const okCell=c=>hams.length||!/H/.test(c);
@@ -1981,8 +1990,10 @@ function genStyledRiff(st){
           if(first){const d=pl.resp?center:0;p=thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||thumbs.find(q=>q.m===rootM)||thumbs[0]}
           else p=pedal&&Math.random()<ST.pedal?pedal:slPick(thumbs,thumbs.map(tW));
           lastT=p.m;out.push({s:'T',m:p.m,pos:{s:p.s,f:p.f},muted:!first&&Math.random()<ST.ghost});continue}
-        if(c==='P'){let p=null;
-          if(Math.random()<ST.oct){const q=posFor(lastT+12,[2,3],lo,hi);if(q)p={...q,m:lastT+12}}
+        if(c==='P'){let p=null;const pi=(cell.slice(0,k).match(/P/g)||[]).length;
+          if(lastT%12===root%12&&Math.random()<ST.oct){const q=posFor(lastT+12,[2,3],lo,hi);if(q)p={...q,m:lastT+12}}
+          if(!p&&hookSeq.length&&!center&&Math.random()<hookP){const h=hookSeq[pi%hookSeq.length];p={s:h.s,f:h.f,m:h.m}}
+          if(!p&&Math.random()<ST.oct*.5){const q=posFor(lastT+12,[2,3],lo,hi);if(q)p={...q,m:lastT+12}}
           if(!p&&ST.tritone&&Math.random()<ST.tritone){const q=posFor(rootM+18,[2,3],lo,hi);if(q)p={...q,m:rootM+18}}
           if(!p)p=pops.length?slPick(pops,pops.map(pW)):slPick(thumbs,thumbs.map(tW));
           out.push({s:'P',m:p.m,pos:{s:p.s,f:p.f},muted:Math.random()<ST.ghost*.6});continue}
@@ -2001,6 +2012,19 @@ function genStyledRiff(st){
   // chromatic approach: a thumb on the last 16th before a beat slides in from a half step below the next thumb
   for(let i=3;i<steps.length-1;i+=4){const a=steps[i],b=steps[i+1];
     if(a.s==='T'&&!a.muted&&b.s==='T'&&!b.muted&&Math.random()<ST.chrom&&b.pos.f>0){a.m=b.m-1;a.pos={s:b.pos.s,f:b.pos.f-1}}}
+  // dead-note pickup: a ghosted thumb on the 16th right before an accented note gives the line its push
+  for(let i=1;i<steps.length;i++){const a=steps[i-1],b=steps[i];
+    if(a.s==='-'&&b.m!=null&&!b.muted&&(i%4===0||b.s==='P')&&Math.random()<(ST.pickup??.35)*(SR.space===2?.4:1))Object.assign(a,{s:'T',muted:true,m:undefined,pos:undefined})}
+  // anticipation: the last 16th of the riff leads back into the one (half step below, or the 5th below)
+  const L=steps.length-1,lastS=steps[L],first=steps[0];
+  if(first.m!=null&&(lastS.s==='-'||lastS.muted)&&Math.random()<(ST.antic??.45)){
+    const opts=[first.m-1,first.m-5,first.m+12].map(m=>({m,q:posFor(m,m>first.m+6?[2,3]:[0,1,2],lo,hi)})).filter(o=>o.q);
+    if(opts.length){const o=opts[0].q&&Math.random()<.6?opts[0]:opts[rnd(opts.length)];Object.assign(lastS,{s:o.m>first.m+6?'P':'T',m:o.m,pos:o.q,muted:false})}}
+  // keep it playable and funky: at most 10 ringing notes per bar; extras on weak 16ths become dead notes
+  for(let b=0;b<steps.length/16;b++){const seg=steps.slice(b*16,b*16+16);let ring=seg.filter(x=>x.m!=null&&!x.muted&&x.s!=='O').length;
+    for(const i of [1,3,9,11,5,13,7,15])if(ring>10){const x=seg[i];if(x.m!=null&&!x.muted&&x.s!=='H'&&x.s!=='O'){x.muted=true;ring--}}}
+  // accents: the one hits hardest, octave pops cut through, dead notes sit back
+  steps.forEach((x,i)=>{x.vel=x.s==='-'?0:x.muted?.78:i%16===0?1.08:i%4===0?.98:x.s==='P'?(deg(x.m)===0?1.05:.96):i%2===0?.9:.84});
   return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi],style:st};
 }
 function genSlapRiff(){
