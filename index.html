@@ -516,7 +516,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <summary>How slap riffs work</summary>
       <div class="morebody">
         <p class="hint">Each riff uses the same building blocks as the rhythm drills, with real notes from the key and mode. Thumbs (T) take the low notes on the E and A strings, favouring the root and fifth. Pops (P) take the high notes on the D and G strings, favouring the octave, third, fifth and seventh. Hammer-ons (H→O) go up one or two frets within the scale. Everything sits in one four-fret hand position around the root, shown on the fretboard.</p>
-        <p class="hint"><b>In the style of</b> picks rhythm cells, note choices, tempo and drum beat typical of each player’s approach (for example octave pops for Larry Graham, constant 16ths with dead notes for Mark King, open-string pedals and odd intervals for Les Claypool). They’re style sketches, not transcriptions of anyone’s songs.</p>
+        <p class="hint"><b>In the style of</b> picks rhythm cells, note choices, tempo and drum beat typical of each player’s approach (for example octave pops for Larry Graham, linear 16ths for Mark King (every 16th filled with left-hand slaps and dead thumbs, ringing notes on syncopated spots or in groups of three), open-string pedals and odd intervals for Les Claypool). They’re style sketches, not transcriptions of anyone’s songs.</p>
         <p class="hint"><b>Length:</b> a 1-bar riff answers itself (beats 3–4 echo beats 1–2 with a new ending). With 2 bars, bar 1 is the <b>call</b>, ending away from the root so it sounds unfinished, and bar 2 is the <b>response</b>: it echoes the call’s rhythm on different notes (leaning on the 4th or 5th) and comes home to the root. 4 bars play call, response, call, then a busier final response. Dead notes add percussion between the pitched notes.</p>
       </div>
     </details>
@@ -555,7 +555,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0252';
+const APP_VERSION='2026.11.27-0303';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1921,7 +1921,9 @@ const SR_STYLES={
     A:['T-TP','TTP-','THOP','T-P-','TtPt','T--P','HOTP'],B:['STPT','TPTT','-TP-','PTTP','HOTP','STP-','T-tP','--PT','TP-P','TtTP','-PTP'],oct:.5,ghost:.15,chrom:.1},
   graham:{name:'Larry Graham: thump & pluck',tempo:100,beat:'funk:3',modes:{4:3,1:2,0:1},shape:'ABAC',
     A:['T---','T-P-','T--P','T-T-','T-tP'],B:['--P-','T-tP','-TP-','P---','T-TP','--T-','tTP-','-P-T'],oct:.8,ghost:.1,thumbDeg:{0:6,7:2,10:2,5:1},chrom:.05},
-  king:{name:'Mark King: machine-gun 16ths',tempo:118,beat:'funk:0',modes:{1:3,5:2,0:1},shape:'AAAB',
+  // Mark King plays 'linear' bars: every 16th is filled (left-hand slaps and dead thumbs work like a hi-hat) and the
+  // ringing notes sit on syncopated spots across the bar, or in repeating groups of three 16ths
+  king:{name:'Mark King: machine-gun 16ths',tempo:118,beat:'funk:0',modes:{1:3,5:2,0:1},shape:'WXYZ',linear:true,hook:.45,
     A:['TtPt','TStP','TtTP','TtPS'],B:['tTPt','TStP','tTtP','TPtP','StPt','TtPP','tPTP'],oct:.65,ghost:.05,thumbDeg:{0:6,7:2,10:1.5,3:1},chrom:.05},
   flea:{name:'Flea: punk-funk',tempo:108,beat:'funk:1',modes:{1:3,5:3,4:1},shape:'ABAC',
     A:['T-TP','TTP-','T-PT','TtP-','TP-P'],B:['-TPT','TP-P','T-tT','tTP-','TPTP','-PTP','HOP-','TT-P'],oct:.5,ghost:.12,thumbDeg:{0:5,7:2,10:2,3:1.5,5:1},chrom:.3,open:.4},
@@ -1931,6 +1933,17 @@ const SR_STYLES={
     A:['T--t','T-tP','T--P','T-P-'],B:['--P-','t-T-','tPt-','-tP-','T---','--PT','-T-P','t-tP'],oct:.45,ghost:.15,popDeg:{10:3,7:2.5,0:2,3:1.5},thumbDeg:{0:6,7:2,10:2,5:1},chrom:.1},
   wooten:{name:'Victor Wooten: hammers & pops',tempo:100,beat:'funk:6',modes:{4:3,1:2,0:1},shape:'ABAC',
     A:['THOP','TtHO','TPHO'],B:['HOtP','TtPt','PHOP','HOPt','tPHO','THOP','HOTP'],oct:.5,ghost:.08,thumbDeg:{0:5,7:2.5,5:1.5,10:1},chrom:.08}};
+// One bar of Mark King-style linear 16ths: a syncopated skeleton of ringing notes, every other 16th filled with
+// dead thumbs (t) and left-hand slaps (S); or the 3-against-4 grouping (thumb, slap, pop) repeated across the bar.
+function kingBar(canHammer){
+  const SK=[[0,3,6,10,12],[0,3,7,10,14],[0,6,8,11,14],[0,3,6,9,12,14],[0,2,7,10,13],[0,4,7,10,13,15],[0,3,8,11,14],'3s','3s'];
+  const sk=SK[rnd(SK.length)];let s='';
+  if(sk==='3s'){const g=Math.random()<.5?'TSP':'TtP';for(let i=0;i<16;i++)s+=i<12?g[i%3]:['TSTP','TStP','TSPT'][rnd(3)][i-12];}
+  else for(let i=0;i<16;i++)s+=sk.includes(i)?(i===0?'T':i%2?(Math.random()<.7?'P':'T'):(Math.random()<.55?'T':'P')):(i%2?'S':'t');
+  // now and then a thumbed note hammers onto the next 16th instead of a dead note
+  if(canHammer)s=s.replace(/T[tS]/g,(m,o)=>o>0&&o%4!==3&&Math.random()<.18?'HO':m);
+  return s;
+}
 function srBox(root){
   const fe=((root-4)%12+12)%12,fa=((root-9)%12+12)%12,rs=fe<=7?0:1,rf=rs===0?fe:fa;
   const lo=rf===0?1:Math.max(1,rf-rnd(2));return {rs,rf,lo,hi:lo+3,rootM:TUNING.bass[rs]+rf};
@@ -1972,14 +1985,16 @@ function genStyledRiff(st){
       if(i===3)L=rhythm=nb===1?shape[3]:resp?(fin?'F':'E'):'C';
       plan.push({L:(resp&&i<3?'r':'')+L,rhythm,resp,end:i===3,bar:b,last:b===nb-1&&i===3})}}
   const cellOf={};
-  for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm==='A'?pickCell(ST.A,true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
+  if(ST.linear){const bar=kingBar(hams.length);'WXYZ'.split('').forEach((L,i)=>cellOf[L]=bar.slice(i*4,i*4+4));
+    for(const L of ['C','E','F'])cellOf[L]=kingBar(hams.length).slice(12,16)}
+  for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm===shape[0]?pickCell(ST.A,true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
   // the final ending gets a busier fill
   if(cellOf.F){const busy=ST.B.concat(ST.A).filter(c=>okCell(c)&&(c.match(/[TPHO]/g)||[]).length>=3);if(busy.length)cellOf.F=busy[rnd(busy.length)]}
   const memo={},steps=[];let lastT=rootM;
   plan.forEach((pl,bi)=>{
     center=pl.resp?respC||0:0;
     if(!memo[pl.L]){const cell=cellOf[pl.rhythm],out=[];
-      for(let k=0;k<4;k++){const c=cell[k],first=(pl.L==='A'||pl.L==='rA')&&k===0;
+      for(let k=0;k<4;k++){const c=cell[k],first=(pl.L===shape[0]||pl.L==='r'+shape[0])&&k===0;
         if(c==='-'){out.push({s:'-'});continue}
         if(c==='S'){out.push({s:'S',muted:true});continue}
         if(c==='t'||c==='p'){out.push({s:c.toUpperCase(),muted:true});continue}
