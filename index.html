@@ -437,7 +437,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-2233';
+const APP_VERSION='2026.11.26-2237';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -734,7 +734,7 @@ const store={lastErr:'',get(k,f){try{const v=localStorage.getItem(k);return v?JS
 function showErr(msg){let b=document.getElementById('errBanner');if(!b){b=document.createElement('div');b.id='errBanner';b.style.cssText='position:fixed;top:max(8px,env(safe-area-inset-top));left:8px;right:8px;z-index:50;background:#a1271d;color:#fff;border-radius:12px;padding:10px 12px;font:600 13px/1.35 system-ui;box-shadow:0 6px 20px rgba(0,0,0,.3)';b.onclick=()=>b.remove();document.body.appendChild(b)}b.textContent='Something went wrong (tap to hide): '+msg}
 window.addEventListener('error',e=>showErr((e.message||'error')+(e.lineno?' @'+e.lineno:'')));
 window.addEventListener('unhandledrejection',e=>{const r=e.reason;if(r&&/decode|abort|NotAllowed/i.test(String(r.name||r)))return;showErr(String(r&&r.message||r))});
-const S=Object.assign({pauseMic:false,listenBoost:2,vol:1.2,drumVol:.55,beats:{},practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
+const S=Object.assign({pauseMic:false,listenBoost:2.2,vol:1.2,drumVol:.55,beats:{},practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
 let saved=store.get('riffecho.saved',[]),renaming=-1,confirmDel=-1,toastT=null;
 S.sounds=Object.assign({bass:'finger',guitar:'clean',voice:'choir'},S.sounds||{});
 
@@ -957,7 +957,7 @@ let OUTBUS=null,buses=[];
 // One master output: volume, then a gentle limiter so boosting never distorts
 let MASTER=null;
 const micOpen=()=>listening&&!micPaused;
-const outGain=()=>S.vol*(micOpen()?S.listenBoost:1);
+const outGain=()=>S.vol*(micOpen()?S.listenBoost:1.5);
 function master(){if(!MASTER){const g=ctx.createGain(),c=ctx.createDynamicsCompressor();c.threshold.value=-8;c.knee.value=6;c.ratio.value=16;c.attack.value=.002;c.release.value=.18;g.gain.value=outGain();g.connect(c);c.connect(ctx.destination);MASTER=g}return MASTER}
 function setVol(){if(MASTER&&ctx)MASTER.gain.setTargetAtTime(outGain(),ctx.currentTime,.05)}
 function OUT(){return OUTBUS||master()}
