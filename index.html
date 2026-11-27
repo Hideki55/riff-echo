@@ -469,7 +469,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <p class="hint">One bar of 4/4 laid out like a ruler. Tall marks are the beats (1 2 3 4), medium marks the “&amp;”s, short marks the “e” and “a” 16ths, so you can see how far apart the notes are.</p>
         <p class="hint">Each groove is eight two-note building blocks: <b>HO</b> thumb then hammer-on, <b>TT</b> two thumbs (some charts write EE), <b>ST</b> left-hand slap then thumb, <b>PT</b> pop then thumb, <b>TP</b> thumb then pop.</p>
         <p class="hint"><b>Rhythmic modes:</b> loop the groove until every sound is even. Then use Block mode to start on the 2nd, 3rd … 8th block, and 16th shift to slide the whole pattern one dash so a different sound lands on beat 1. Tap any block on the yardstick to swap it.</p>
-        <p class="hint">“As taught” plays thumbs on open E and hammer-ons D→E, with ST, PT and TP muted. Concept from Anthony Wellington (Bassology) and Victor Wooten’s Groove Workshop.</p>
+        <p class="hint">“Muted” means you still slap or pop while the left hand rests on the strings, so you get a percussive dead note (outlined circles). “As taught” plays thumbs on open E and hammer-ons D→E, with ST, PT and TP muted. Concept from Anthony Wellington (Bassology) and Victor Wooten’s Groove Workshop.</p>
       </div>
     </details>
   </div>
@@ -507,7 +507,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0040';
+const APP_VERSION='2026.11.27-0050';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1647,7 +1647,7 @@ async function checkUpdate(){
     const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;
     const v=(await r.json()).v;if(!v||v===APP_VERSION)return;
     if(sessionStorage.getItem('riffecho.tried')===v)return;sessionStorage.setItem('riffecho.tried',v);
-    location.replace(location.pathname+'?v='+encodeURIComponent(v));
+    location.replace(location.pathname+'?v='+encodeURIComponent(v)+location.hash);
   }catch(e){}
 }
 $('verLbl').textContent='Version '+APP_VERSION;
@@ -1695,37 +1695,55 @@ function renderSlap(){
   renderYard();
   $('slTempo').value=SL.tempo;$('slTempoVal').textContent=SL.tempo;
   $('slBack').value=SL.back;$('slSound').value=SL.sound;$('slAdv').value=SL.adv;$('slPreset').value=SL.preset;
-  $('slBeat').innerHTML=BEATS.funk.map((B,i)=>opt(i,`Funk ${i+1}: ${B.name}`)).join('');$('slBeat').value=SL.beat;$('slBeat').disabled=SL.back!=='drums';
+  $('slBeat').innerHTML=['funk','pop','rock','metal'].map(st=>`<optgroup label="${st[0].toUpperCase()+st.slice(1)}">${BEATS[st].map((B,i)=>opt(st+':'+i,`${B.name}`)).join('')}</optgroup>`).join('');$('slBeat').value=slBeatKey();$('slBeat').disabled=SL.back!=='drums';
   $('slUse').innerHTML=Object.keys(SL_BLOCKS).map(k=>`<button class="chip" data-v="${k}" aria-pressed="${SL.use.includes(k)}">${k}</button>`).join('');
   const b=$('slPlay'),on=!!slBus;b.querySelector('use').setAttribute('href',on?'#i-stop':'#i-play');b.querySelector('span').textContent=on?'Stop':'Play';b.classList.toggle('stopping',on);
 }
+function slBeatKey(){const k=String(SL.beat);return /:/.test(k)?k:'funk:'+(+k||0)}
+function slBeatSel(){const [st,i]=slBeatKey().split(':');return {st,B:(BEATS[st]||BEATS.funk)[+i]||BEATS.funk[0]}}
+function slRestart(){if(slBus){slapStop();slapPlay()}}
 function slapEnter(){fetchSamples('bass','slap');fetchKit('pearl');renderSlap()}
 function slNoiseBuf(){if(!slNoise){const n=Math.floor(ctx.sampleRate*.12),b=ctx.createBuffer(1,n,ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;slNoise=b}return slNoise}
-function slSamp(t,midi,len,vel,f,off){
+// Pitched notes use the slap-bass recording. Muted ("dead") notes keep only the attack of the recording,
+// cut short the way a resting left hand chokes the string, plus the click of string on frets and the body thud.
+function slSamp(t,midi,len,vel,f,off,tau,rate){
   const o=sampleBuf.get('slap_bass_1'+midi);
-  if(!o){playTone('bass',t,midi,Math.max(.05,len),vel);return}
-  const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=o.b;let node=s;
+  if(!o){if(!tau)playTone('bass',t,midi,Math.max(.05,len),vel);return}
+  const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=o.b;if(rate)s.playbackRate.value=rate;let node=s;
   if(f){const fl=ctx.createBiquadFilter();fl.type=f[0];fl.frequency.value=f[1];fl.Q.value=f[2]||.7;s.connect(fl);node=fl}
-  const pk=o.g*vel,end=Math.min(o.b.duration-.02,len);
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pk,t+.003);g.gain.setValueAtTime(pk,t+Math.max(.006,end-.03));g.gain.linearRampToValueAtTime(0,t+end+.015);
+  const pk=o.g*vel;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pk,t+.002);
+  if(tau){g.gain.setTargetAtTime(0,t+.004,tau);node.connect(g);g.connect(slBus);s.start(t,off||0);s.stop(t+tau*7+.01);return}
+  const end=Math.min(o.b.duration-.02,len);g.gain.setValueAtTime(pk,t+Math.max(.006,end-.03));g.gain.linearRampToValueAtTime(0,t+end+.015);
   node.connect(g);g.connect(slBus);s.start(t,off||0);s.stop(t+end+.05);
 }
-function slNoiseHit(t,dur,freq,q,vel){const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=slNoiseBuf();f.type='bandpass';f.frequency.value=freq;f.Q.value=q;
+function slNoiseHit(t,dur,freq,q,vel,type){const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=slNoiseBuf();f.type=type||'bandpass';f.frequency.value=freq;f.Q.value=q;
   g.gain.setValueAtTime(vel,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);s.connect(f);f.connect(g);g.connect(slBus);s.start(t);s.stop(t+dur+.02)}
+function slThud(t,f0,f1,dur,vel){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vel,t+.003);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(slBus);o.start(t);o.stop(t+dur+.02)}
+const SL_MUTED={
+  // dead thumb: dull "thuck" - low body thud plus the thumb hitting the strings
+  T:(t,v)=>{slSamp(t,28+rnd(3),0,v*1.25,['lowpass',1400,.8],0,.022);slThud(t,150,70,.07,.55*v);slNoiseHit(t,.03,1300,1,.22*v)},
+  // dead pop: bright "clack" - the string snapping back against the frets
+  P:(t,v)=>{slSamp(t,50+rnd(3),0,v*1.45,['highpass',500,.7],0,.014);slNoiseHit(t,.045,3200,1.4,.9*v);slNoiseHit(t,.015,6500,1,.25*v,'highpass')},
+  // left-hand slap: the flat fingers smacking strings onto the fretboard - papery mid "pat", no pitch
+  S:(t,v)=>{slNoiseHit(t,.06,750,.8,1.05*v);slNoiseHit(t,.025,2300,1.1,.5*v);slSamp(t,31,0,v*.45,['lowpass',900,.7],0,.012,1.06)},
+  H:(t,v)=>SL_MUTED.T(t,v),
+  O:(t,v)=>{slSamp(t,40,0,v*.6,['lowpass',1100,.7],0,.016);slNoiseHit(t,.02,1500,1,.15*v)}};
 function slapHit(x,t,e16,acc){
   const v=(acc?1:.86)*(.94+Math.random()*.08),ring=e16*1.7;
+  if(x.muted)return SL_MUTED[x.s](t,v);
   switch(x.s){
-    case 'T':if(x.muted){slSamp(t,28,.045,v*1.05,['lowpass',750,.9]);slNoiseHit(t,.018,2600,1.2,.18*v)}else slSamp(t,28,ring,v);break;
-    case 'P':if(x.muted){slSamp(t,52,.035,v*.8,['highpass',900,.8]);slNoiseHit(t,.025,3800,1.5,.32*v)}else{slSamp(t,40,ring,v*.95);slNoiseHit(t,.012,4200,1.5,.15*v)}break;
-    case 'S':slNoiseHit(t,.045,1500,.8,.55*v);slSamp(t,33,.025,v*.45,['lowpass',380,.7]);break;
-    case 'H':if(x.muted){slSamp(t,38,.045,v,['lowpass',800,.9]);slNoiseHit(t,.018,2600,1.2,.18*v)}else slSamp(t,38,e16*1.02,v);break;
-    case 'O':if(x.muted){slSamp(t,40,.04,v*.55,['lowpass',600,.7])}else slSamp(t,40,ring,v*.62,['lowpass',1600,.7],.012);break;
+    case 'T':slSamp(t,28,ring,v);break;
+    case 'P':slSamp(t,40,ring,v*.95);slNoiseHit(t,.012,4200,1.5,.15*v);break;
+    case 'S':SL_MUTED.S(t,v);break;
+    case 'H':slSamp(t,38,e16*1.02,v);break;
+    case 'O':slSamp(t,40,ring,v*.62,['lowpass',1600,.7],.012);break;
   }
 }
 async function slapPlay(){
   ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
   const g=++slGen;slBus=newBus();renderSlap();
-  await Promise.all([soundReady('bass','slap'),SL.back==='drums'?kitReady('funk'):Promise.resolve()]);
+  await Promise.all([soundReady('bass','slap'),SL.back==='drums'?kitReady(slBeatSel().st):Promise.resolve()]);
   if(g!==slGen)return;
   slBars=0;let t0=ctx.currentTime+.12;
   const bar=()=>{if(g!==slGen)return;
@@ -1733,7 +1751,7 @@ async function slapPlay(){
     if(SL.adv&&slBars>0&&slBars%SL.adv===0){SL.bm=(SL.bm+1)%8;saveS()}
     const st=slapSteps();slSteps.push({t0,e16,st});
     st.forEach((x,i)=>slapHit(x,t0+i*e16,e16,i%4===0));
-    if(SL.back==='drums'){const keep=DRUMBUS;playDrums(t0,16,'funk',e16,slBars===0,BEATS.funk[SL.beat]||BEATS.funk[0]);
+    if(SL.back==='drums'){const keep=DRUMBUS;const sb=slBeatSel();playDrums(t0,16,sb.st,e16,slBars===0,sb.B);
       // route this bar's drum bus through the slap bus so Stop silences it
       const db=drumBuses[drumBuses.length-1];try{db.disconnect();db.connect(slBus)}catch(e){}DRUMBUS=keep}
     else if(SL.back==='click'){for(let b=0;b<4;b++){const tt=t0+b*4*e16;slNoiseHit(tt,.03,b?2200:3200,4,b?.35:.6)}}
@@ -1761,9 +1779,9 @@ $('ssUp').onclick=()=>{SL.ss=(SL.ss+1)%16;saveS();renderSlap()};
 $('ssDown').onclick=()=>{SL.ss=(SL.ss+15)%16;saveS();renderSlap()};
 const slT=v=>{SL.tempo=Math.max(40,Math.min(140,v));saveS();renderSlap()};
 $('slTUp').onclick=()=>slT(SL.tempo+2);$('slTDown').onclick=()=>slT(SL.tempo-2);$('slTempo').oninput=e=>slT(+e.target.value);
-chg('slBack',v=>{SL.back=v;saveS();renderSlap()});
-chg('slBeat',v=>{SL.beat=+v;saveS()});
-chg('slSound',v=>{SL.sound=v;saveS();renderSlap()});
+chg('slBack',v=>{SL.back=v;saveS();renderSlap();slRestart()});
+chg('slBeat',v=>{SL.beat=v;saveS();slRestart()});
+chg('slSound',v=>{SL.sound=v;saveS();renderSlap();slRestart()});
 chg('slAdv',v=>{SL.adv=+v;saveS()});
 chg('slPreset',v=>{SL.preset=v;if(v==='wellington'){SL.blocks=SL_EXAMPLE.slice();SL.bm=0;SL.ss=0}else SL.blocks=slapRandom();saveS();renderSlap()});
 $('slUse').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,i=SL.use.indexOf(k);if(i>=0){if(SL.use.length>1)SL.use.splice(i,1)}else SL.use.push(k);saveS();renderSlap()};
