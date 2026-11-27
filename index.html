@@ -167,10 +167,12 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 .mstep b{font-family:Gabarito,sans-serif;font-size:26px}
 .mstep .round{width:40px;height:40px;font-size:24px}
 .btns.sl{grid-template-columns:1.2fr 1fr}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-.chip{font:inherit;font-weight:800;font-size:15px;min-height:44px;min-width:56px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
-.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
-.chip:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.srboard{margin-top:10px}
+.srboard svg{display:block;width:100%;height:auto}
+.slchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.slchip{font:inherit;font-weight:800;font-size:15px;min-height:44px;min-width:56px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+.slchip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.slchip:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .fld select:disabled{opacity:.5}
 
 .bar{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:8px;margin:2px 0 12px}
@@ -322,7 +324,8 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <a class="hcard ear" href="#ear"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15a6 6 0 1 1 11.3-2.8c0 2.3-2.3 3.3-3.3 4.6-.8 1-.6 3.2-2.5 3.2-1.6 0-2.3-1.2-2.3-1.2"/><path d="M9.5 12a2.5 2.5 0 0 1 5 0"/></svg></span><b>Ear training</b><small>Hear a riff, then play or sing it back. Riffs, single notes, call and response.</small></a>
       <a class="hcard" href="#create"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></span><b>Riff creator <em class="beta">Beta</em></b><small>Build your own riffs note by note on the fretboard.</small></a>
       <div class="hcard soon"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18V8l8-4 8 4v10"/><path d="M8 18v-6h8v6"/></svg></span><b>Backing tracks <em class="next">Next</em></b><small>Chord progressions with drums, guitar and bass, plus suggested bass lines.</small></div>
-      <a class="hcard" href="#slap"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h16M7 8v8M12 6v12M17 9v6"/></svg></span><b>Slap practice</b><small>Random slap grooves on Wellington’s yardstick, with rhythmic modes.</small></a>
+      <a class="hcard" href="#slap"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h16M7 8v8M12 6v12M17 9v6"/></svg></span><b>Slap rhythm</b><small>Wellington’s yardstick: building blocks and rhythmic modes.</small></a>
+      <a class="hcard" href="#sriff"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></span><b>Slap riffs</b><small>Slap lines with real notes in any key and mode, shown on the fretboard.</small></a>
     </div>
     <a class="homesaved" href="#ear" id="homeSaved"></a>
   </div>
@@ -434,7 +437,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 
   <!-- ===== SLAP PRACTICE ===== -->
   <div class="view" id="viewSlap" hidden>
-    <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Slap practice</h1><span class="muted" id="slMode"></span></div>
+    <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Slap rhythm</h1><span class="muted" id="slMode"></span></div>
     <section class="card hero slhero" aria-label="Slap groove">
       <div class="ystick" id="ystick" aria-label="Rhythm yardstick: one bar of 16th notes. Tap a block to change it."></div>
       <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H/O hammer-on</span></div>
@@ -454,6 +457,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <input type="range" id="slTempo" min="40" max="140" step="2" aria-label="Tempo">
       <div class="fields">
         <label class="fld"><span>Groove length</span><select id="slBars"><option value="1">1 beat (repeats 4×)</option><option value="2">2 beats (repeats 2×)</option><option value="4">4 beats (full bar)</option></select></label>
+        <label class="fld"><span>Space (rests)</span><select id="slSpace"><option value="0">None: all 16ths (as taught)</option><option value="1">Some rests</option><option value="2">Lots of rests</option></select></label>
         <label class="fld"><span>Dead-note tone</span><select id="slTone"><option value="thunk">Thunky</option><option value="click">Clicky</option></select></label>
         <label class="fld"><span>Backing</span><select id="slBack"><option value="drums">Drums</option><option value="click">Click only</option><option value="none">Nothing</option></select></label>
         <label class="fld"><span>Drum beat</span><select id="slBeat"></select></label>
@@ -462,7 +466,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <label class="fld full"><span>Example or random</span><select id="slPreset"><option value="">Random grooves</option><option value="wellington">Groove Workshop example</option></select></label>
       </div>
       <p class="lbl2">Blocks to use in new grooves</p>
-      <div class="chips" id="slUse"></div>
+      <div class="slchips" id="slUse"></div>
     </section>
 
     <details class="card more">
@@ -472,6 +476,44 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <p class="hint">Each groove is eight two-note building blocks: <b>HO</b> thumb then hammer-on, <b>TT</b> two thumbs (some charts write EE), <b>ST</b> left-hand slap then thumb, <b>PT</b> pop then thumb, <b>TP</b> thumb then pop.</p>
         <p class="hint"><b>Rhythmic modes:</b> loop the groove until every sound is even. Then use Block mode to start on the 2nd, 3rd … 8th block, and 16th shift to slide the whole pattern one dash so a different sound lands on beat 1. Tap any block on the yardstick to swap it.</p>
         <p class="hint">“Muted” means you still slap or pop while the left hand rests on the strings, so you get a percussive dead note (outlined circles). “As taught” plays thumbs on open E and hammer-ons D→E, with ST, PT and TP muted. Concept from Anthony Wellington (Bassology) and Victor Wooten’s Groove Workshop.</p>
+      </div>
+    </details>
+  </div>
+
+
+  <!-- ===== SLAP RIFFS ===== -->
+  <div class="view" id="viewSRiff" hidden>
+    <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Slap riffs</h1><span class="muted" id="srKey"></span></div>
+    <section class="card hero slhero" aria-label="Slap riff">
+      <div class="ystick" id="srStick"></div>
+      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H/O hammer-on</span><span>outlined / x = dead note</span></div>
+      <div class="tabbox srboard" id="srBoard" aria-label="Riff on the fretboard"></div>
+      <div class="btns sl">
+        <button class="big play" id="srPlay"><svg><use href="#i-play"/></svg><span>Play</span></button>
+        <button class="big" id="srNew"><svg><use href="#i-dice"/></svg><span>New riff</span></button>
+      </div>
+    </section>
+    <section class="card qs" aria-label="Slap riff settings">
+      <h2>Settings</h2>
+      <div class="fields">
+        <label class="fld"><span>Key</span><select id="srKeySel"></select></label>
+        <label class="fld"><span>Mode</span><select id="srModeSel"></select></label>
+        <label class="fld"><span>Length</span><select id="srBars"><option value="1">1 bar</option><option value="2">2 bars</option></select></label>
+        <label class="fld"><span>Space (rests)</span><select id="srSpace"><option value="0">None: all 16ths</option><option value="1">Some rests</option><option value="2">Lots of rests</option></select></label>
+        <label class="fld"><span>Dead notes</span><select id="srGhosts"><option value="0">Few</option><option value="1">Some</option><option value="2">Lots</option></select></label>
+        <label class="fld"><span>Dead-note tone</span><select id="srTone"><option value="thunk">Thunky</option><option value="click">Clicky</option></select></label>
+        <label class="fld"><span>Backing</span><select id="srBack"><option value="drums">Drums</option><option value="click">Click only</option><option value="none">Nothing</option></select></label>
+        <label class="fld"><span>Drum beat</span><select id="srBeat"></select></label>
+      </div>
+      <div class="trow"><span class="tl2">Tempo</span><div class="tempo"><button class="round" id="srTDown" aria-label="Slower">–</button><div class="bpm"><span class="n" id="srTempoVal">84</span><small>bpm</small></div><button class="round" id="srTUp" aria-label="Faster">+</button></div></div>
+      <input type="range" id="srTempo" min="40" max="140" step="2" aria-label="Tempo">
+      <div class="togs" style="margin-top:12px"><label class="tog"><input type="checkbox" id="srNames"><span class="sw"></span><span class="ic"><svg><use href="#i-tag"/></svg></span><b>Note names</b><small>Under each slap letter</small></label></div>
+    </section>
+    <details class="card more">
+      <summary>How slap riffs work</summary>
+      <div class="morebody">
+        <p class="hint">Each riff uses the same building blocks as the rhythm drills, with real notes from the key and mode. Thumbs (T) take the low notes on the E and A strings, favouring the root and fifth. Pops (P) take the high notes on the D and G strings, favouring the octave, third, fifth and seventh. Hammer-ons (H→O) go up one or two frets within the scale. Everything sits in one four-fret hand position around the root, shown on the fretboard.</p>
+        <p class="hint">The riff is built as a call and answer: beats 3–4 repeat the start of beats 1–2, then change the ending, so it sounds like a phrase rather than random notes. Dead notes add percussion between the pitched notes.</p>
       </div>
     </details>
   </div>
@@ -509,7 +551,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0114';
+const APP_VERSION='2026.11.27-0143';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1657,57 +1699,88 @@ for(const i of ['bass','guitar','voice'])if(i===S.instrument)fetchSamples(i,S.so
 if(S.drums)fetchDrums();
 if(/^https?:/.test(location.protocol)){checkUpdate();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()})}
 // ---- Slap practice: Wellington yardstick + building blocks ----
-const SL_BLOCKS={HO:['H','O'],TT:['T','T'],ST:['S','T'],PT:['P','T'],TP:['T','P']};
+// Blocks are two 16ths. "-" is a rest (space), so grooves are not all constant 16ths.
+const SL_BLOCKS={HO:['H','O'],TT:['T','T'],ST:['S','T'],PT:['P','T'],TP:['T','P'],'T-':['T','-'],'-T':['-','T'],'P-':['P','-'],'-P':['-','P'],'--':['-','-']};
+const SL_CORE=['HO','TT','ST','PT','TP'],SL_REST=['T-','-T','P-','-P','--'];
 const SL_EXAMPLE=['HO','TT','ST','PT','TP','TT','ST','PT'];
-const SLD={tempo:80,blocks:SL_EXAMPLE.slice(),bm:0,ss:0,back:'drums',beat:0,sound:'taught',adv:0,use:Object.keys(SL_BLOCKS),preset:''};
+const SPACE_P=[0,.3,.5];
+const SLD={tempo:80,blocks:SL_EXAMPLE.slice(),bm:0,ss:0,back:'drums',beat:'funk:0',sound:'taught',adv:0,use:SL_CORE.slice(),preset:'',space:0,tone:'thunk'};
 S.slap=Object.assign({},SLD,S.slap||{});
-const SL=S.slap;
-let slGen=0,slBus=null,slTimer=null,slRaf=0,slSteps=[],slBars=0,slPlayingStep=-1,slNoise=null;
+const SL=S.slap;SL.use=SL.use.filter(k=>SL_CORE.includes(k));if(!SL.use.length)SL.use=SL_CORE.slice();
+const SRD={tempo:84,key:'random',mode:'random',bars:1,space:1,ghosts:1,back:'drums',beat:'funk:0',riff:null,showNames:true};
+S.sriff=Object.assign({},SRD,S.sriff||{});
+const SR=S.sriff;
+let slGen=0,slBus=null,slTimer=null,slRaf=0,slSteps=[],slBars=0,slPlayingStep=-1,slNoise=null,slKind=null;
+const slPick=(arr,w)=>{let s=0;for(const x of w)s+=x;let r=Math.random()*s;for(let i=0;i<arr.length;i++){r-=w[i];if(r<=0)return arr[i]}return arr[arr.length-1]};
+// random blocks; the first block of each bar always starts with a thumb or hammer so beat 1 is played
+function slBlocks(n,use,space,first){
+  const out=[];
+  for(let i=0;i<n;i++){let b,tries=0;
+    do{b=Math.random()<SPACE_P[space]?SL_REST[rnd(SL_REST.length)]:use[rnd(use.length)];tries++}
+    while(tries<30&&((i===0&&first)&&!(b[0]==='T'||b[0]==='H'&&use.includes('HO'))&&use.some(x=>x[0]==='T'||x[0]==='H')
+      ||i>=2&&out[i-1]===b&&out[i-2]===b||b==='--'&&(out[i-1]||'').endsWith('-')||n===2&&i===1&&b===out[0]));
+    out.push(b)}
+  return out;
+}
 // Groove length in beats (1, 2 or 4). One yardstick = one bar of 4/4; shorter grooves repeat across it.
 const slLen=()=>[1,2,4].includes(+SL.len)?+SL.len:4;
 function slapRandom(nb){
-  const n=2*(nb||slLen()),use=SL.use.length?SL.use:Object.keys(SL_BLOCKS),out=[];
-  for(let i=0;i<n;i++){let b,tries=0;do{b=use[rnd(use.length)];tries++}while(tries<20&&use.length>1&&(i>=2&&out[i-1]===b&&out[i-2]===b||i===0&&b[0]!=='T'&&b[0]!=='H'&&use.some(x=>x[0]==='T'||x[0]==='H')||n===2&&i===1&&b===out[0]));out.push(b)}
-  if(n>=8&&use.length>2&&new Set(out).size<3)return slapRandom(nb);
+  const n=2*(nb||slLen()),use=SL.use.length?SL.use:SL_CORE;
+  const out=slBlocks(n,use,SL.space||0,true);
+  if(n>=8&&use.length>2&&new Set(out.filter(b=>SL_CORE.includes(b))).size<3)return slapRandom(nb);
   return out;
 }
 function slFit(){const n=2*slLen();if(SL.blocks.length>n)SL.blocks=SL.blocks.slice(0,n);else if(SL.blocks.length<n)SL.blocks=SL.blocks.concat(SL.preset==='wellington'?SL_EXAMPLE.slice(SL.blocks.length,n):slapRandom(n/2).slice(SL.blocks.length));SL.bm%=n;SL.ss%=2*n}
-// steps: one per 16th of the groove {s:sound letter, blk:block index, k:0/1 within block, muted}
+const slTaughtPitched=c=>c==='HO'||c==='TT'||c==='T-'||c==='-T';
 function slapSteps(){
   slFit();const n=SL.blocks.length,L=2*n,flat=[];
   for(let i=0;i<n;i++){const bi=(i+SL.bm)%n;SL_BLOCKS[SL.blocks[bi]].forEach((s,k)=>flat.push({s,blk:bi,k,code:SL.blocks[bi]}))}
   const out=[];for(let i=0;i<L;i++)out.push(Object.assign({},flat[((i-SL.ss)%L+L)%L]));
-  for(const x of out){x.muted=SL.sound==='muted'?true:SL.sound==='notes'?false:!(x.code==='HO'||x.code==='TT')}
+  for(const x of out){x.muted=SL.sound==='muted'?true:SL.sound==='notes'?false:!slTaughtPitched(x.code);
+    if(!x.muted)x.m=x.s==='P'?40:x.s==='H'?38:x.s==='O'?40:x.s==='T'?28:null}
   return out;
 }
+const SLCOL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var(--mint)'};
+// one yardstick row (16 steps) as SVG; get(i) returns the step for column i
+function yardRow(get,y0,opts){
+  const W=20,X0=16,cnt=['1','e','&','a'];let h='';
+  const pill=(x,w,dash,op)=>`<rect x="${x}" y="${y0+6}" width="${w}" height="30" rx="${dash?8:15}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" opacity="${op}"${dash?' stroke-dasharray="3 3"':''}/>`;
+  for(let i=0;i<16;i++){const a=get(i),b=get(i+1),op=opts.fade(i)?.45:1;
+    if(a.k===0&&b&&b.blk===a.blk&&b.k===1&&b.bar===a.bar){if(i<15)h+=pill(X0+i*W+3,2*W-6,0,op);else if(opts.wrap)h+=pill(X0+15*W+3,W-3,1,op)+pill(X0,W-3,1,1)}}
+  // ringing notes held through rests
+  for(let i=0;i<16;i++){const a=get(i);if(a.s==='-'||a.muted)continue;let j=i+1;while(j<16&&get(j).s==='-')j++;
+    if(j>i+1)h+=`<rect x="${X0+i*W+W/2}" y="${y0+18}" width="${(j-i-1)*W+2}" height="6" rx="3" fill="${SLCOL[a.s]}" opacity="${opts.fade(i)?.25:.5}"/>`}
+  h+=`<line x1="${X0}" y1="${y0+52}" x2="${X0+16*W}" y2="${y0+52}" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>`;
+  for(let i=0;i<16;i++){const x=X0+i*W+W/2,len=i%4===0?24:i%2===0?16:9,s=get(i),on=opts.on(i),op=opts.fade(i)&&!on?.45:1;
+    h+=`<g data-i="${opts.idx(i)}"><rect x="${X0+i*W}" y="${y0}" width="${W}" height="${opts.RH}" fill="${on?'rgba(255,201,60,.4)':'transparent'}"/>`;
+    h+=`<line x1="${x}" y1="${y0+52}" x2="${x}" y2="${y0+52+len}" stroke="var(--ink)" stroke-width="${i%4===0?2.5:1.6}"/><g opacity="${op}">`;
+    if(s.s==='-')h+=`<line x1="${x-4}" y1="${y0+21}" x2="${x+4}" y2="${y0+21}" stroke="var(--muted)" stroke-width="2.4" stroke-linecap="round"/>`;
+    else h+=`<circle cx="${x}" cy="${y0+21}" r="8" fill="${s.muted?'#fff':SLCOL[s.s]}" stroke="${SLCOL[s.s]}" stroke-width="2.4"/><text x="${x}" y="${y0+25.5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="${s.muted?SLCOL[s.s]:'#fff'}">${s.s}</text>`;
+    if(opts.names&&s.s!=='-')h+=`<text x="${x}" y="${y0+44}" text-anchor="middle" font-size="9.5" font-weight="800" fill="${s.muted||s.m==null?'var(--muted)':'var(--ink)'}">${s.muted||s.m==null?'x':opts.names[s.m%12]}</text>`;
+    h+=`</g><text x="${x}" y="${y0+100}" text-anchor="middle" font-size="${i%4===0?14:11}" font-weight="800" fill="${i%4===0?'var(--ink)':'var(--muted)'}">${i%4===0?i/4+1:cnt[i%4]}</text></g>`}
+  return h;
+}
 function renderYard(stIn){
-  const st=stIn||slapSteps(),L=st.length,W=20,X0=16,cnt=['1','e','&','a'],COL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var(--mint)'};
-  let h=`<svg viewBox="0 0 352 108" role="img">`;
-  const pill=(x,w,dash,op)=>`<rect x="${x}" y="6" width="${w}" height="30" rx="${dash?8:15}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" opacity="${op}"${dash?' stroke-dasharray="3 3"':''}/>`;
-  for(let i=0;i<16;i++){const a=st[i%L],b=st[(i+1)%L],op=i>=L?.45:1;
-    if(a.k===0&&b.blk===a.blk&&b.k===1){if(i<15)h+=pill(X0+i*W+3,2*W-6,0,op);else h+=pill(X0+15*W+3,W-3,1,op)+pill(X0,W-3,1,1)}}
-  h+=`<line x1="${X0}" y1="52" x2="${X0+16*W}" y2="52" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>`;
-  for(let i=0;i<16;i++){const x=X0+i*W+W/2,len=i%4===0?24:i%2===0?16:9,s=st[i%L],on=i===slPlayingStep,op=i>=L&&!on?.45:1;
-    h+=`<g data-i="${i%L}"><rect x="${X0+i*W}" y="0" width="${W}" height="108" fill="${on?'rgba(255,201,60,.4)':'transparent'}"/>`;
-    h+=`<line x1="${x}" y1="52" x2="${x}" y2="${52+len}" stroke="var(--ink)" stroke-width="${i%4===0?2.5:1.6}"/>`;
-    h+=`<g opacity="${op}"><circle cx="${x}" cy="21" r="8" fill="${s.muted?'#fff':COL[s.s]}" stroke="${COL[s.s]}" stroke-width="2.4"/><text x="${x}" y="25.5" text-anchor="middle" font-size="12.5" font-weight="800" fill="${s.muted?COL[s.s]:'#fff'}">${s.s}</text></g>`;
-    h+=`<text x="${x}" y="100" text-anchor="middle" font-size="${i%4===0?14:11}" font-weight="800" fill="${i%4===0?'var(--ink)':'var(--muted)'}">${i%4===0?i/4+1:cnt[i%4]}</text></g>`}
-  $('ystick').innerHTML=h+'</svg>';
+  const st=stIn||slapSteps(),L=st.length;
+  const h=yardRow(i=>st[i%L],0,{RH:108,wrap:true,fade:i=>i>=L,on:i=>i===slPlayingStep,idx:i=>i%L});
+  $('ystick').innerHTML=`<svg viewBox="0 0 352 108" role="img">${h}</svg>`;
   const sh=SL.ss>L/2?SL.ss-L:SL.ss;
   $('bmVal').textContent=SL.bm+1;$('ssVal').textContent=sh>0?'+'+sh:sh;
   $('slMode').textContent=`Mode ${SL.bm+1}${sh?` · shift ${sh>0?'+'+sh:sh}`:''}`;
 }
+const beatOpts=()=>['funk','pop','rock','metal'].map(st=>`<optgroup label="${st[0].toUpperCase()+st.slice(1)}">${BEATS[st].map((B,i)=>opt(st+':'+i,`${B.name}`)).join('')}</optgroup>`).join('');
 function renderSlap(){
   renderYard();
   $('slTempo').value=SL.tempo;$('slTempoVal').textContent=SL.tempo;
-  $('slBack').value=SL.back;$('slBars').value=slLen();$('slTone').value=SL.tone||'thunk';$('slSound').value=SL.sound;$('slAdv').value=SL.adv;$('slPreset').value=SL.preset;
-  $('slBeat').innerHTML=['funk','pop','rock','metal'].map(st=>`<optgroup label="${st[0].toUpperCase()+st.slice(1)}">${BEATS[st].map((B,i)=>opt(st+':'+i,`${B.name}`)).join('')}</optgroup>`).join('');$('slBeat').value=slBeatKey();$('slBeat').disabled=SL.back!=='drums';
-  $('slUse').innerHTML=Object.keys(SL_BLOCKS).map(k=>`<button class="chip" data-v="${k}" aria-pressed="${SL.use.includes(k)}">${k}</button>`).join('');
-  const b=$('slPlay'),on=!!slBus;b.querySelector('use').setAttribute('href',on?'#i-stop':'#i-play');b.querySelector('span').textContent=on?'Stop':'Play';b.classList.toggle('stopping',on);
+  $('slBack').value=SL.back;$('slBars').value=slLen();$('slTone').value=SL.tone||'thunk';$('slSound').value=SL.sound;$('slAdv').value=SL.adv;$('slPreset').value=SL.preset;$('slSpace').value=SL.space||0;
+  $('slBeat').innerHTML=beatOpts();$('slBeat').value=slBeatKey(SL);$('slBeat').disabled=SL.back!=='drums';
+  $('slUse').innerHTML=SL_CORE.map(k=>`<button class="slchip" data-v="${k}" aria-pressed="${SL.use.includes(k)}">${k}</button>`).join('');
+  renderSlPlay();
 }
-function slBeatKey(){const k=String(SL.beat);return /:/.test(k)?k:'funk:'+(+k||0)}
-function slBeatSel(){const [st,i]=slBeatKey().split(':');return {st,B:(BEATS[st]||BEATS.funk)[+i]||BEATS.funk[0]}}
-function slRestart(){if(slBus){slapStop();slapPlay()}}
+function renderSlPlay(){for(const [id,k] of [['slPlay','drill'],['srPlay','riff']]){const b=$(id);if(!b)continue;const on=!!slBus&&slKind===k;b.querySelector('use').setAttribute('href',on?'#i-stop':'#i-play');b.querySelector('span').textContent=on?'Stop':'Play';b.classList.toggle('stopping',on)}}
+function slBeatKey(P){const k=String(P.beat);return /:/.test(k)?k:'funk:'+(+k||0)}
+function slBeatSel(P){const [st,i]=slBeatKey(P).split(':');return {st,B:(BEATS[st]||BEATS.funk)[+i]||BEATS.funk[0]}}
+function slRestart(){if(slBus){const k=slKind;slapStop();slapPlay(k)}}
 function slapEnter(){fetchSamples('bass','slap');fetchKit('pearl');renderSlap()}
 function slNoiseBuf(){if(!slNoise){const n=Math.floor(ctx.sampleRate*.12),b=ctx.createBuffer(1,n,ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;slNoise=b}return slNoise}
 // Pitched notes use the slap-bass recording. Muted ("dead") notes keep only the attack of the recording,
@@ -1756,76 +1829,157 @@ const SL_MUTED={
     slNoiseHit(t,c?.03:.04,700,.8,(c?1:.7)*v);slClack(t,[1300,2200,3400],.01,(c?1.4:.8)*v)},
   H:(t,v)=>{if(SL.tone!=='click')slKS(t,55*jit(),.07,.72,.13,v*.9,2200);slSamp(t,33,0,v*.75,null,0,.004);slClack(t,[1150,1900,3100],.011,.9*v)},
   O:(t,v)=>{if(SL.tone!=='click')slKS(t,82.4,.03,.4,.2,v*.8,1500);slClack(t,[1400,2300],.008,.8*v)}};
-function slapHit(x,t,e16,acc){
-  const v=(acc?1:.86)*(.94+Math.random()*.08),ring=e16*1.7;
-  if(x.muted)return SL_MUTED[x.s](t,v);
+function slapHit(x,t,e16,acc,ringSteps){
+  if(x.s==='-')return;
+  const v=(acc?1:.86)*(.94+Math.random()*.08),ring=e16*Math.min(6,Math.max(1.05,(ringSteps||1)*.97));
+  if(x.muted||x.m==null)return SL_MUTED[x.s](t,v);
   switch(x.s){
-    case 'T':slSamp(t,28,ring,v);break;
-    case 'P':slSamp(t,40,ring,v*.95);slNoiseHit(t,.012,4200,1.5,.15*v);break;
-    case 'S':SL_MUTED.S(t,v);break;
-    case 'H':slSamp(t,38,e16*1.02,v);break;
-    case 'O':slSamp(t,40,ring,v*.62,['lowpass',1600,.7],.012);break;
+    case 'T':slSamp(t,x.m,ring,v);break;
+    case 'P':slSamp(t,x.m,ring,v*.95);slNoiseHit(t,.012,4200,1.5,.15*v);break;
+    case 'H':slSamp(t,x.m,Math.min(ring,e16*1.02),v);break;
+    case 'O':slSamp(t,x.m,ring,v*.62,['lowpass',1600,.7],.012);break;
   }
 }
-async function slapPlay(){
+// how many 16ths each note rings: until the next sound (dead notes and slaps stop it too)
+function slRings(st){const N=st.length;return st.map((x,i)=>{let j=1;while(j<8&&st[(i+j)%N].s==='-')j++;return j})}
+// ---- player shared by the rhythm drills ('drill') and the slap riffs ('riff') ----
+async function slapPlay(kind){
+  kind=kind||'drill';const P=kind==='drill'?SL:SR;
+  if(slBus)slapStop();
   ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
-  const g=++slGen;slBus=newBus();renderSlap();
-  await Promise.all([soundReady('bass','slap'),SL.back==='drums'?kitReady(slBeatSel().st):Promise.resolve()]);
+  const g=++slGen;slKind=kind;slBus=newBus();renderSlPlay();
+  await Promise.all([soundReady('bass','slap'),P.back==='drums'?kitReady(slBeatSel(P).st):Promise.resolve()]);
   if(g!==slGen)return;
   slBars=0;let t0=ctx.currentTime+.12;
-  const bar=()=>{if(g!==slGen)return;
-    const e16=60/SL.tempo/4;
-    if(SL.adv&&slBars>0&&slBars%SL.adv===0){SL.bm=(SL.bm+1)%(2*slLen());saveS()}
-    const st=slapSteps(),L=16;slSteps.push({t0,e16,st});
-    for(let i=0;i<16;i++)slapHit(st[i%st.length],t0+i*e16,e16,i%4===0);
-    if(SL.back==='drums'){const keep=DRUMBUS;const sb=slBeatSel();playDrums(t0,L,sb.st,e16,slBars===0,sb.B);
-      // route this bar's drum bus through the slap bus so Stop silences it
+  const cycle=()=>{if(g!==slGen)return;
+    const e16=60/P.tempo/4;
+    let st;
+    if(kind==='drill'){if(SL.adv&&slBars>0&&slBars%SL.adv===0){SL.bm=(SL.bm+1)%(2*slLen());saveS()}
+      const g16=slapSteps();st=Array.from({length:16},(_,i)=>g16[i%g16.length]);st.src=g16}
+    else{if(!SR.riff)SR.riff=genSlapRiff();st=SR.riff.steps}
+    const N=st.length,rings=slRings(st);slSteps.push({t0,e16,st});
+    for(let i=0;i<N;i++)slapHit(st[i],t0+i*e16,e16,i%4===0,rings[i]);
+    if(P.back==='drums'){const keep=DRUMBUS,sb=slBeatSel(P);playDrums(t0,N,sb.st,e16,slBars===0,sb.B);
       const db=drumBuses[drumBuses.length-1];try{db.disconnect();db.connect(slBus)}catch(e){}DRUMBUS=keep}
-    else if(SL.back==='click'){for(let b=0;b<L/4;b++){const tt=t0+b*4*e16;slNoiseHit(tt,.03,b%4?2200:3200,4,b%4?.35:.6)}}
-    slBars++;const next=t0+16*e16;t0=next;
-    slTimer=setTimeout(bar,Math.max(10,(next-ctx.currentTime-.35)*1000));
+    else if(P.back==='click'){for(let b=0;b<N/4;b++)slNoiseHit(t0+b*4*e16,.03,b%4?2200:3200,4,b%4?.35:.6)}
+    slBars+=N/16;t0+=N*e16;
+    slTimer=setTimeout(cycle,Math.max(10,(t0-ctx.currentTime-.35)*1000));
   };
-  bar();
+  cycle();
   const tick=()=>{if(g!==slGen)return;const now=ctx.currentTime;while(slSteps.length>1&&now>=slSteps[1].t0)slSteps.shift();
-    const B=slSteps[0];let i=-1;if(B&&now>=B.t0)i=Math.min(15,Math.floor((now-B.t0)/B.e16));
-    // keep the drawing in step with what is sounding (the mode can change between bars)
-    if(B&&(i!==slPlayingStep||B.st!==renderYard.last)){slPlayingStep=i;renderYard.last=B.st;renderYard(B.st)}
+    const B=slSteps[0];let i=-1;if(B&&now>=B.t0)i=Math.min(B.st.length-1,Math.floor((now-B.t0)/B.e16));
+    if(B&&(i!==slPlayingStep||B.st!==slapPlay.last)){slPlayingStep=i;slapPlay.last=B.st;if(kind==='drill')renderYard(B.st.src);else renderSR()}
     slRaf=requestAnimationFrame(tick)};
   slRaf=requestAnimationFrame(tick);
 }
 function slapStop(){
   slGen++;clearTimeout(slTimer);cancelAnimationFrame(slRaf);slSteps=[];slPlayingStep=-1;
   if(slBus&&ctx){const g=slBus,now=ctx.currentTime;try{g.gain.setValueAtTime(g.gain.value,now);g.gain.linearRampToValueAtTime(0,now+.04)}catch(e){}setTimeout(()=>{try{g.disconnect()}catch(e){}},150)}
-  slBus=null;if($('viewSlap'))renderSlap();
+  const k=slKind;slBus=null;slKind=null;if(k==='riff')renderSR();else renderSlap();renderSlPlay();
 }
-$('slPlay').onclick=()=>slBus?slapStop():slapPlay();
-$('slNew').onclick=()=>{SL.preset='';SL.blocks=slapRandom();SL.bm=0;SL.ss=0;saveS();renderSlap();slRestart()};
+// ---- Slap riffs: real notes from a key and mode, laid out for thumb (low strings) and pops (high strings) ----
+const SR_MODE_W=[2,3,1,1,3,2,.5]; // Ionian..Locrian: funk favours Dorian and Mixolydian
+function genSlapRiff(){
+  const root=SR.key==='random'?rnd(12):+SR.key,mode=SR.mode==='random'?slPick([0,1,2,3,4,5,6],SR_MODE_W):+SR.mode;
+  const sc=scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
+  // root on the E string if it sits in frets 0-7, else on the A string; a 4-fret box around it
+  const fe=((root-4)%12+12)%12,fa=((root-9)%12+12)%12,rs=fe<=7?0:1,rf=rs===0?fe:fa;
+  const lo=rf===0?1:Math.max(1,rf-rnd(2)),hi=lo+3;
+  const spots=[];for(let s=0;s<4;s++)for(const f of [0,...Array.from({length:4},(_,k)=>lo+k)]){const m=TUNING.bass[s]+f;if(inS(m))spots.push({s,f,m})}
+  const rootM=TUNING.bass[rs]+rf;
+  const thumbs=spots.filter(p=>p.s<=1),pops=spots.filter(p=>p.s>=2&&p.m>rootM+4);
+  const tW=p=>(deg(p.m)===0?5:deg(p.m)===7?2.5:[10,11].includes(deg(p.m))?1.5:1)*(p.f===0?.6:1)*(p.m<rootM-7?.4:1);
+  const pW=p=>(deg(p.m)===0?5:[3,4,7,10,11].includes(deg(p.m))?2:.8)*(Math.abs(p.m-rootM-12)<=5?1.5:.7);
+  const hams=spots.filter(p=>p.s<=2&&p.f>0).map(p=>{const o=spots.find(q=>q.s===p.s&&q.f>p.f&&q.f-p.f<=2);return o?{h:p,o}:null}).filter(Boolean);
+  const pickT=first=>first?thumbs.find(p=>p.m===rootM)||thumbs[0]:slPick(thumbs,thumbs.map(tW));
+  const pickP=()=>pops.length?slPick(pops,pops.map(pW)):slPick(thumbs,thumbs.map(tW));
+  const use=hams.length?SL_CORE:SL_CORE.filter(b=>b!=='HO');
+  const gp=[.1,.25,.45][SR.ghosts];
+  const motif=n=>slBlocks(n,use,SR.space,true);
+  const A=motif(4);
+  // bar = call (A) + answer (A's first half + a new ending); bar 2 varies the ending again
+  const barsB=[A.concat(A.slice(0,2),slBlocks(2,use,SR.space,false))];
+  if(+SR.bars===2)barsB.push(A.concat(A.slice(0,2),slBlocks(2,use,SR.space,false)));
+  const memo=new Map(),steps=[];
+  barsB.forEach((blocks,bar)=>blocks.forEach((code,bi)=>{
+    const key=bi<4?'A'+bi:bi<6?'A'+(bi-4):'B'+bar+'_'+bi;
+    let notes=memo.get(key);
+    if(!notes){
+      const first=bi===0;notes=SL_BLOCKS[code].map((s,k)=>{
+        if(s==='-')return {s};if(s==='S')return {s,muted:true};
+        if(s==='H'||s==='O')return {s};
+        const p=s==='T'?pickT(first&&k===0):pickP();
+        const ghost=!(first&&k===0)&&Math.random()<gp*(s==='T'&&(code==='ST'||code==='PT')?1.5:1);
+        return {s,m:p.m,pos:{s:p.s,f:p.f},muted:ghost}});
+      if(code==='HO'){const hm=first?hams.find(x=>x.h.m===rootM)||slPick(hams,hams.map(x=>tW(x.h))):slPick(hams,hams.map(x=>tW(x.h)));
+        notes[0]=Object.assign(notes[0],{m:hm.h.m,pos:{s:hm.h.s,f:hm.h.f}});notes[1]=Object.assign(notes[1],{m:hm.o.m,pos:{s:hm.o.s,f:hm.o.f}})}
+      memo.set(key,notes)}
+    notes.forEach((x,k)=>steps.push(Object.assign({},x,{blk:bar*8+bi,k,bar})));
+  }));
+  return {root,mode,steps,box:[lo,hi]};
+}
+function renderSR(){
+  const r=SR.riff||(SR.riff=genSlapRiff()),st=r.steps,nb=st.length/16,nm=namesFor(r.root,r.mode);
+  let h=`<svg viewBox="0 0 352 ${108*nb}" role="img">`;
+  for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*108,{RH:108,wrap:false,fade:()=>false,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:SR.showNames?nm:null});
+  $('srStick').innerHTML=h+'</svg>';
+  $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}${MODES[r.mode].label?' ('+MODES[r.mode].label+')':''}`;
+  const cur=slKind==='riff'&&slPlayingStep>=0?st[slPlayingStep]:null;
+  const items=st.filter(x=>x.pos).map(x=>({p:x.pos,label:nm[x.m%12],play:!!(cur&&cur.pos&&cur.pos.s===x.pos.s&&cur.pos.f===x.pos.f&&!cur.muted),old:x.muted}));
+  $('srBoard').innerHTML=fretSVG(items,'bass');
+  renderSlPlay();
+}
+function renderSRControls(){
+  $('srKeySel').innerHTML=$('keySel').innerHTML;$('srKeySel').value=SR.key;
+  $('srModeSel').innerHTML=opt('random','Any (funky modes more often)')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode;
+  $('srBars').value=SR.bars;$('srSpace').value=SR.space;$('srGhosts').value=SR.ghosts;$('srBack').value=SR.back;
+  $('srBeat').innerHTML=beatOpts();$('srBeat').value=slBeatKey(SR);$('srBeat').disabled=SR.back!=='drums';
+  $('srTone').value=SL.tone||'thunk';$('srNames').checked=SR.showNames;
+  $('srTempo').value=SR.tempo;$('srTempoVal').textContent=SR.tempo;
+}
+function srEnter(){fetchSamples('bass','slap');fetchKit('pearl');renderSRControls();renderSR()}
+const srNew=()=>{SR.riff=genSlapRiff();saveS();renderSR();if(slBus&&slKind==='riff')slRestart()};
+$('srPlay').onclick=()=>slBus&&slKind==='riff'?slapStop():slapPlay('riff');
+$('srNew').onclick=srNew;
+chg('srKeySel',v=>{SR.key=v;srNew()});chg('srModeSel',v=>{SR.mode=v;srNew()});
+chg('srBars',v=>{SR.bars=+v;srNew()});chg('srSpace',v=>{SR.space=+v;srNew()});chg('srGhosts',v=>{SR.ghosts=+v;srNew()});
+chg('srBack',v=>{SR.back=v;saveS();renderSRControls();if(slKind==='riff')slRestart()});
+chg('srBeat',v=>{SR.beat=v;saveS();if(slKind==='riff')slRestart()});
+chg('srTone',v=>{SL.tone=v;saveS()});
+$('srNames').onchange=e=>{SR.showNames=e.target.checked;saveS();renderSR()};
+let srTT=0;const srT=v=>{SR.tempo=Math.max(40,Math.min(140,v));saveS();renderSRControls();clearTimeout(srTT);srTT=setTimeout(()=>{if(slKind==='riff')slRestart()},350)};
+$('srTUp').onclick=()=>srT(SR.tempo+2);$('srTDown').onclick=()=>srT(SR.tempo-2);$('srTempo').oninput=e=>srT(+e.target.value);
+// ---- rhythm drill controls ----
+$('slPlay').onclick=()=>slBus&&slKind==='drill'?slapStop():slapPlay('drill');
+const slR=()=>{if(slKind==='drill')slRestart()};
+$('slNew').onclick=()=>{SL.preset='';SL.blocks=slapRandom();SL.bm=0;SL.ss=0;saveS();renderSlap();slR()};
 const slN=()=>2*slLen();
-$('bmUp').onclick=()=>{SL.bm=(SL.bm+1)%slN();saveS();renderSlap();slRestart()};
-$('bmDown').onclick=()=>{SL.bm=(SL.bm+slN()-1)%slN();saveS();renderSlap();slRestart()};
-$('ssUp').onclick=()=>{SL.ss=(SL.ss+1)%(2*slN());saveS();renderSlap();slRestart()};
-$('ssDown').onclick=()=>{SL.ss=(SL.ss+2*slN()-1)%(2*slN());saveS();renderSlap();slRestart()};
-chg('slBars',v=>{SL.len=+v;slFit();saveS();renderSlap();slRestart()});
+$('bmUp').onclick=()=>{SL.bm=(SL.bm+1)%slN();saveS();renderSlap();slR()};
+$('bmDown').onclick=()=>{SL.bm=(SL.bm+slN()-1)%slN();saveS();renderSlap();slR()};
+$('ssUp').onclick=()=>{SL.ss=(SL.ss+1)%(2*slN());saveS();renderSlap();slR()};
+$('ssDown').onclick=()=>{SL.ss=(SL.ss+2*slN()-1)%(2*slN());saveS();renderSlap();slR()};
+chg('slBars',v=>{SL.len=+v;slFit();saveS();renderSlap();slR()});
 chg('slTone',v=>{SL.tone=v;saveS()});
-let slTT=0;const slT=v=>{SL.tempo=Math.max(40,Math.min(140,v));saveS();renderSlap();clearTimeout(slTT);slTT=setTimeout(slRestart,350)};
+chg('slSpace',v=>{SL.space=+v;SL.preset='';SL.blocks=slapRandom();SL.bm=0;SL.ss=0;saveS();renderSlap();slR()});
+let slTT=0;const slT=v=>{SL.tempo=Math.max(40,Math.min(140,v));saveS();renderSlap();clearTimeout(slTT);slTT=setTimeout(slR,350)};
 $('slTUp').onclick=()=>slT(SL.tempo+2);$('slTDown').onclick=()=>slT(SL.tempo-2);$('slTempo').oninput=e=>slT(+e.target.value);
-chg('slBack',v=>{SL.back=v;saveS();renderSlap();slRestart()});
-chg('slBeat',v=>{SL.beat=v;saveS();slRestart()});
-chg('slSound',v=>{SL.sound=v;saveS();renderSlap();slRestart()});
+chg('slBack',v=>{SL.back=v;saveS();renderSlap();slR()});
+chg('slBeat',v=>{SL.beat=v;saveS();slR()});
+chg('slSound',v=>{SL.sound=v;saveS();renderSlap();slR()});
 chg('slAdv',v=>{SL.adv=+v;saveS()});
-chg('slPreset',v=>{SL.preset=v;if(v==='wellington'){SL.blocks=SL_EXAMPLE.slice(0,slN());SL.bm=0;SL.ss=0}else SL.blocks=slapRandom();saveS();renderSlap();slRestart()});
+chg('slPreset',v=>{SL.preset=v;if(v==='wellington'){SL.blocks=SL_EXAMPLE.slice(0,slN());SL.bm=0;SL.ss=0}else SL.blocks=slapRandom();saveS();renderSlap();slR()});
 $('slUse').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,i=SL.use.indexOf(k);if(i>=0){if(SL.use.length>1)SL.use.splice(i,1)}else SL.use.push(k);saveS();renderSlap()};
-$('ystick').onclick=e=>{const g=e.target.closest('[data-i]');if(!g)return;const x=slapSteps()[+g.dataset.i],keys=SL.use.length?SL.use:Object.keys(SL_BLOCKS),cur=SL.blocks[x.blk],j=keys.indexOf(cur);
-  SL.blocks[x.blk]=keys[(j+1)%keys.length]===cur?Object.keys(SL_BLOCKS)[(Object.keys(SL_BLOCKS).indexOf(cur)+1)%5]:keys[(j+1)%keys.length];SL.preset='';saveS();renderSlap();slRestart()};
+$('ystick').onclick=e=>{const g=e.target.closest('[data-i]');if(!g)return;const x=slapSteps()[+g.dataset.i],cyc=SL.use.concat(SL.space?SL_REST:[]),cur=SL.blocks[x.blk],j=cyc.indexOf(cur);
+  SL.blocks[x.blk]=cyc[(j+1)%cyc.length];SL.preset='';saveS();renderSlap();slR()};
 // ---- simple page routing (#home, #ear, #create, #slap) ----
 let route='home';
 function renderHomeSaved(){const a=$('homeSaved');if(!a)return;a.textContent=saved.length?`My saved riffs (${saved.length}) →`:'';a.hidden=!saved.length}
 function go(r){if(location.hash!=='#'+r)location.hash=r;else showRoute()}
 function showRoute(){
-  const r=(location.hash||'#home').slice(1),next=['home','ear','create','slap'].includes(r)?r:'home';
+  const r=(location.hash||'#home').slice(1),next=['home','ear','create','slap','sriff'].includes(r)?r:'home';
   if(route==='ear'&&next!=='ear'){if(playSched||loopMode>0)stopPlayback(false);if(listening)stopListening()}
-  if(route==='slap'&&next!=='slap')slapStop();
-  route=next;$('viewSlap').hidden=route!=='slap';
+  if((route==='slap'||route==='sriff')&&next!==route&&slBus)slapStop();
+  route=next;$('viewSlap').hidden=route!=='slap';$('viewSRiff').hidden=route!=='sriff';if(route==='sriff')srEnter();
   $('viewHome').hidden=route!=='home';$('viewEar').hidden=route!=='ear';$('viewCreate').hidden=route!=='create';
   if(route==='create')renderEditor();if(route==='slap')slapEnter();if(route==='home')renderHomeSaved();
   window.scrollTo({top:0});
