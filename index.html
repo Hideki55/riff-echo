@@ -400,6 +400,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <label class="tog"><input type="checkbox" id="showNotes"><span class="sw"></span><span class="ic"><svg><use href="#i-tag"/></svg></span><b>Note names</b><small>Hint inside each bubble</small></label>
       <label class="tog"><input type="checkbox" id="drone"><span class="sw"></span><span class="ic"><svg><use href="#i-wave"/></svg></span><b>Root drone</b><small>Hear the mode's home note</small></label>
       <label class="tog"><input type="checkbox" id="octUp"><span class="sw"></span><span class="ic"><svg><use href="#i-up"/></svg></span><b>Octave up</b><small>For phone speakers. Off with headphones</small></label>
+      <label class="tog"><input type="checkbox" id="louder"><span class="sw"></span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M16 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></svg></span><b>Louder playback</b><small>iPhone: pauses the mic while sounds play. Off = always listening, quieter riff</small></label>
       <label class="tog"><input type="checkbox" id="timer"><span class="sw"></span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 2h6"/></svg></span><b>Attempt timer</b><small>Each try lasts about the riff's length, then resets</small></label>
       <label class="tog"><input type="checkbox" id="holdFirst"><span class="sw"></span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4"/></svg></span><b>Hold first note</b><small>Repeats the starting note until you find it</small></label>
       <label class="tog"><input type="checkbox" id="autoNext"><span class="sw"></span><span class="ic"><svg><use href="#i-next"/></svg></span><b>Auto next</b><small>New riff 2s after a win</small></label>
@@ -436,7 +437,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-2155';
+const APP_VERSION='2026.11.26-2200';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -733,7 +734,7 @@ const store={lastErr:'',get(k,f){try{const v=localStorage.getItem(k);return v?JS
 function showErr(msg){let b=document.getElementById('errBanner');if(!b){b=document.createElement('div');b.id='errBanner';b.style.cssText='position:fixed;top:max(8px,env(safe-area-inset-top));left:8px;right:8px;z-index:50;background:#a1271d;color:#fff;border-radius:12px;padding:10px 12px;font:600 13px/1.35 system-ui;box-shadow:0 6px 20px rgba(0,0,0,.3)';b.onclick=()=>b.remove();document.body.appendChild(b)}b.textContent='Something went wrong (tap to hide): '+msg}
 window.addEventListener('error',e=>showErr((e.message||'error')+(e.lineno?' @'+e.lineno:'')));
 window.addEventListener('unhandledrejection',e=>{const r=e.reason;if(r&&/decode|abort|NotAllowed/i.test(String(r.name||r)))return;showErr(String(r&&r.message||r))});
-const S=Object.assign({vol:1.2,drumVol:.55,beats:{},practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
+const S=Object.assign({louder:true,vol:1.2,drumVol:.55,beats:{},practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
 let saved=store.get('riffecho.saved',[]),renaming=-1,confirmDel=-1,toastT=null;
 S.sounds=Object.assign({bass:'finger',guitar:'clean',voice:'choir'},S.sounds||{});
 
@@ -925,17 +926,20 @@ function setSession(){try{if(navigator.audioSession)navigator.audioSession.type=
 let micPaused=false,resumeTimer=null,micSrc=null;
 const MIC_OPTS={audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}};
 function pauseMicFor(until){
-  if(!listening)return;
+  if(!listening||!S.louder)return;
   if(!micPaused&&stream){stream.getTracks().forEach(t=>t.stop());stream=null;try{micSrc&&micSrc.disconnect()}catch(e){}micSrc=null;micPaused=true;setSession()}
-  clearTimeout(resumeTimer);resumeTimer=setTimeout(resumeMic,Math.max(0,(until-ctx.currentTime)*1000));
+  clearTimeout(resumeTimer);resumeTimer=setTimeout(resumeMic,Math.max(0,(until-.6-ctx.currentTime)*1000));renderMic();
 }
+// re-opening the mic takes a moment on iPhone, so start ~0.6 s before the sound ends
+function renderMic(){if(!listening)return;$('listenBtn').querySelector('span').textContent=micPaused?'Mic paused':'Listening'}
 async function resumeMic(){
   resumeTimer=null;if(!listening||!micPaused)return;
-  if(ctx.currentTime<muteUntil-.05){resumeTimer=setTimeout(resumeMic,(muteUntil-ctx.currentTime)*1000);return}
+  if(ctx.currentTime<muteUntil-.65){resumeTimer=setTimeout(resumeMic,(muteUntil-.6-ctx.currentTime)*1000);return}
   try{if(navigator.audioSession)navigator.audioSession.type='play-and-record'}catch(e){}
   try{let s;try{s=await navigator.mediaDevices.getUserMedia(MIC_OPTS)}catch(e){s=await navigator.mediaDevices.getUserMedia({audio:true})}
     if(!listening){s.getTracks().forEach(t=>t.stop());return}
-    stream=s;micSrc=ctx.createMediaStreamSource(stream);micSrc.connect(analyser);micPaused=false;vt.reset();cand=null;candN=0;
+    stream=s;micSrc=ctx.createMediaStreamSource(stream);micSrc.connect(analyser);micPaused=false;vt.reset();cand=null;candN=0;renderMic();
+    if(loopMode===2&&riff&&!done&&!playSched)setStatus('Your turn!');
   }catch(e){micPaused=false;stopListening();setStatus('Tap Listen to keep going.')}
 }
 function ensureCtx(){
@@ -1272,9 +1276,9 @@ async function playRiff(contAt){
   }
   if(cr){
     // call (the riff), then a response gap of the same length on the beat grid, then repeat
-    const callEnd=t0+L16*e16,gap16=Math.max(L16,Math.ceil(1.6/e16/8)*8),next=callEnd+gap16*e16;
+    const callEnd=t0+L16*e16,gap16=Math.max(L16,Math.ceil(2.4/e16/8)*8),next=callEnd+gap16*e16;
     setStatus('Listen…');
-    setTimeout(()=>{if(loopMode===2&&riff===myRiff&&!done)setStatus(listening?'Your turn!':'Your turn! (tap Listen so the app can hear you)')},Math.max(0,(muteUntil-ctx.currentTime)*1000));
+    setTimeout(()=>{if(loopMode===2&&riff===myRiff&&!done)setStatus(!listening?'Your turn! (tap Listen so the app can hear you)':micPaused?'Your turn! Mic is switching on…':'Your turn!')},Math.max(0,(muteUntil-ctx.currentTime)*1000));
     loopTimer=setTimeout(()=>{loopTimer=null;if(loopMode===2&&riff===myRiff)playRiff(next)},Math.max(0,(next-ctx.currentTime-.2)*1000));
     return;
   }
@@ -1452,7 +1456,7 @@ function syncControls(){
   $('tempo').value=S.tempo;$('sens').value=S.sens;
   $('tempoVal').textContent=S.tempo;$('tempoShow').textContent=S.tempo;$('tempoWord').textContent=tempoWord(S.tempo);
   $('pulse').style.setProperty('--beat',(60/S.tempo).toFixed(3)+'s');
-  for(const k of ['showKey','showNotes','drone','octUp','autoNext','holdFirst','timer'])$(k).checked=S[k];
+  for(const k of ['showKey','showNotes','drone','octUp','autoNext','holdFirst','timer','louder'])$(k).checked=S[k];
   $('sub').textContent=({bass:'Bass',guitar:'Guitar',voice:'Voice'})[S.instrument]+' · any octave counts';
 }
 const pick=(el,fn)=>el.onclick=e=>{const b=e.target.closest('[data-v]');if(b)fn(b.dataset.v)};
@@ -1504,7 +1508,7 @@ $('tempo').oninput=e=>setTempo(+e.target.value);
 $('tDown').onclick=()=>setTempo(S.tempo-4);
 $('tUp').onclick=()=>setTempo(S.tempo+4);
 $('sens').oninput=e=>{S.sens=+e.target.value;saveS()};
-for(const k of ['showKey','showNotes','drone','octUp','autoNext','holdFirst','timer'])$(k).onchange=e=>{S[k]=e.target.checked;saveS();if(k==='timer')resetAttempt(false);renderAll();if(k==='holdFirst'&&S.holdFirst)startHold()};
+for(const k of ['showKey','showNotes','drone','octUp','autoNext','holdFirst','timer','louder'])$(k).onchange=e=>{S[k]=e.target.checked;saveS();if(k==='louder'&&!S.louder&&micPaused){clearTimeout(resumeTimer);muteUntil=Math.min(muteUntil,ctx.currentTime);resumeMic()}if(k==='timer')resetAttempt(false);renderAll();if(k==='holdFirst'&&S.holdFirst)startHold()};
 $('listenBtn').onclick=()=>listening?stopListening():startListening();
 $('playBtn').onclick=()=>{if(playSched||loopMode>0)stopPlayback(false);else playRiff()};
 $('newBtn').onclick=newRiff;
