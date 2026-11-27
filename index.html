@@ -447,7 +447,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-2257';
+const APP_VERSION='2026.11.26-2317';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -909,6 +909,7 @@ function loadRiff(r,autoplay){
 }
 // Same riff again: clear progress, lights, timer and tries, then play it
 function resetAttemptState(){
+  crWrong=false;lastNoteAt=0;
   played=[];playedM=[];livePos=[];progress=0;done=false;attemptStart=null;firstFound=false;
   if(riffPos&&riffPos.base)liveBase=riffPos.base[0];vt.reset();cand=null;candN=0;
   renderLeds();renderHeard();renderAtt();renderSave();
@@ -1245,7 +1246,7 @@ async function audition(idx){
   muteUntil=Math.max(muteUntil,t+len+.3);cand=null;candN=0;vbuf=[];pauseMicFor(muteUntil);
   const startAnim=!playSched;playSched={list:[{t,end:t+len,i:idx}],stop:t+len,riff};if(startAnim)requestAnimationFrame(playAnim);
 }
-let playGen=0,crIdx=0,crCycle=0;
+let playGen=0,crIdx=0,crCycle=0,crWrong=false,lastNoteAt=0,doneAt=0;
 async function playRiff(contAt){
   if(!riff)return;ensureCtx();const gen=++playGen;
   if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
@@ -1299,9 +1300,15 @@ async function playRiff(contAt){
     setStatus(reps>1?`Listen… ${passNo} of ${reps}`:'Listen…');
     const myCycle=crCycle;
     setTimeout(()=>{if(loopMode===2&&riff===myRiff&&!done&&myCycle===crCycle)setStatus(!listening?'Your turn! (tap Listen so the app can hear you)':micPaused?'Your turn! Mic is switching on…':'Your turn!')},Math.max(0,(muteUntil-ctx.currentTime)*1000));
-    loopTimer=setTimeout(()=>{loopTimer=null;if(loopMode!==2||riff!==myRiff)return;
+    // At the end of the pause: if you're mid-riff and on track, wait for you (notes matter more than time)
+    const gapEnd=()=>{loopTimer=null;if(loopMode!==2||riff!==myRiff||myCycle!==crCycle)return;
+      const idle=performance.now()-lastNoteAt>2500;
+      if(progress>0&&!done&&!crWrong&&!idle){setStatus(`Keep going… ${progress} of ${target.length}`);loopTimer=setTimeout(gapEnd,100);return}
+      if(done&&performance.now()-doneAt<1400){loopTimer=setTimeout(gapEnd,100);return}   // let the celebration land
+      const at=Math.max(next,ctx.currentTime+.25);
       if(S.crAuto&&done&&!riff.single){const keep=loopMode;loadRiff(genRiff(S),false);loopMode=keep;renderToggles()}
-      playRiff(next)},Math.max(0,(next-ctx.currentTime-.2)*1000));
+      playRiff(at)};
+    loopTimer=setTimeout(gapEnd,Math.max(0,(next-ctx.currentTime-.2)*1000));
     return;
   }
   if(listening)setStatus('Listen…');
@@ -1371,16 +1378,18 @@ function loop(){
 }
 function heard(pc,m){
   if(!riff||done)return;
+  lastNoteAt=performance.now();
   if(played[played.length-1]===pc)return;
   if(timerOn()&&attemptStart===null){attemptStart=performance.now()-150;tries++;requestAnimationFrame(attTick)}
   let lp=null;if(riff.instrument!=='voice'){const st=liveStep(m,riff.instrument,liveBase);liveBase=st.base;lp=st.p}
   played.push(pc);playedM.push(m);livePos.push(lp);
   if(played.length>64){played.shift();playedM.shift();livePos.shift()}
   const before=progress;progress=progressOf(played,target);
+  if(before>0&&progress<=before&&progress<target.length)crWrong=true;
   if(progress===1&&before!==1){if(!timerOn()&&!(loopMode===2&&played.length>1))tries++;if(!startT)startT=performance.now()}
   if(progress>=1&&!firstFound){firstFound=true;if(holdTimer){clearTimeout(holdTimer);holdTimer=null}}
   if(progress===target.length){
-    done=true;keyPeek=true;renderAtt();
+    done=true;doneAt=performance.now();keyPeek=true;renderAtt();
     if(riff.single){
       const clean=played.length===1;streak=clean?streak+1:0;if(streak>S.bestStreak){S.bestStreak=streak;saveS()}
       renderAll();setStatus(clean?(streak>1?`Yes! ${streak} in a row.`:'Yes!'):'Got it. Next one…');celebrate(false);
