@@ -500,7 +500,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <label class="fld full"><span>In the style of</span><select id="srStyle"></select></label>
         <label class="fld"><span>Key</span><select id="srKeySel"></select></label>
         <label class="fld"><span>Mode</span><select id="srModeSel"></select></label>
-        <label class="fld"><span>Length</span><select id="srBars"><option value="1">1 bar</option><option value="2">2 bars</option></select></label>
+        <label class="fld full"><span>Length</span><select id="srBars"><option value="1">1 bar</option><option value="2">2 bars: call &amp; response</option><option value="4">4 bars: call, response ×2</option></select></label>
         <label class="fld"><span>Space (rests)</span><select id="srSpace"><option value="0">None: all 16ths</option><option value="1">Some rests</option><option value="2">Lots of rests</option></select></label>
         <label class="fld"><span>Dead notes</span><select id="srGhosts"><option value="0">Few</option><option value="1">Some</option><option value="2">Lots</option></select></label>
         <label class="fld"><span>Dead-note tone</span><select id="srTone"><option value="real">Recorded (real bass)</option><option value="thunk">Synth: thunky</option><option value="click">Synth: clicky</option></select></label>
@@ -517,7 +517,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <div class="morebody">
         <p class="hint">Each riff uses the same building blocks as the rhythm drills, with real notes from the key and mode. Thumbs (T) take the low notes on the E and A strings, favouring the root and fifth. Pops (P) take the high notes on the D and G strings, favouring the octave, third, fifth and seventh. Hammer-ons (H→O) go up one or two frets within the scale. Everything sits in one four-fret hand position around the root, shown on the fretboard.</p>
         <p class="hint"><b>In the style of</b> picks rhythm cells, note choices, tempo and drum beat typical of each player’s approach (for example octave pops for Larry Graham, constant 16ths with dead notes for Mark King, open-string pedals and odd intervals for Les Claypool). They’re style sketches, not transcriptions of anyone’s songs.</p>
-        <p class="hint">The riff is built as a call and answer: beats 3–4 repeat the start of beats 1–2, then change the ending, so it sounds like a phrase rather than random notes. Dead notes add percussion between the pitched notes.</p>
+        <p class="hint"><b>Length:</b> a 1-bar riff answers itself (beats 3–4 echo beats 1–2 with a new ending). With 2 bars, bar 1 is the <b>call</b>, ending away from the root so it sounds unfinished, and bar 2 is the <b>response</b>: it echoes the call’s rhythm on different notes (leaning on the 4th or 5th) and comes home to the root. 4 bars play call, response, call, then a busier final response. Dead notes add percussion between the pitched notes.</p>
       </div>
     </details>
   </div>
@@ -555,7 +555,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0206';
+const APP_VERSION='2026.11.27-0216';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1751,6 +1751,7 @@ const SLCOL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var
 // one yardstick row (16 steps) as SVG; get(i) returns the step for column i
 function yardRow(get,y0,opts){
   const W=20,X0=16,cnt=['1','e','&','a'];let h='';
+  if(opts.label){h+=`<text x="${X0}" y="${y0+10}" font-size="10" font-weight="800" fill="${opts.labelC||'var(--muted)'}" letter-spacing=".06em">${opts.label}</text>`;y0+=14}
   const pill=(x,w,dash,op)=>`<rect x="${x}" y="${y0+6}" width="${w}" height="30" rx="${dash?8:15}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" opacity="${op}"${dash?' stroke-dasharray="3 3"':''}/>`;
   for(let i=0;i<16;i++){const a=get(i),b=get(i+1),op=opts.fade(i)?.45:1;
     if(a.k===0&&b&&b.blk===a.blk&&b.k===1&&b.bar===a.bar){if(i<15)h+=pill(X0+i*W+3,2*W-6,0,op);else if(opts.wrap)h+=pill(X0+15*W+3,W-3,1,op)+pill(X0,W-3,1,1)}}
@@ -1912,7 +1913,8 @@ const SR_MODE_W=[2,3,1,1,3,2,.5]; // Ionian..Locrian: funk favours Dorian and Mi
 // Cells are one beat (four 16ths): T thumb, t dead thumb, P pop, p dead pop, S left-hand slap, H O hammer-on, - rest.
 // These are general traits of each player's approach, not transcriptions of their songs.
 const SR_STYLES={
-  mix:{name:'Mixed (building blocks)'},
+  mix:{name:'Mixed (no particular player)',modes:{0:2,1:3,2:1,3:1,4:3,5:2,6:.5},shape:'ABAC',
+    A:['T-TP','TTP-','THOP','T-P-','TtPt','T--P','HOTP'],B:['STPT','TPTT','-TP-','PTTP','HOTP','STP-','T-tP','--PT','TP-P','TtTP','-PTP'],oct:.5,ghost:.15,chrom:.1},
   graham:{name:'Larry Graham: thump & pluck',tempo:100,beat:'funk:3',modes:{4:3,1:2,0:1},shape:'ABAC',
     A:['T---','T-P-','T--P','T-T-','T-tP'],B:['--P-','T-tP','-TP-','P---','T-TP','--T-','tTP-','-P-T'],oct:.8,ghost:.1,thumbDeg:{0:6,7:2,10:2,5:1},chrom:.05},
   king:{name:'Mark King: machine-gun 16ths',tempo:118,beat:'funk:0',modes:{1:3,5:2,0:1},shape:'AAAB',
@@ -1938,46 +1940,67 @@ function genStyledRiff(st){
   const spots=[];for(let s=0;s<4;s++)for(const f of [0,lo,lo+1,lo+2,lo+3]){const m=TUNING.bass[s]+f;if(inS(m))spots.push({s,f,m})}
   const thumbs=spots.filter(p=>p.s<=1),pops=spots.filter(p=>p.s>=2&&p.m>rootM+4);
   const tw=ST.thumbDeg||{0:5,7:2.5},pw=ST.popDeg||{0:4,10:2,7:2,3:1.5,4:1.5};
-  const tW=p=>(tw[deg(p.m)]||.7)*(p.f===0?.7:1)*(p.m<rootM-7?.4:1);
-  const pW=p=>(pw[deg(p.m)]||.7)*(Math.abs(p.m-rootM-12)<=5?1.4:.7);
+  // the response leans on another chord tone (4th or 5th) before coming home to the root
+  const respC=[7,5].find(d=>sc.includes((root+d)%12));
+  let center=0;
+  const tW=p=>(deg(p.m)===center?(center?8:1)*(tw[0]||5)/(center?2:1):(tw[deg(p.m)]||.7))*(p.f===0?.7:1)*(p.m<rootM-7?.4:1);
+  const pW=p=>(pw[deg(p.m)]||.7)*(center&&deg(p.m)===center?3:1)*(Math.abs(p.m-rootM-12)<=5?1.4:.7);
   const hams=spots.filter(p=>p.s<=2&&p.f>0).map(p=>{const o=spots.find(q=>q.s===p.s&&q.f>p.f&&q.f-p.f<=2);return o?{h:p,o}:null}).filter(Boolean);
   const pedal=ST.pedal?(inS(28)||st==='claypool'?{s:0,f:0,m:28}:{s:1,f:0,m:33}):null;
-  // a cell with H/O needs a hammer-on available
   const okCell=c=>hams.length||!/H/.test(c);
   const pickCell=(L,first)=>{const c=L.filter(c=>okCell(c)&&(!first||c[0]==='T'));return (c.length?c:['T-P-'])[rnd(c.length||1)]};
-  const shape=ST.shape,cellOf={};
-  const labels=[];for(let b=0;b<+SR.bars;b++)for(let i=0;i<4;i++){let L=shape[i];if(b>0&&i===3)L='D'+b;labels.push(L)}
-  for(const L of labels)if(!cellOf[L])cellOf[L]=L==='A'?pickCell(ST.A,true):pickCell(ST.B.concat(ST.A),false);
-  // spacing setting: "None" fills rests with dead thumbs, "Lots" turns some dead notes into rests
   const spaceAdj=c=>SR.space===0?c.replace(/-/g,()=>Math.random()<.6?'t':'-'):SR.space===2?c.replace(/[tp]/g,()=>Math.random()<.6?'-':'t'):c;
-  for(const L in cellOf)if(L!=='A')cellOf[L]=spaceAdj(cellOf[L]);
+  const shape=ST.shape,nb=+SR.bars||1;
+  // Phrase plan. 1 bar: call answered inside the bar. 2 bars: call | response. 4 bars: call | response | call | final response.
+  // Response cells reuse the call's rhythm (an echo) on new notes; the last beat of each bar is its own ending.
+  const plan=[];
+  for(let b=0;b<nb;b++){const resp=nb>1&&b%2===1,fin=nb===4&&b===3;
+    for(let i=0;i<4;i++){let L=shape[i],rhythm=L;
+      if(i===3)L=rhythm=nb===1?shape[3]:resp?(fin?'F':'E'):'C';
+      plan.push({L:(resp&&i<3?'r':'')+L,rhythm,resp,end:i===3,bar:b,last:b===nb-1&&i===3})}}
+  const cellOf={};
+  for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm==='A'?pickCell(ST.A,true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
+  // the final ending gets a busier fill
+  if(cellOf.F){const busy=ST.B.concat(ST.A).filter(c=>okCell(c)&&(c.match(/[TPHO]/g)||[]).length>=3);if(busy.length)cellOf.F=busy[rnd(busy.length)]}
   const memo={},steps=[];let lastT=rootM;
-  labels.forEach((L,bi)=>{
-    if(!memo[L]){const cell=cellOf[L],out=[];
-      for(let k=0;k<4;k++){const c=cell[k],first=L==='A'&&k===0;
+  plan.forEach((pl,bi)=>{
+    center=pl.resp?respC||0:0;
+    if(!memo[pl.L]){const cell=cellOf[pl.rhythm],out=[];
+      for(let k=0;k<4;k++){const c=cell[k],first=(pl.L==='A'||pl.L==='rA')&&k===0;
         if(c==='-'){out.push({s:'-'});continue}
         if(c==='S'){out.push({s:'S',muted:true});continue}
         if(c==='t'||c==='p'){out.push({s:c.toUpperCase(),muted:true});continue}
-        if(c==='H'){const hm=first?hams.find(x=>x.h.m===rootM)||slPick(hams,hams.map(x=>tW(x.h))):slPick(hams,hams.map(x=>tW(x.h)));
+        if(c==='H'){const want=first?(pl.resp?rootM+(center||0)-(center>6?12:0):rootM):null;
+          const hm=(want!=null&&hams.find(x=>deg(x.h.m)===deg(want)))||slPick(hams,hams.map(x=>tW(x.h)));
           out.push({s:'H',m:hm.h.m,pos:{s:hm.h.s,f:hm.h.f}},{s:'O',m:hm.o.m,pos:{s:hm.o.s,f:hm.o.f}});k++;lastT=hm.h.m;continue}
-        if(c==='T'){let p=first?thumbs.find(q=>q.m===rootM)||thumbs[0]:(pedal&&Math.random()<ST.pedal?pedal:slPick(thumbs,thumbs.map(tW)));
+        if(c==='T'){let p;
+          if(first){const d=pl.resp?center:0;p=thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||thumbs.find(q=>q.m===rootM)||thumbs[0]}
+          else p=pedal&&Math.random()<ST.pedal?pedal:slPick(thumbs,thumbs.map(tW));
           lastT=p.m;out.push({s:'T',m:p.m,pos:{s:p.s,f:p.f},muted:!first&&Math.random()<ST.ghost});continue}
         if(c==='P'){let p=null;
-          if(Math.random()<ST.oct){const q=posFor(lastT===28||lastT===33?lastT+12:lastT+12,[2,3],lo,hi);if(q)p={...q,m:lastT+12}}
+          if(Math.random()<ST.oct){const q=posFor(lastT+12,[2,3],lo,hi);if(q)p={...q,m:lastT+12}}
           if(!p&&ST.tritone&&Math.random()<ST.tritone){const q=posFor(rootM+18,[2,3],lo,hi);if(q)p={...q,m:rootM+18}}
           if(!p)p=pops.length?slPick(pops,pops.map(pW)):slPick(thumbs,thumbs.map(tW));
           out.push({s:'P',m:p.m,pos:{s:p.s,f:p.f},muted:Math.random()<ST.ghost*.6});continue}
       }
-      memo[L]=out.slice(0,4)}
-    memo[L].forEach((x,k)=>steps.push(Object.assign({},x,{blk:bi*2+(k>>1),k:k&1,bar:Math.floor(bi/4)})));
+      memo[pl.L]=out.slice(0,4)}
+    memo[pl.L].forEach((x,k)=>steps.push(Object.assign({},x,{blk:bi*2+(k>>1),k:k&1,bar:pl.bar})));
   });
+  // endings: a call ends "open" (not on the root); a response, and the whole riff, comes home to the root
+  const setNote=(x,m)=>{const q=posFor(m,x.s==='P'?[2,3]:[0,1,2],lo,hi);if(q){x.m=m;x.pos=q;return true}return false};
+  if(nb>1)for(let b=0;b<nb;b++){
+    const seg=steps.slice(b*16,b*16+16),lastI=seg.map((x,i)=>x.m!=null&&!x.muted&&x.s!=='H'&&x.s!=='O'?i:-1).filter(i=>i>=0).pop();if(lastI==null)continue;
+    const x=seg[lastI];
+    if(b%2===1){if(deg(x.m)!==0)setNote(x,x.s==='P'?rootM+12:rootM)}
+    else if(deg(x.m)===0){const opts=[10,11,7,3,4].filter(d=>sc.includes((root+d)%12));for(const d of opts){if(setNote(x,x.s==='P'?rootM+12+d-(d>7?12:0):rootM+d-(d>7?12:0)))break}}
+  }
   // chromatic approach: a thumb on the last 16th before a beat slides in from a half step below the next thumb
   for(let i=3;i<steps.length-1;i+=4){const a=steps[i],b=steps[i+1];
     if(a.s==='T'&&!a.muted&&b.s==='T'&&!b.muted&&Math.random()<ST.chrom&&b.pos.f>0){a.m=b.m-1;a.pos={s:b.pos.s,f:b.pos.f-1}}}
   return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi],style:st};
 }
 function genSlapRiff(){
-  if(SR.style&&SR.style!=='mix'&&SR_STYLES[SR.style])return genStyledRiff(SR.style);
+  return genStyledRiff(SR_STYLES[SR.style]?SR.style:'mix');
   const root=SR.key==='random'?rnd(12):+SR.key,mode=SR.mode==='random'?slPick([0,1,2,3,4,5,6],SR_MODE_W):+SR.mode;
   const sc=scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
   // root on the E string if it sits in frets 0-7, else on the A string; a 4-fret box around it
@@ -2018,8 +2041,9 @@ function genSlapRiff(){
 }
 function renderSR(){
   const r=SR.riff||(SR.riff=genSlapRiff()),st=r.steps,nb=st.length/16,nm=namesFor(r.root,r.mode);
-  let h=`<svg viewBox="0 0 352 ${108*nb}" role="img">`;
-  for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*108,{RH:108,wrap:false,fade:()=>false,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:SR.showNames?nm:null});
+  const RH=nb>1?122:108,LB=['CALL','RESPONSE','CALL','RESPONSE (ENDING)'];
+  let h=`<svg viewBox="0 0 352 ${RH*nb}" role="img">`;
+  for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{RH:108,wrap:false,fade:()=>false,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:SR.showNames?nm:null,label:nb>1?`BAR ${b+1} · ${LB[b]}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
   $('srStick').innerHTML=h+'</svg>';
   $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}`;
   const cur=slKind==='riff'&&slPlayingStep>=0?st[slPlayingStep]:null;
@@ -2060,7 +2084,7 @@ function renderSRSaved(){
   const cur=SR.riff&&srSaved.find(s=>s.riff.id===SR.riff.id);$('srSave').querySelector('span').textContent=cur?'Saved ✓':'Save';$('srSave').classList.toggle('saved',!!cur);
   if(!srSaved.length){L.innerHTML='<li style="border:0;padding:0;display:block"><p class="empty">Slap riffs you save land here, with their tempo and drums.</p></li>';return}
   const BN=k=>{const [st,i]=String(k).split(':');const B=(BEATS[st]||[])[+i];return B?st[0].toUpperCase()+st.slice(1)+' '+B.name:''};
-  L.innerHTML=srSaved.map((s,i)=>{const meta=[srTitle(s.riff),s.style&&s.style!=='mix'?SR_STYLES[s.style].name.split(':')[0]+' style':'',`${s.tempo} bpm`,s.back==='drums'?'Drums: '+BN(s.beat):s.back==='click'?'Click':'No drums',s.riff.steps.length>16?'2 bars':'1 bar'].filter(Boolean).join(' · ');
+  L.innerHTML=srSaved.map((s,i)=>{const meta=[srTitle(s.riff),s.style&&s.style!=='mix'?SR_STYLES[s.style].name.split(':')[0]+' style':'',`${s.tempo} bpm`,s.back==='drums'?'Drums: '+BN(s.beat):s.back==='click'?'Click':'No drums',s.riff.steps.length>16?s.riff.steps.length/16+' bars':'1 bar'].filter(Boolean).join(' · ');
     const name=srRen===i?`<input id="srRenIn" value="${esc(s.title)}" maxlength="40" aria-label="Riff name">`:`<span class="nm"><b>${esc(s.title)}</b><button class="ren" data-ren="${i}">Rename</button></span>`;
     return `<li><div>${name}<span class="muted">${esc(meta)}</span></div><button class="btn" data-load="${i}">Play</button><button class="btn x${srConfirm===i?' sure':''}" data-del="${i}" aria-label="Delete">${srConfirm===i?'Delete?':'✕'}</button></li>`}).join('');
   const inp=$('srRenIn');if(inp){inp.focus();inp.select();const done=()=>{if(srRen<0)return;const v=inp.value.trim();if(v)srSaved[srRen].title=v;srRen=-1;srStore();renderSRSaved()};inp.onblur=done;inp.onkeydown=e=>{if(e.key==='Enter')inp.blur()}}
