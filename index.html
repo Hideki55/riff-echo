@@ -178,6 +178,10 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 .tabtog button{justify-content:center;text-align:center;line-height:1.15;padding:4px 6px!important;min-height:48px!important;border-radius:16px!important;font-size:13.5px!important;gap:5px!important}
 .tabtog button svg{flex:none;width:16px;height:16px}
 .crreps{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 0;font-size:14px;font-weight:800;color:var(--muted);position:relative}
+.crreps{flex-wrap:wrap}
+.crauto{font:inherit;font-size:13.5px;font-weight:800;min-height:38px;padding:0 12px;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.crauto[aria-pressed=true]{background:var(--mint);border-color:var(--mint);color:#fff}
+.crauto:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .crseg{display:flex;background:#fff;border-radius:12px;padding:3px;box-shadow:inset 0 0 0 2px var(--line)}
 .crseg button{font:inherit;font-weight:800;min-width:40px;min-height:36px;border:0;border-radius:9px;background:transparent;color:var(--ink);cursor:pointer}
 .crseg button[aria-pressed=true]{background:var(--ink);color:#fff}
@@ -271,7 +275,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <div class="bubbles" id="leds" aria-live="polite"></div>
     <div class="att off" id="att"><span id="attL">Attempt</span><div class="bar"><i id="attFill"></i></div><span id="attT"></span></div>
     <div class="tabtog"><button id="loopBtn" aria-pressed="false" aria-label="Loop mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9a3 3 0 0 1 3-3h12M16 3l3 3-3 3M20 13v2a3 3 0 0 1-3 3H5M8 21l-3-3 3-3"/></svg><span>Off</span></button><button id="drumBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v6c0 1.7 3.6 3 8 3s8-1.3 8-3V9M15 3l5 4M9 3 4 7"/></svg><span>Drums</span></button><button id="tabBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 10h18M3 14h18M3 18h18"/></svg><span>Fretboard</span></button></div>
-    <div class="crreps" id="crRow" hidden><span>Plays before your turn</span><span class="crseg" id="crSeg"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button></span></div>
+    <div class="crreps" id="crRow" hidden><span>Plays before your turn</span><span class="crseg" id="crSeg"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button></span><button class="crauto" id="crAuto" aria-pressed="false">New riff when you nail it</button></div>
     <div class="tabbox" id="riffTab" hidden><div class="tl"><span id="riffLbl">Riff on the fretboard</span><span><span id="handLbl"></span><button class="alt" id="altBtn" hidden>Position 1/2</button></span></div><div id="riffTabSvg"></div></div>
     <p class="status" id="status">Tap Listen so the app can hear you.</p>
     <div class="dial" aria-label="What the app hears">
@@ -443,7 +447,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-2250';
+const APP_VERSION='2026.11.26-2257';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -740,7 +744,7 @@ const store={lastErr:'',get(k,f){try{const v=localStorage.getItem(k);return v?JS
 function showErr(msg){let b=document.getElementById('errBanner');if(!b){b=document.createElement('div');b.id='errBanner';b.style.cssText='position:fixed;top:max(8px,env(safe-area-inset-top));left:8px;right:8px;z-index:50;background:#a1271d;color:#fff;border-radius:12px;padding:10px 12px;font:600 13px/1.35 system-ui;box-shadow:0 6px 20px rgba(0,0,0,.3)';b.onclick=()=>b.remove();document.body.appendChild(b)}b.textContent='Something went wrong (tap to hide): '+msg}
 window.addEventListener('error',e=>showErr((e.message||'error')+(e.lineno?' @'+e.lineno:'')));
 window.addEventListener('unhandledrejection',e=>{const r=e.reason;if(r&&/decode|abort|NotAllowed/i.test(String(r.name||r)))return;showErr(String(r&&r.message||r))});
-const S=Object.assign({crReps:1,pauseMic:false,listenBoost:2.2,vol:1.2,drumVol:.55,beats:{},practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
+const S=Object.assign({crAuto:false,crReps:1,pauseMic:false,listenBoost:2.2,vol:1.2,drumVol:.55,beats:{},practice:'riff',style:'any',drums:false,bestStreak:0,sounds:{bass:'finger',guitar:'clean',voice:'choir'},timer:true,holdFirst:false,tol:70,instrument:'bass',mode:'random',key:'random',length:'medium',tempo:90,sens:6,showKey:false,showNotes:false,drone:false,octUp:true,autoNext:false},store.get('riffecho.settings',{}));
 let saved=store.get('riffecho.saved',[]),renaming=-1,confirmDel=-1,toastT=null;
 S.sounds=Object.assign({bass:'finger',guitar:'clean',voice:'choir'},S.sounds||{});
 
@@ -1295,7 +1299,9 @@ async function playRiff(contAt){
     setStatus(reps>1?`Listen… ${passNo} of ${reps}`:'Listen…');
     const myCycle=crCycle;
     setTimeout(()=>{if(loopMode===2&&riff===myRiff&&!done&&myCycle===crCycle)setStatus(!listening?'Your turn! (tap Listen so the app can hear you)':micPaused?'Your turn! Mic is switching on…':'Your turn!')},Math.max(0,(muteUntil-ctx.currentTime)*1000));
-    loopTimer=setTimeout(()=>{loopTimer=null;if(loopMode===2&&riff===myRiff)playRiff(next)},Math.max(0,(next-ctx.currentTime-.2)*1000));
+    loopTimer=setTimeout(()=>{loopTimer=null;if(loopMode!==2||riff!==myRiff)return;
+      if(S.crAuto&&done&&!riff.single){const keep=loopMode;loadRiff(genRiff(S),false);loopMode=keep;renderToggles()}
+      playRiff(next)},Math.max(0,(next-ctx.currentTime-.2)*1000));
     return;
   }
   if(listening)setStatus('Listen…');
@@ -1382,7 +1388,7 @@ function heard(pc,m){
     }
     const secs=Math.round((performance.now()-startT)/1000);
     renderAll();setStatus(`Nailed it! ${tries} ${tries===1?'try':'tries'}, ${secs}s. Try again or get a new riff.`);celebrate(true);
-    if(loopMode===2)setStatus(`Nailed it! ${tries} ${tries===1?'try':'tries'}. Again on the next pass…`);
+    if(loopMode===2)setStatus(`Nailed it! ${tries} ${tries===1?'try':'tries'}. ${S.crAuto?'New riff coming up…':'Again on the next pass…'}`);
     else if(S.autoNext)setTimeout(()=>{if(done)newRiff()},2000);
     return;
   }
@@ -1403,7 +1409,7 @@ function celebrate(big){
     c.appendChild(p);setTimeout(()=>p.remove(),1400)}
   const h=document.querySelector('.hero');h.classList.remove('cheer');void h.offsetWidth;h.classList.add('cheer');
 }
-function renderToggles(){if($('crRow')){$('crRow').hidden=loopMode!==2;press($('crSeg'),S.crReps||1)}if(typeof renderPlayBtn==='function'&&$('playBtn'))renderPlayBtn();const lb=$('loopBtn');lb.setAttribute('aria-pressed',loopMode>0);lb.querySelector('span').textContent=['Off','Loop','Call & Response'][loopMode];$('drumBtn').setAttribute('aria-pressed',!!S.drums)}
+function renderToggles(){if($('crRow')){$('crRow').hidden=loopMode!==2;press($('crSeg'),S.crReps||1);$('crAuto').setAttribute('aria-pressed',!!S.crAuto)}if(typeof renderPlayBtn==='function'&&$('playBtn'))renderPlayBtn();const lb=$('loopBtn');lb.setAttribute('aria-pressed',loopMode>0);lb.querySelector('span').textContent=['Off','Loop','Call & Response'][loopMode];$('drumBtn').setAttribute('aria-pressed',!!S.drums)}
 function renderSounds(){
   const inst=S.instrument;
   const st=s=>{const f=SAMPLED[inst+':'+s.id];if(!f)return '';const any=[...sampleBuf.keys()].some(k=>k.startsWith(f));return any?'':sampleState[f]==='loading'||sampleState[f]==='fetched'?' · loading…':''};
@@ -1506,6 +1512,7 @@ $('edSave').onclick=()=>{
   loadRiff(r,true);window.scrollTo({top:0,behavior:'smooth'});
 };
 pick($('crSeg'),v=>{S.crReps=+v;saveS();renderToggles()});
+$('crAuto').onclick=()=>{S.crAuto=!S.crAuto;saveS();renderToggles()};
 $('loopBtn').onclick=()=>{
   loopMode=(loopMode+1)%3;renderToggles();
   if(loopTimer){clearTimeout(loopTimer);loopTimer=null}
