@@ -428,7 +428,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.26-1448';
+const APP_VERSION='2026.11.26-2047';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -692,6 +692,30 @@ function genSingle(o,prevPc){
   }
   return genSingle(o,-1);
 }
+// Voice note tracker. Sung lines glide from note to note, so averaging blindly blends neighbours
+// into phantom in-between notes. This splits the line into notes at pitch jumps, ignores each
+// note's glide-in, refuses to decide while the pitch is still sweeping, and makes unexpected
+// notes wait longer than expected ones before they count.
+function VoiceTracker(){this.reset()}
+VoiceTracker.prototype.reset=function(){this.win=[];this.fast=[];this.jump=0;this.skip=0;this.cand=null;this.n=0};
+VoiceTracker.prototype.silence=function(){this.reset()};
+VoiceTracker.prototype.feed=function(mf,expected,tol,lastPc){
+  this.fast.push(mf);if(this.fast.length>4)this.fast.shift();
+  if(this.win.length>=5){const c=pitchCentre(this.win),f=median(this.fast);
+    if(Math.abs(f-c)>.75){if(++this.jump>=3){this.win=[];this.jump=0;this.skip=2;this.cand=null;this.n=0}}else this.jump=0}
+  if(this.skip>0){this.skip--;return null}
+  this.win.push(mf);if(this.win.length>14)this.win.shift();
+  if(this.win.length<6)return null;
+  const s=[...this.win].sort((a,b)=>a-b),spread=s[Math.round(.9*(s.length-1))]-s[Math.round(.1*(s.length-1))];
+  const ctr=pitchCentre(this.win),near=((Math.round(ctr)%12)+12)%12;
+  // still closest to the note just sung: don't let the tolerance credit it as the next note
+  const d=decideVoice(ctr,near===lastPc?[]:expected,tol);
+  if(spread>1.9||Math.abs(d.cents)>Math.max(50,tol)){this.cand=null;this.n=0;return {show:d}}
+  if(d.pc===this.cand)this.n++;else{this.cand=d.pc;this.n=1}
+  const need=expected.includes(d.pc)?(this.win.length>=8?3:4):9;
+  if(this.win.length<8&&!expected.includes(d.pc))return {show:d};
+  return {show:d,hit:this.n===need?d.pc:null,midi:Math.round(ctr-d.cents/100)};
+};
 /*CORE-END*/
 
 const $=id=>document.getElementById(id);
@@ -724,7 +748,7 @@ $('keyWheel').innerHTML=FIFTHS.map((pc,i)=>{const a=i/12*2*Math.PI,x=50+40*Math.
   const n=SHARP[pc]===FLAT[pc]?SHARP[pc]:([1,3,8,10].includes(pc)?FLAT[pc]:SHARP[pc]);
   return `<button class="wk" data-v="${pc}" style="left:${x}%;top:${y}%">${n}</button>`}).join('')+`<button class="wk any" data-v="random">Any<br>key</button>`;
 
-let riff=null,target=[],played=[],playedM=[],livePos=[],groups=[],riffPos=[],progress=0,tries=0,done=false,startT=0,keyPeek=false,tabPeek=false,liveBase=1,playIdx=-1,playSched=null,vbuf=[],holdTimer=null,firstFound=false,attemptStart=null,loopMode=0,loopTimer=null,alts=[],altIdx=0,streak=0;
+let riff=null,target=[],played=[],playedM=[],livePos=[],groups=[],riffPos=[],progress=0,tries=0,done=false,startT=0,keyPeek=false,tabPeek=false,liveBase=1,playIdx=-1,playSched=null,vbuf=[],vt=new VoiceTracker(),holdTimer=null,firstFound=false,attemptStart=null,loopMode=0,loopTimer=null,alts=[],altIdx=0,streak=0;
 const ed={notes:[],win:0,oct:3,len:2};
 const LENS=[1,2,3,4,8],LENNAME={1:'16th',2:'8th',3:'dotted 8th',4:'quarter',8:'half'};
 let ctx=null,analyser=null,stream=null,buf=null,listening=false,muteUntil=0,wake=null;
@@ -1125,7 +1149,7 @@ function playAnim(){
   requestAnimationFrame(playAnim);
 }
 function riffSecs(){const e=60/S.tempo/(riff.unit||2);return Math.max(...riff.notes.map(n=>n.start+n.dur))*e}
-function attemptLen(){return riffSecs()*1.25+0.6}
+function attemptLen(){return riff&&riff.instrument==='voice'?riffSecs()*2+2.5:riffSecs()*1.25+0.6}
 function renderAtt(){
   const a=$('att');a.hidden=!timerOn();if(!timerOn())return;
   const L=attemptLen(),el=attemptStart===null?0:Math.min(L,(performance.now()-attemptStart)/1000);
@@ -1190,7 +1214,7 @@ async function playRiff(contAt){
     o.connect(g);g.connect(OUT());o.start(t0);o.stop(end+.35);end+=.3;
   }
   OUTBUS=null;setTimeout(()=>{const i=buses.indexOf(bus);if(i>=0){buses.splice(i,1);try{bus.disconnect()}catch(e){}}},Math.max(0,(end-ctx.currentTime+1.5)*1000));
-  muteUntil=Math.max(song?muteUntil:0,end+.35);cand=null;candN=0;renderPlayBtn();
+  muteUntil=Math.max(song?muteUntil:0,end+.35);cand=null;candN=0;vt.reset();renderPlayBtn();
   const myRiff=riff;
   if(song){
     const next=t0+L16*e16;
@@ -1244,19 +1268,14 @@ function loop(){
   const lvl=v=>Math.max(0,Math.min(100,(Math.log10(v)+3.6)/3.3*100));
   $('level').style.width=lvl(rms)+'%';$('gate').style.left=lvl(gate)+'%';
   const muted=ctx.currentTime<muteUntil;
-  if(muted||rms<gate){cand=null;candN=0;vbuf=[];if(++silentN>12){$('noteBig').textContent='–';setNeedle(0)}requestAnimationFrame(loop);return}
+  if(muted||rms<gate){cand=null;candN=0;vbuf=[];vt.silence();if(++silentN>12){$('noteBig').textContent='–';setNeedle(0)}requestAnimationFrame(loop);return}
   silentN=0;
   const isV=S.instrument==='voice';
   const r=detectPitch(buf,ctx.sampleRate,isV?70:S.instrument==='guitar'?70:30,isV?1100:S.instrument==='guitar'?1400:500);
   if(r&&isV){
-    vbuf.push(69+12*Math.log2(r.freq/440));if(vbuf.length>14)vbuf.shift();
-    if(vbuf.length>=12){
-      const med=pitchCentre(vbuf),exp=[];if(riff&&!done){if(progress<target.length)exp.push(target[progress]);exp.push(target[0])}
-      const d=decideVoice(med,exp,S.tol);
-      $('noteBig').textContent=names()[d.pc];setNeedle(d.cents*0.5);
-      if(Math.abs(d.cents)<=Math.max(50,S.tol)){if(d.pc===cand)candN++;else{cand=d.pc;candN=1}if(candN===3)heard(d.pc,Math.round(med-d.cents/100))}
-      else{cand=null;candN=0}
-    }
+    const exp=[];if(riff&&!done){if(progress<target.length)exp.push(target[progress]);exp.push(target[0])}
+    const res=vt.feed(69+12*Math.log2(r.freq/440),exp,S.tol,played.length?played[played.length-1]:-1);
+    if(res){$('noteBig').textContent=names()[res.show.pc];setNeedle(res.show.cents*0.5);if(res.hit!=null)heard(res.hit,res.midi)}
   }else if(r){
     const mf=69+12*Math.log2(r.freq/440),m=Math.round(mf),cents=(mf-m)*100,pc=((m%12)+12)%12;
     $('noteBig').textContent=names()[pc];setNeedle(cents);
