@@ -453,7 +453,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <div class="trow"><span class="tl2">Tempo</span><div class="tempo"><button class="round" id="slTDown" aria-label="Slower">–</button><div class="bpm"><span class="n" id="slTempoVal">80</span><small>bpm</small></div><button class="round" id="slTUp" aria-label="Faster">+</button></div></div>
       <input type="range" id="slTempo" min="40" max="140" step="2" aria-label="Tempo">
       <div class="fields">
-        <label class="fld"><span>Groove length</span><select id="slBars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option></select></label>
+        <label class="fld"><span>Groove length</span><select id="slBars"><option value="1">1 beat (repeats 4×)</option><option value="2">2 beats (repeats 2×)</option><option value="4">4 beats (full bar)</option></select></label>
         <label class="fld"><span>Dead-note tone</span><select id="slTone"><option value="thunk">Thunky</option><option value="click">Clicky</option></select></label>
         <label class="fld"><span>Backing</span><select id="slBack"><option value="drums">Drums</option><option value="click">Click only</option><option value="none">Nothing</option></select></label>
         <label class="fld"><span>Drum beat</span><select id="slBeat"></select></label>
@@ -509,7 +509,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0105';
+const APP_VERSION='2026.11.27-0114';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1663,15 +1663,16 @@ const SLD={tempo:80,blocks:SL_EXAMPLE.slice(),bm:0,ss:0,back:'drums',beat:0,soun
 S.slap=Object.assign({},SLD,S.slap||{});
 const SL=S.slap;
 let slGen=0,slBus=null,slTimer=null,slRaf=0,slSteps=[],slBars=0,slPlayingStep=-1,slNoise=null;
-const slBarsN=()=>[1,2,4].includes(+SL.bars)?+SL.bars:1;
+// Groove length in beats (1, 2 or 4). One yardstick = one bar of 4/4; shorter grooves repeat across it.
+const slLen=()=>[1,2,4].includes(+SL.len)?+SL.len:4;
 function slapRandom(nb){
-  nb=nb||slBarsN();const use=SL.use.length?SL.use:Object.keys(SL_BLOCKS),out=[];
-  for(let i=0;i<8*nb;i++){let b,tries=0;do{b=use[rnd(use.length)];tries++}while(tries<20&&use.length>1&&(i>=2&&out[i-1]===b&&out[i-2]===b||i%8===0&&b[0]!=='T'&&b[0]!=='H'&&use.some(x=>x[0]==='T'||x[0]==='H')));out.push(b)}
-  if(use.length>2&&new Set(out).size<3)return slapRandom(nb);
+  const n=2*(nb||slLen()),use=SL.use.length?SL.use:Object.keys(SL_BLOCKS),out=[];
+  for(let i=0;i<n;i++){let b,tries=0;do{b=use[rnd(use.length)];tries++}while(tries<20&&use.length>1&&(i>=2&&out[i-1]===b&&out[i-2]===b||i===0&&b[0]!=='T'&&b[0]!=='H'&&use.some(x=>x[0]==='T'||x[0]==='H')||n===2&&i===1&&b===out[0]));out.push(b)}
+  if(n>=8&&use.length>2&&new Set(out).size<3)return slapRandom(nb);
   return out;
 }
-function slFit(){const n=8*slBarsN();if(SL.blocks.length>n)SL.blocks=SL.blocks.slice(0,n);else if(SL.blocks.length<n)SL.blocks=SL.blocks.concat(SL.preset==='wellington'?Array.from({length:n-SL.blocks.length},(_,i)=>SL_EXAMPLE[i%8]):slapRandom(n/8).slice(SL.blocks.length));SL.bm%=n;SL.ss%=2*n}
-// steps: 16 per bar {s:sound letter, blk:block index, k:0/1 within block, muted}
+function slFit(){const n=2*slLen();if(SL.blocks.length>n)SL.blocks=SL.blocks.slice(0,n);else if(SL.blocks.length<n)SL.blocks=SL.blocks.concat(SL.preset==='wellington'?SL_EXAMPLE.slice(SL.blocks.length,n):slapRandom(n/2).slice(SL.blocks.length));SL.bm%=n;SL.ss%=2*n}
+// steps: one per 16th of the groove {s:sound letter, blk:block index, k:0/1 within block, muted}
 function slapSteps(){
   slFit();const n=SL.blocks.length,L=2*n,flat=[];
   for(let i=0;i<n;i++){const bi=(i+SL.bm)%n;SL_BLOCKS[SL.blocks[bi]].forEach((s,k)=>flat.push({s,blk:bi,k,code:SL.blocks[bi]}))}
@@ -1679,23 +1680,18 @@ function slapSteps(){
   for(const x of out){x.muted=SL.sound==='muted'?true:SL.sound==='notes'?false:!(x.code==='HO'||x.code==='TT')}
   return out;
 }
-// The yardstick always shows 4 bars; 1- and 2-bar grooves repeat (repeats drawn lighter).
-let slPlayRow=-1;
 function renderYard(stIn){
-  const st=stIn||slapSteps(),L=st.length,W=20,X0=16,RH=94,cnt=['1','e','&','a'],COL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var(--mint)'};
-  let h=`<svg viewBox="0 0 352 ${RH*4}" role="img">`;
-  const pill=(x,y,w,dash)=>`<rect x="${x}" y="${y}" width="${w}" height="28" rx="${dash?8:14}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5"${dash?' stroke-dasharray="3 3"':''}/>`;
-  for(let r=0;r<4;r++){const y0=r*RH,rep=r*16>=L&&r!==slPlayRow,op=rep?.45:1;
-    h+=`<g opacity="${op}"><text x="2" y="${y0+49}" font-size="10" font-weight="800" fill="var(--muted)">${r+1}</text>`;
-    for(let i=0;i<16;i++){const gi=(r*16+i)%L,a=st[gi],b=st[(gi+1)%L];
-      if(a.k===0&&b.blk===a.blk&&b.k===1){if(i<15)h+=pill(X0+i*W+3,y0+5,2*W-6);else h+=pill(X0+15*W+3,y0+5,W-3,1)+pill(X0,((r+1)%4)*RH+5,W-3,1)}}
-    h+=`<line x1="${X0}" y1="${y0+46}" x2="${X0+16*W}" y2="${y0+46}" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>`;
-    for(let i=0;i<16;i++){const gi=(r*16+i)%L,x=X0+i*W+W/2,len=i%4===0?22:i%2===0?14:8,s=st[gi],on=r===slPlayRow&&gi===slPlayingStep;
-      h+=`<g data-i="${gi}"><rect x="${X0+i*W}" y="${y0}" width="${W}" height="${RH}" fill="${on?'rgba(255,201,60,.4)':'transparent'}"/>`;
-      h+=`<line x1="${x}" y1="${y0+46}" x2="${x}" y2="${y0+46+len}" stroke="var(--ink)" stroke-width="${i%4===0?2.5:1.6}"/>`;
-      h+=`<circle cx="${x}" cy="${y0+19}" r="8" fill="${s.muted?'#fff':COL[s.s]}" stroke="${COL[s.s]}" stroke-width="2.4"/><text x="${x}" y="${y0+23.5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="${s.muted?COL[s.s]:'#fff'}">${s.s}</text>`;
-      h+=`<text x="${x}" y="${y0+88}" text-anchor="middle" font-size="${i%4===0?14:11}" font-weight="800" fill="${i%4===0?'var(--ink)':'var(--muted)'}">${i%4===0?i/4+1:cnt[i%4]}</text></g>`}
-    h+='</g>'}
+  const st=stIn||slapSteps(),L=st.length,W=20,X0=16,cnt=['1','e','&','a'],COL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var(--mint)'};
+  let h=`<svg viewBox="0 0 352 108" role="img">`;
+  const pill=(x,w,dash,op)=>`<rect x="${x}" y="6" width="${w}" height="30" rx="${dash?8:15}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" opacity="${op}"${dash?' stroke-dasharray="3 3"':''}/>`;
+  for(let i=0;i<16;i++){const a=st[i%L],b=st[(i+1)%L],op=i>=L?.45:1;
+    if(a.k===0&&b.blk===a.blk&&b.k===1){if(i<15)h+=pill(X0+i*W+3,2*W-6,0,op);else h+=pill(X0+15*W+3,W-3,1,op)+pill(X0,W-3,1,1)}}
+  h+=`<line x1="${X0}" y1="52" x2="${X0+16*W}" y2="52" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>`;
+  for(let i=0;i<16;i++){const x=X0+i*W+W/2,len=i%4===0?24:i%2===0?16:9,s=st[i%L],on=i===slPlayingStep,op=i>=L&&!on?.45:1;
+    h+=`<g data-i="${i%L}"><rect x="${X0+i*W}" y="0" width="${W}" height="108" fill="${on?'rgba(255,201,60,.4)':'transparent'}"/>`;
+    h+=`<line x1="${x}" y1="52" x2="${x}" y2="${52+len}" stroke="var(--ink)" stroke-width="${i%4===0?2.5:1.6}"/>`;
+    h+=`<g opacity="${op}"><circle cx="${x}" cy="21" r="8" fill="${s.muted?'#fff':COL[s.s]}" stroke="${COL[s.s]}" stroke-width="2.4"/><text x="${x}" y="25.5" text-anchor="middle" font-size="12.5" font-weight="800" fill="${s.muted?COL[s.s]:'#fff'}">${s.s}</text></g>`;
+    h+=`<text x="${x}" y="100" text-anchor="middle" font-size="${i%4===0?14:11}" font-weight="800" fill="${i%4===0?'var(--ink)':'var(--muted)'}">${i%4===0?i/4+1:cnt[i%4]}</text></g>`}
   $('ystick').innerHTML=h+'</svg>';
   const sh=SL.ss>L/2?SL.ss-L:SL.ss;
   $('bmVal').textContent=SL.bm+1;$('ssVal').textContent=sh>0?'+'+sh:sh;
@@ -1704,7 +1700,7 @@ function renderYard(stIn){
 function renderSlap(){
   renderYard();
   $('slTempo').value=SL.tempo;$('slTempoVal').textContent=SL.tempo;
-  $('slBack').value=SL.back;$('slBars').value=slBarsN();$('slTone').value=SL.tone||'thunk';$('slSound').value=SL.sound;$('slAdv').value=SL.adv;$('slPreset').value=SL.preset;
+  $('slBack').value=SL.back;$('slBars').value=slLen();$('slTone').value=SL.tone||'thunk';$('slSound').value=SL.sound;$('slAdv').value=SL.adv;$('slPreset').value=SL.preset;
   $('slBeat').innerHTML=['funk','pop','rock','metal'].map(st=>`<optgroup label="${st[0].toUpperCase()+st.slice(1)}">${BEATS[st].map((B,i)=>opt(st+':'+i,`${B.name}`)).join('')}</optgroup>`).join('');$('slBeat').value=slBeatKey();$('slBeat').disabled=SL.back!=='drums';
   $('slUse').innerHTML=Object.keys(SL_BLOCKS).map(k=>`<button class="chip" data-v="${k}" aria-pressed="${SL.use.includes(k)}">${k}</button>`).join('');
   const b=$('slPlay'),on=!!slBus;b.querySelector('use').setAttribute('href',on?'#i-stop':'#i-play');b.querySelector('span').textContent=on?'Stop':'Play';b.classList.toggle('stopping',on);
@@ -1779,39 +1775,37 @@ async function slapPlay(){
   slBars=0;let t0=ctx.currentTime+.12;
   const bar=()=>{if(g!==slGen)return;
     const e16=60/SL.tempo/4;
-    const nb=slBarsN();
-    if(SL.adv&&slBars>0&&slBars%Math.max(SL.adv,nb)===0){SL.bm=(SL.bm+1)%(8*nb);saveS()}
-    const st=slapSteps(),L=st.length;slSteps.push({t0,e16,st,bar0:slBars});
-    st.forEach((x,i)=>slapHit(x,t0+i*e16,e16,i%4===0));
+    if(SL.adv&&slBars>0&&slBars%SL.adv===0){SL.bm=(SL.bm+1)%(2*slLen());saveS()}
+    const st=slapSteps(),L=16;slSteps.push({t0,e16,st});
+    for(let i=0;i<16;i++)slapHit(st[i%st.length],t0+i*e16,e16,i%4===0);
     if(SL.back==='drums'){const keep=DRUMBUS;const sb=slBeatSel();playDrums(t0,L,sb.st,e16,slBars===0,sb.B);
       // route this bar's drum bus through the slap bus so Stop silences it
       const db=drumBuses[drumBuses.length-1];try{db.disconnect();db.connect(slBus)}catch(e){}DRUMBUS=keep}
     else if(SL.back==='click'){for(let b=0;b<L/4;b++){const tt=t0+b*4*e16;slNoiseHit(tt,.03,b%4?2200:3200,4,b%4?.35:.6)}}
-    slBars+=nb;const next=t0+L*e16;t0=next;
+    slBars++;const next=t0+16*e16;t0=next;
     slTimer=setTimeout(bar,Math.max(10,(next-ctx.currentTime-.35)*1000));
   };
   bar();
   const tick=()=>{if(g!==slGen)return;const now=ctx.currentTime;while(slSteps.length>1&&now>=slSteps[1].t0)slSteps.shift();
-    const B=slSteps[0];let i=-1;if(B&&now>=B.t0)i=Math.min(B.st.length-1,Math.floor((now-B.t0)/B.e16));
-    // keep the drawing in step with what is sounding (the mode can change between grooves)
-    const row=i<0?-1:(B.bar0+Math.floor(i/16))%4;
-    if(B&&(i!==slPlayingStep||row!==slPlayRow||B.st!==renderYard.last)){slPlayingStep=i;slPlayRow=row;renderYard.last=B.st;renderYard(B.st)}
+    const B=slSteps[0];let i=-1;if(B&&now>=B.t0)i=Math.min(15,Math.floor((now-B.t0)/B.e16));
+    // keep the drawing in step with what is sounding (the mode can change between bars)
+    if(B&&(i!==slPlayingStep||B.st!==renderYard.last)){slPlayingStep=i;renderYard.last=B.st;renderYard(B.st)}
     slRaf=requestAnimationFrame(tick)};
   slRaf=requestAnimationFrame(tick);
 }
 function slapStop(){
-  slGen++;clearTimeout(slTimer);cancelAnimationFrame(slRaf);slSteps=[];slPlayingStep=-1;slPlayRow=-1;
+  slGen++;clearTimeout(slTimer);cancelAnimationFrame(slRaf);slSteps=[];slPlayingStep=-1;
   if(slBus&&ctx){const g=slBus,now=ctx.currentTime;try{g.gain.setValueAtTime(g.gain.value,now);g.gain.linearRampToValueAtTime(0,now+.04)}catch(e){}setTimeout(()=>{try{g.disconnect()}catch(e){}},150)}
   slBus=null;if($('viewSlap'))renderSlap();
 }
 $('slPlay').onclick=()=>slBus?slapStop():slapPlay();
 $('slNew').onclick=()=>{SL.preset='';SL.blocks=slapRandom();SL.bm=0;SL.ss=0;saveS();renderSlap();slRestart()};
-const slN=()=>8*slBarsN();
+const slN=()=>2*slLen();
 $('bmUp').onclick=()=>{SL.bm=(SL.bm+1)%slN();saveS();renderSlap();slRestart()};
 $('bmDown').onclick=()=>{SL.bm=(SL.bm+slN()-1)%slN();saveS();renderSlap();slRestart()};
 $('ssUp').onclick=()=>{SL.ss=(SL.ss+1)%(2*slN());saveS();renderSlap();slRestart()};
 $('ssDown').onclick=()=>{SL.ss=(SL.ss+2*slN()-1)%(2*slN());saveS();renderSlap();slRestart()};
-chg('slBars',v=>{SL.bars=+v;slFit();saveS();renderSlap();slRestart()});
+chg('slBars',v=>{SL.len=+v;slFit();saveS();renderSlap();slRestart()});
 chg('slTone',v=>{SL.tone=v;saveS()});
 let slTT=0;const slT=v=>{SL.tempo=Math.max(40,Math.min(140,v));saveS();renderSlap();clearTimeout(slTT);slTT=setTimeout(slRestart,350)};
 $('slTUp').onclick=()=>slT(SL.tempo+2);$('slTDown').onclick=()=>slT(SL.tempo-2);$('slTempo').oninput=e=>slT(+e.target.value);
@@ -1819,7 +1813,7 @@ chg('slBack',v=>{SL.back=v;saveS();renderSlap();slRestart()});
 chg('slBeat',v=>{SL.beat=v;saveS();slRestart()});
 chg('slSound',v=>{SL.sound=v;saveS();renderSlap();slRestart()});
 chg('slAdv',v=>{SL.adv=+v;saveS()});
-chg('slPreset',v=>{SL.preset=v;if(v==='wellington'){SL.blocks=Array.from({length:slN()},(_,i)=>SL_EXAMPLE[i%8]);SL.bm=0;SL.ss=0}else SL.blocks=slapRandom();saveS();renderSlap();slRestart()});
+chg('slPreset',v=>{SL.preset=v;if(v==='wellington'){SL.blocks=SL_EXAMPLE.slice(0,slN());SL.bm=0;SL.ss=0}else SL.blocks=slapRandom();saveS();renderSlap();slRestart()});
 $('slUse').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,i=SL.use.indexOf(k);if(i>=0){if(SL.use.length>1)SL.use.splice(i,1)}else SL.use.push(k);saveS();renderSlap()};
 $('ystick').onclick=e=>{const g=e.target.closest('[data-i]');if(!g)return;const x=slapSteps()[+g.dataset.i],keys=SL.use.length?SL.use:Object.keys(SL_BLOCKS),cur=SL.blocks[x.blk],j=keys.indexOf(cur);
   SL.blocks[x.blk]=keys[(j+1)%keys.length]===cur?Object.keys(SL_BLOCKS)[(Object.keys(SL_BLOCKS).indexOf(cur)+1)%5]:keys[(j+1)%keys.length];SL.preset='';saveS();renderSlap();slRestart()};
