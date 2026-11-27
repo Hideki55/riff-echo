@@ -155,6 +155,24 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 .tog:has(input:checked) .sw::after{transform:translateX(16px)}
 /* saved */
 .view[hidden]{display:none!important}
+.slhero::before{display:none}
+.ystick{background:#fff;border-radius:18px;padding:10px 6px 4px;margin-top:2px}
+.ystick svg{display:block;width:100%;height:auto;font-family:Gabarito,Figtree,sans-serif;cursor:pointer}
+.sllegend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin:10px 0 4px;font-size:12.5px;font-weight:800;color:var(--muted)}
+.sllegend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.sT{background:var(--coral)}.sP{background:var(--blue)}.sS{background:#9b5de5}.sH{background:var(--mint)}
+.slmodes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.mstep{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;justify-items:center;background:#fff;border-radius:16px;padding:8px 6px 8px}
+.mstep span{grid-column:1/-1;font-size:12.5px;font-weight:800;color:var(--muted);margin-bottom:4px}
+.mstep b{font-family:Gabarito,sans-serif;font-size:26px}
+.mstep .round{width:40px;height:40px;font-size:24px}
+.btns.sl{grid-template-columns:1.2fr 1fr}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font:inherit;font-weight:800;font-size:15px;min-height:44px;min-width:56px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.fld select:disabled{opacity:.5}
+
 .bar{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:8px;margin:2px 0 12px}
 .back{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:var(--ink);background:var(--soft)}
 .back:focus-visible,.hcard:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
@@ -304,7 +322,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <a class="hcard ear" href="#ear"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15a6 6 0 1 1 11.3-2.8c0 2.3-2.3 3.3-3.3 4.6-.8 1-.6 3.2-2.5 3.2-1.6 0-2.3-1.2-2.3-1.2"/><path d="M9.5 12a2.5 2.5 0 0 1 5 0"/></svg></span><b>Ear training</b><small>Hear a riff, then play or sing it back. Riffs, single notes, call and response.</small></a>
       <a class="hcard" href="#create"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></span><b>Riff creator <em class="beta">Beta</em></b><small>Build your own riffs note by note on the fretboard.</small></a>
       <div class="hcard soon"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18V8l8-4 8 4v10"/><path d="M8 18v-6h8v6"/></svg></span><b>Backing tracks <em class="next">Next</em></b><small>Chord progressions with drums, guitar and bass, plus suggested bass lines.</small></div>
-      <div class="hcard soon"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h16M7 8v8M12 6v12M17 9v6"/></svg></span><b>Slap practice <em class="next">Soon</em></b><small>Generated slap lines using the ruler concept.</small></div>
+      <a class="hcard" href="#slap"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h16M7 8v8M12 6v12M17 9v6"/></svg></span><b>Slap practice</b><small>Random slap grooves on Wellington’s yardstick, with rhythmic modes.</small></a>
     </div>
     <a class="homesaved" href="#ear" id="homeSaved"></a>
   </div>
@@ -413,6 +431,49 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
   </details>
   </div>
 
+
+  <!-- ===== SLAP PRACTICE ===== -->
+  <div class="view" id="viewSlap" hidden>
+    <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Slap practice</h1><span class="muted" id="slMode"></span></div>
+    <section class="card hero slhero" aria-label="Slap groove">
+      <div class="ystick" id="ystick" aria-label="Rhythm yardstick: one bar of 16th notes. Tap a block to change it."></div>
+      <div class="sllegend"><span><i class="sT"></i>T thumb</span><span><i class="sP"></i>P pop</span><span><i class="sS"></i>S left-hand slap</span><span><i class="sH"></i>H/O hammer-on</span></div>
+      <div class="slmodes">
+        <div class="mstep"><span>Block mode</span><button class="round" id="bmDown" aria-label="Previous block mode">‹</button><b id="bmVal">1</b><button class="round" id="bmUp" aria-label="Next block mode">›</button></div>
+        <div class="mstep"><span>16th shift</span><button class="round" id="ssDown" aria-label="Shift left one 16th">‹</button><b id="ssVal">0</b><button class="round" id="ssUp" aria-label="Shift right one 16th">›</button></div>
+      </div>
+      <div class="btns sl">
+        <button class="big play" id="slPlay"><svg><use href="#i-play"/></svg><span>Play</span></button>
+        <button class="big" id="slNew"><svg><use href="#i-dice"/></svg><span>New groove</span></button>
+      </div>
+    </section>
+
+    <section class="card qs" aria-label="Slap settings">
+      <h2>Settings</h2>
+      <div class="trow"><span class="tl2">Tempo</span><div class="tempo"><button class="round" id="slTDown" aria-label="Slower">–</button><div class="bpm"><span class="n" id="slTempoVal">80</span><small>bpm</small></div><button class="round" id="slTUp" aria-label="Faster">+</button></div></div>
+      <input type="range" id="slTempo" min="40" max="140" step="2" aria-label="Tempo">
+      <div class="fields">
+        <label class="fld"><span>Backing</span><select id="slBack"><option value="drums">Drums</option><option value="click">Click only</option><option value="none">Nothing</option></select></label>
+        <label class="fld"><span>Drum beat</span><select id="slBeat"></select></label>
+        <label class="fld"><span>Sounds</span><select id="slSound"><option value="taught">As taught (mixed)</option><option value="muted">All muted</option><option value="notes">All notes</option></select></label>
+        <label class="fld"><span>Change mode every</span><select id="slAdv"><option value="0">Never</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option></select></label>
+        <label class="fld full"><span>Example or random</span><select id="slPreset"><option value="">Random grooves</option><option value="wellington">Groove Workshop example</option></select></label>
+      </div>
+      <p class="lbl2">Blocks to use in new grooves</p>
+      <div class="chips" id="slUse"></div>
+    </section>
+
+    <details class="card more">
+      <summary>How the yardstick works</summary>
+      <div class="morebody">
+        <p class="hint">One bar of 4/4 laid out like a ruler. Tall marks are the beats (1 2 3 4), medium marks the “&amp;”s, short marks the “e” and “a” 16ths, so you can see how far apart the notes are.</p>
+        <p class="hint">Each groove is eight two-note building blocks: <b>HO</b> thumb then hammer-on, <b>TT</b> two thumbs (some charts write EE), <b>ST</b> left-hand slap then thumb, <b>PT</b> pop then thumb, <b>TP</b> thumb then pop.</p>
+        <p class="hint"><b>Rhythmic modes:</b> loop the groove until every sound is even. Then use Block mode to start on the 2nd, 3rd … 8th block, and 16th shift to slide the whole pattern one dash so a different sound lands on beat 1. Tap any block on the yardstick to swap it.</p>
+        <p class="hint">“As taught” plays thumbs on open E and hammer-ons D→E, with ST, PT and TP muted. Concept from Anthony Wellington (Bassology) and Victor Wooten’s Groove Workshop.</p>
+      </div>
+    </details>
+  </div>
+
   <!-- ===== RIFF CREATOR ===== -->
   <div class="view" id="viewCreate" hidden>
     <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Riff creator <em class="beta">Beta</em></h1></div>
@@ -446,7 +507,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-0033';
+const APP_VERSION='2026.11.27-0039';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1179,8 +1240,8 @@ function drumHit(kit,kind,t,v){
   g.gain.value=o.g*(DRUMMIX[kind]||.3)*(.5+.5*v);s.connect(g);g.connect(DRUMBUS||OUT());s.start(t);
 }
 function beatFor(style){const list=BEATS[style]||BEATS.rock;return list[Math.min(list.length-1,(S.beats||{})[style]||0)]}
-function playDrums(t0,n16,style,e16,first){
-  const B=beatFor(style),kit=KITS[style]||'zep',sw=style==='walking'&&!B.straight?.67*e16:0,hum=()=>(Math.random()-.5)*.008;
+function playDrums(t0,n16,style,e16,first,Bo){
+  const B=Bo||beatFor(style),kit=KITS[style]||'zep',sw=style==='walking'&&!B.straight?.67*e16:0,hum=()=>(Math.random()-.5)*.008;
   const db=ctx.createGain();db.gain.value=S.drumVol;db.connect(OUT());drumBuses.push(db);DRUMBUS=db;
   setTimeout(()=>{const i=drumBuses.indexOf(db);if(i>=0)drumBuses.splice(i,1)},(n16*e16+3)*1000);
   const hit=(arr,kind,i,b,vf)=>{if(arr&&arr.includes(b))drumHit(kit,kind,Math.max(t0,t0+i*e16+(b%4===2?sw:0)+hum()),Math.min(1,vf(b)*(.92+Math.random()*.12)))};
@@ -1593,16 +1654,132 @@ $('verLbl').textContent='Version '+APP_VERSION;
 for(const i of ['bass','guitar','voice'])if(i===S.instrument)fetchSamples(i,S.sounds[i]);
 if(S.drums)fetchDrums();
 if(/^https?:/.test(location.protocol)){checkUpdate();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()})}
-// ---- simple page routing (#home, #ear, #create) ----
+// ---- Slap practice: Wellington yardstick + building blocks ----
+const SL_BLOCKS={HO:['H','O'],TT:['T','T'],ST:['S','T'],PT:['P','T'],TP:['T','P']};
+const SL_EXAMPLE=['HO','TT','ST','PT','TP','TT','ST','PT'];
+const SLD={tempo:80,blocks:SL_EXAMPLE.slice(),bm:0,ss:0,back:'drums',beat:0,sound:'taught',adv:0,use:Object.keys(SL_BLOCKS),preset:''};
+S.slap=Object.assign({},SLD,S.slap||{});
+const SL=S.slap;
+let slGen=0,slBus=null,slTimer=null,slRaf=0,slSteps=[],slBars=0,slPlayingStep=-1,slNoise=null;
+function slapRandom(){
+  const use=SL.use.length?SL.use:Object.keys(SL_BLOCKS),out=[];
+  for(let i=0;i<8;i++){let b,tries=0;do{b=use[rnd(use.length)];tries++}while(tries<20&&use.length>1&&(i>=2&&out[i-1]===b&&out[i-2]===b||i===0&&b[0]!=='T'&&b[0]!=='H'&&use.some(x=>x[0]==='T'||x[0]==='H')));out.push(b)}
+  if(use.length>2&&new Set(out).size<3)return slapRandom();
+  return out;
+}
+// steps: 16 entries {s:sound letter, blk:block index (in original order), muted}
+function slapSteps(){
+  const n=SL.blocks.length,rot=[];for(let i=0;i<n;i++){const bi=(i+SL.bm)%n;rot.push(bi)}
+  const flat=[];rot.forEach(bi=>SL_BLOCKS[SL.blocks[bi]].forEach((s,k)=>flat.push({s,blk:bi,k,code:SL.blocks[bi]})));
+  const out=[];for(let i=0;i<16;i++)out.push(flat[((i-SL.ss)%16+16)%16]);
+  for(const x of out){x.muted=SL.sound==='muted'?true:SL.sound==='notes'?false:!(x.code==='HO'||x.code==='TT')}
+  return out;
+}
+function renderYard(stIn){
+  const st=stIn||slapSteps(),W=20,X0=16,cnt=['1','e','&','a'],COL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var(--mint)'};
+  let h=`<svg viewBox="0 0 352 108" role="img">`;
+  // block connectors
+  for(let i=0;i<15;i++)if(st[i].blk===st[i+1].blk&&st[i].k===0)h+=`<rect x="${X0+i*W+3}" y="6" width="${2*W-6}" height="30" rx="15" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5"/>`;
+  if(st[15].k===0&&st[0].blk===st[15].blk){h+=`<rect x="${X0+15*W+3}" y="6" width="${W-3}" height="30" rx="8" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="3 3"/><rect x="${X0}" y="6" width="${W-3}" height="30" rx="8" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="3 3"/>`}
+  h+=`<line x1="${X0}" y1="52" x2="${X0+16*W}" y2="52" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>`;
+  for(let i=0;i<16;i++){const x=X0+i*W+W/2,len=i%4===0?24:i%2===0?16:9,s=st[i],on=i===slPlayingStep;
+    h+=`<g class="ys${on?' on':''}" data-i="${i}"><rect x="${X0+i*W}" y="0" width="${W}" height="108" fill="${on?'rgba(255,201,60,.35)':'transparent'}"/>`;
+    h+=`<line x1="${x}" y1="52" x2="${x}" y2="${52+len}" stroke="var(--ink)" stroke-width="${i%4===0?2.5:1.6}"/>`;
+    h+=`<circle cx="${x}" cy="21" r="${on?9:8}" fill="${s.muted?'#fff':COL[s.s]}" stroke="${COL[s.s]}" stroke-width="2.4"/><text x="${x}" y="25.5" text-anchor="middle" font-size="12.5" font-weight="800" fill="${s.muted?COL[s.s]:'#fff'}">${s.s}</text>`;
+    h+=`<text x="${x}" y="100" text-anchor="middle" font-size="${i%4===0?14:11}" font-weight="800" fill="${i%4===0?'var(--ink)':'var(--muted)'}">${i%4===0?i/4+1:cnt[i%4]}</text></g>`}
+  $('ystick').innerHTML=h+'</svg>';
+  $('bmVal').textContent=SL.bm+1;$('ssVal').textContent=(SL.ss>8?SL.ss-16:SL.ss);
+  $('slMode').textContent=`Mode ${SL.bm+1}${SL.ss?` · shift ${SL.ss>8?SL.ss-16:'+'+SL.ss}`:''}`;
+}
+function renderSlap(){
+  renderYard();
+  $('slTempo').value=SL.tempo;$('slTempoVal').textContent=SL.tempo;
+  $('slBack').value=SL.back;$('slSound').value=SL.sound;$('slAdv').value=SL.adv;$('slPreset').value=SL.preset;
+  $('slBeat').innerHTML=BEATS.funk.map((B,i)=>opt(i,`Funk ${i+1}: ${B.name}`)).join('');$('slBeat').value=SL.beat;$('slBeat').disabled=SL.back!=='drums';
+  $('slUse').innerHTML=Object.keys(SL_BLOCKS).map(k=>`<button class="chip" data-v="${k}" aria-pressed="${SL.use.includes(k)}">${k}</button>`).join('');
+  const b=$('slPlay'),on=!!slBus;b.querySelector('use').setAttribute('href',on?'#i-stop':'#i-play');b.querySelector('span').textContent=on?'Stop':'Play';b.classList.toggle('stopping',on);
+}
+function slapEnter(){fetchSamples('bass','slap');fetchKit('pearl');renderSlap()}
+function slNoiseBuf(){if(!slNoise){const n=Math.floor(ctx.sampleRate*.12),b=ctx.createBuffer(1,n,ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;slNoise=b}return slNoise}
+function slSamp(t,midi,len,vel,f,off){
+  const o=sampleBuf.get('slap_bass_1'+midi);
+  if(!o){playTone('bass',t,midi,Math.max(.05,len),vel);return}
+  const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=o.b;let node=s;
+  if(f){const fl=ctx.createBiquadFilter();fl.type=f[0];fl.frequency.value=f[1];fl.Q.value=f[2]||.7;s.connect(fl);node=fl}
+  const pk=o.g*vel,end=Math.min(o.b.duration-.02,len);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pk,t+.003);g.gain.setValueAtTime(pk,t+Math.max(.006,end-.03));g.gain.linearRampToValueAtTime(0,t+end+.015);
+  node.connect(g);g.connect(slBus);s.start(t,off||0);s.stop(t+end+.05);
+}
+function slNoiseHit(t,dur,freq,q,vel){const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=slNoiseBuf();f.type='bandpass';f.frequency.value=freq;f.Q.value=q;
+  g.gain.setValueAtTime(vel,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);s.connect(f);f.connect(g);g.connect(slBus);s.start(t);s.stop(t+dur+.02)}
+function slapHit(x,t,e16,acc){
+  const v=(acc?1:.86)*(.94+Math.random()*.08),ring=e16*1.7;
+  switch(x.s){
+    case 'T':if(x.muted){slSamp(t,28,.045,v*1.05,['lowpass',750,.9]);slNoiseHit(t,.018,2600,1.2,.18*v)}else slSamp(t,28,ring,v);break;
+    case 'P':if(x.muted){slSamp(t,52,.035,v*.8,['highpass',900,.8]);slNoiseHit(t,.025,3800,1.5,.32*v)}else{slSamp(t,40,ring,v*.95);slNoiseHit(t,.012,4200,1.5,.15*v)}break;
+    case 'S':slNoiseHit(t,.045,1500,.8,.55*v);slSamp(t,33,.025,v*.45,['lowpass',380,.7]);break;
+    case 'H':if(x.muted){slSamp(t,38,.045,v,['lowpass',800,.9]);slNoiseHit(t,.018,2600,1.2,.18*v)}else slSamp(t,38,e16*1.02,v);break;
+    case 'O':if(x.muted){slSamp(t,40,.04,v*.55,['lowpass',600,.7])}else slSamp(t,40,ring,v*.62,['lowpass',1600,.7],.012);break;
+  }
+}
+async function slapPlay(){
+  ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
+  const g=++slGen;slBus=newBus();renderSlap();
+  await Promise.all([soundReady('bass','slap'),SL.back==='drums'?kitReady('funk'):Promise.resolve()]);
+  if(g!==slGen)return;
+  slBars=0;let t0=ctx.currentTime+.12;
+  const bar=()=>{if(g!==slGen)return;
+    const e16=60/SL.tempo/4;
+    if(SL.adv&&slBars>0&&slBars%SL.adv===0){SL.bm=(SL.bm+1)%8;saveS()}
+    const st=slapSteps();slSteps.push({t0,e16,st});
+    st.forEach((x,i)=>slapHit(x,t0+i*e16,e16,i%4===0));
+    if(SL.back==='drums'){const keep=DRUMBUS;playDrums(t0,16,'funk',e16,slBars===0,BEATS.funk[SL.beat]||BEATS.funk[0]);
+      // route this bar's drum bus through the slap bus so Stop silences it
+      const db=drumBuses[drumBuses.length-1];try{db.disconnect();db.connect(slBus)}catch(e){}DRUMBUS=keep}
+    else if(SL.back==='click'){for(let b=0;b<4;b++){const tt=t0+b*4*e16;slNoiseHit(tt,.03,b?2200:3200,4,b?.35:.6)}}
+    slBars++;const next=t0+16*e16;t0=next;
+    slTimer=setTimeout(bar,Math.max(10,(next-ctx.currentTime-.35)*1000));
+  };
+  bar();
+  const tick=()=>{if(g!==slGen)return;const now=ctx.currentTime;while(slSteps.length>1&&now>=slSteps[1].t0)slSteps.shift();
+    const B=slSteps[0];let i=-1;if(B&&now>=B.t0)i=Math.min(15,Math.floor((now-B.t0)/B.e16));
+    // keep the drawing in step with what is sounding (the mode can change between bars)
+    if(B&&(i!==slPlayingStep||B.st!==renderYard.last)){slPlayingStep=i;renderYard.last=B.st;renderYard(B.st)}
+    slRaf=requestAnimationFrame(tick)};
+  slRaf=requestAnimationFrame(tick);
+}
+function slapStop(){
+  slGen++;clearTimeout(slTimer);cancelAnimationFrame(slRaf);slSteps=[];slPlayingStep=-1;
+  if(slBus&&ctx){const g=slBus,now=ctx.currentTime;try{g.gain.setValueAtTime(g.gain.value,now);g.gain.linearRampToValueAtTime(0,now+.04)}catch(e){}setTimeout(()=>{try{g.disconnect()}catch(e){}},150)}
+  slBus=null;if($('viewSlap'))renderSlap();
+}
+$('slPlay').onclick=()=>slBus?slapStop():slapPlay();
+$('slNew').onclick=()=>{SL.preset='';SL.blocks=slapRandom();SL.bm=0;SL.ss=0;saveS();renderSlap()};
+$('bmUp').onclick=()=>{SL.bm=(SL.bm+1)%8;saveS();renderSlap()};
+$('bmDown').onclick=()=>{SL.bm=(SL.bm+7)%8;saveS();renderSlap()};
+$('ssUp').onclick=()=>{SL.ss=(SL.ss+1)%16;saveS();renderSlap()};
+$('ssDown').onclick=()=>{SL.ss=(SL.ss+15)%16;saveS();renderSlap()};
+const slT=v=>{SL.tempo=Math.max(40,Math.min(140,v));saveS();renderSlap()};
+$('slTUp').onclick=()=>slT(SL.tempo+2);$('slTDown').onclick=()=>slT(SL.tempo-2);$('slTempo').oninput=e=>slT(+e.target.value);
+chg('slBack',v=>{SL.back=v;saveS();renderSlap()});
+chg('slBeat',v=>{SL.beat=+v;saveS()});
+chg('slSound',v=>{SL.sound=v;saveS();renderSlap()});
+chg('slAdv',v=>{SL.adv=+v;saveS()});
+chg('slPreset',v=>{SL.preset=v;if(v==='wellington'){SL.blocks=SL_EXAMPLE.slice();SL.bm=0;SL.ss=0}else SL.blocks=slapRandom();saveS();renderSlap()});
+$('slUse').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,i=SL.use.indexOf(k);if(i>=0){if(SL.use.length>1)SL.use.splice(i,1)}else SL.use.push(k);saveS();renderSlap()};
+$('ystick').onclick=e=>{const g=e.target.closest('[data-i]');if(!g)return;const x=slapSteps()[+g.dataset.i],keys=SL.use.length?SL.use:Object.keys(SL_BLOCKS),cur=SL.blocks[x.blk],j=keys.indexOf(cur);
+  SL.blocks[x.blk]=keys[(j+1)%keys.length]===cur?Object.keys(SL_BLOCKS)[(Object.keys(SL_BLOCKS).indexOf(cur)+1)%5]:keys[(j+1)%keys.length];SL.preset='';saveS();renderSlap()};
+// ---- simple page routing (#home, #ear, #create, #slap) ----
 let route='home';
 function renderHomeSaved(){const a=$('homeSaved');if(!a)return;a.textContent=saved.length?`My saved riffs (${saved.length}) →`:'';a.hidden=!saved.length}
 function go(r){if(location.hash!=='#'+r)location.hash=r;else showRoute()}
 function showRoute(){
-  const r=(location.hash||'#home').slice(1),next=['home','ear','create'].includes(r)?r:'home';
+  const r=(location.hash||'#home').slice(1),next=['home','ear','create','slap'].includes(r)?r:'home';
   if(route==='ear'&&next!=='ear'){if(playSched||loopMode>0)stopPlayback(false);if(listening)stopListening()}
-  route=next;
+  if(route==='slap'&&next!=='slap')slapStop();
+  route=next;$('viewSlap').hidden=route!=='slap';
   $('viewHome').hidden=route!=='home';$('viewEar').hidden=route!=='ear';$('viewCreate').hidden=route!=='create';
-  if(route==='create')renderEditor();if(route==='home')renderHomeSaved();
+  if(route==='create')renderEditor();if(route==='slap')slapEnter();if(route==='home')renderHomeSaved();
   window.scrollTo({top:0});
 }
 window.addEventListener('hashchange',showRoute);
