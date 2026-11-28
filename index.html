@@ -400,6 +400,31 @@ input[type=range]{accent-color:var(--acc)}
 .fld select{font-weight:600}
 .beta{background:var(--accbg);color:var(--acc)}
 .big:focus-visible,.tile:focus-visible,.pill:focus-visible,.wk:focus-visible,.round:focus-visible,.btn:focus-visible,.tog:focus-within,.slchip:focus-visible,.fld select:focus-visible{outline-color:var(--acc)}
+/* backing tracks */
+.btnow{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:10px;position:relative}
+.btnow .btlbl{display:block;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.btnow b{display:block;font-family:var(--fb);font-weight:800;font-size:40px;line-height:1;letter-spacing:-.03em}
+.btnow small{display:block;font-family:var(--fm);font-size:13px;color:var(--muted);margin-top:2px}
+.btcount{font-family:var(--fm);font-weight:700;font-size:22px;color:var(--acc);min-width:2ch;text-align:right}
+.btchart{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;position:relative}
+.btc{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;cursor:pointer;font:inherit;color:var(--ink)}
+.btc b{display:block;font-weight:700;font-size:16px;line-height:1.1}
+.btc small{display:block;font-family:var(--fm);font-size:11px;color:var(--muted)}
+.btc.on{border-color:var(--acc);background:var(--accbg);box-shadow:0 0 0 1px var(--acc)}
+.btc.on small{color:var(--acc)}
+.btscale{margin:10px 2px 4px;font-size:13px;font-weight:600;color:var(--muted);position:relative}
+.btscale b{color:var(--ink)}
+.btinst{display:grid;gap:8px;margin-top:8px}
+.btrow{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--bg)}
+.btrow .bth{display:flex;align-items:center;gap:10px}
+.btrow .bth b{font-weight:700;font-size:15px}
+.btrow input[type=range]{height:28px;margin:0}
+.btrow select{grid-column:1/-1;font:inherit;font-size:15px;font-weight:600;color:var(--ink);min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);padding:0 10px}
+.btrow.off{opacity:.55}
+.btsw{position:relative;width:44px;height:26px;border-radius:13px;background:var(--line);border:0;cursor:pointer;flex:none;padding:0}
+.btsw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.btsw[aria-pressed=true]{background:var(--acc)}
+.btsw[aria-pressed=true]::after{transform:translateX(18px)}
 </style>
 </head>
 <body>
@@ -427,7 +452,7 @@ input[type=range]{accent-color:var(--acc)}
     <div class="homegrid">
       <a class="hcard ear" href="#ear"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15a6 6 0 1 1 11.3-2.8c0 2.3-2.3 3.3-3.3 4.6-.8 1-.6 3.2-2.5 3.2-1.6 0-2.3-1.2-2.3-1.2"/><path d="M9.5 12a2.5 2.5 0 0 1 5 0"/></svg></span><b>Ear training</b><small>Hear a riff, then play or sing it back. Riffs, single notes, call and response.</small></a>
       <a class="hcard" href="#creator"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></span><b>Creator</b><small>Slap riffs, bass lines and guitar riffs in the style of great players, with tab.</small></a>
-      <div class="hcard soon"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18V8l8-4 8 4v10"/><path d="M8 18v-6h8v6"/></svg></span><b>Backing tracks <em class="next">Next</em></b><small>Chord progressions with drums, guitar and bass, plus suggested bass lines.</small></div>
+      <a class="hcard" href="#backing"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18V8l8-4 8 4v10"/><path d="M8 18v-6h8v6"/></svg></span><b>Backing tracks</b><small>Chord progressions in any style, key and mode, with drums, guitar and a suggested bass line.</small></a>
       <a class="hcard" href="#slap"><span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h16M7 8v8M12 6v12M17 9v6"/></svg></span><b>Slap rhythm drills</b><small>Wellington’s yardstick: building blocks and rhythmic modes.</small></a>
 
     </div>
@@ -642,6 +667,41 @@ input[type=range]{accent-color:var(--acc)}
   </div>
 
   <!-- ===== RIFF CREATOR ===== -->
+  <!-- ===== BACKING TRACKS ===== -->
+  <div class="view" id="viewBacking" hidden>
+    <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Backing tracks</h1><span class="muted" id="btKey"></span></div>
+    <section class="card hero slhero" aria-label="Backing track">
+      <div class="btnow"><div><span class="btlbl">Now</span><b id="btNowChord">–</b><small id="btNowTones"></small></div><div class="btcount" id="btCount"></div></div>
+      <div class="btchart" id="btChart" aria-label="Chord chart"></div>
+      <p class="btscale" id="btScale"></p>
+      <details class="tabwrap" id="btBassBox"><summary>Suggested bass line</summary><div class="srtab" id="btTab"></div><p class="hint" id="btBassHint" style="margin:6px 0 0"></p></details>
+      <div class="btns sl">
+        <button class="big play" id="btPlay"><svg><use href="#i-play"/></svg><span>Play</span></button>
+        <button class="big" id="btNew"><svg><use href="#i-dice"/></svg><span>New track</span></button>
+      </div>
+    </section>
+    <section class="card qs" aria-label="Instruments">
+      <h2>Instruments</h2>
+      <div class="btinst" id="btInst"></div>
+    </section>
+    <section class="card qs" aria-label="Backing track settings">
+      <h2>Settings</h2>
+      <div class="fields">
+        <label class="fld full"><span>Style</span><select id="btStyle"></select></label>
+        <label class="fld"><span>Key</span><select id="btKeySel"></select></label>
+        <label class="fld"><span>Mode</span><select id="btModeSel"></select></label>
+        <label class="fld full"><span>Chord progression</span><select id="btProg"></select></label>
+        <label class="fld"><span>Bars per chord</span><select id="btBpc"><option value="1">1 bar</option><option value="2">2 bars</option></select></label>
+        <label class="fld"><span>Drum beat</span><select id="btBeat"></select></label>
+      </div>
+      <div class="trow"><span class="tl2">Tempo</span><div class="tempo"><button class="round" id="btTDown" aria-label="Slower">–</button><div class="bpm"><span class="n" id="btTempoVal">100</span><small>bpm</small></div><button class="round" id="btTUp" aria-label="Faster">+</button></div></div>
+      <input type="range" id="btTempo" min="50" max="200" step="2" aria-label="Tempo">
+    </section>
+    <details class="card more"><summary>How backing tracks work</summary><div class="morebody">
+      <p class="hint">Pick a style, key and mode. The chords are built from the mode, so a Dorian track sounds Dorian, and the scale shown under the chart is the one to improvise with. Progressions listed are common ones for that mode; "Random" picks one for you.</p>
+      <p class="hint">Turn instruments on or off and set their volume. The suggested bass line follows the chords in the style's way (roots, walking, funk with dead notes, bossa…). Switch it off to play the bass part yourself, or open its tab to learn it.</p>
+    </div></details>
+  </div>
   <div class="view" id="viewCreate" hidden>
     <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Riff creator <em class="beta">Beta</em></h1></div>
     <section class="card" id="makeCard">
@@ -674,7 +734,7 @@ input[type=range]{accent-color:var(--acc)}
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0311';
+const APP_VERSION='2026.11.28-0332';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -3223,18 +3283,205 @@ chg('slPreset',v=>{SL.preset=v;if(v==='wellington'){SL.blocks=SL_EXAMPLE.slice(0
 $('slUse').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,i=SL.use.indexOf(k);if(i>=0){if(SL.use.length>1)SL.use.splice(i,1)}else SL.use.push(k);saveS();renderSlap()};
 $('ystick').onclick=e=>{const g=e.target.closest('[data-i]');if(!g)return;const x=slapSteps()[+g.dataset.i],cyc=SL.use.concat(SL.space?SL_REST:[]),cur=SL.blocks[x.blk],j=cyc.indexOf(cur);
   SL.blocks[x.blk]=cyc[(j+1)%cyc.length];SL.preset='';saveS();renderSlap();slR()};
-// ---- simple page routing (#home, #ear, #create, #slap) ----
+// ===================== BACKING TRACKS =====================
+// A style sets the drum beat, the guitar's strumming pattern and voicing, the bass approach, tempo and which
+// modes and progressions suit it. Chords are built from the chosen mode (diatonic triads or 7ths), so the
+// progression and the scale shown for improvising always agree.
+const BT_STYLES={
+  rock:{name:'Rock',tempo:112,beat:'rock:1',gtr:'crunch',bass:'eighths',bassSnd:'pick',pad:false,chord:'triad',voice:'barre',modes:{0:3,5:3,4:2,1:1},
+    pats:['D-D-D-D-D-D-D-D-','D---D-U-D-U-D-U-','D-D-D-DUD-D-D-DU']},
+  blues:{name:'Blues shuffle',tempo:92,beat:'walking:3',swing:true,gtr:'clean',bass:'boogie',bassSnd:'finger',pad:false,chord:'dom7',voice:'boogie',modes:{4:3},blues:true,
+    pats:['B-B-B-B-B-B-B-B-']},
+  funk:{name:'Funk',tempo:100,beat:'funk:0',gtr:'clean',bass:'funk',bassSnd:'fingerpunch',pad:false,chord:'7th',voice:'funk',modes:{1:3,4:2,5:1},
+    pats:['S-MMS-MMM-S-MMS-','MMSMM-SMMMSMM-SM','S--MS-M-S--MS-MM']},
+  pop:{name:'Pop',tempo:100,beat:'pop:0',gtr:'steel',bass:'root8',bassSnd:'finger',pad:true,chord:'triad',voice:'open',modes:{0:4,5:2,4:1},
+    pats:['D---D-U--U-UD-U-','D-D-D-U-D-D-D-U-','D--UD-U-D--UD-U-']},
+  grunge:{name:'Grunge',tempo:104,beat:'rock:7',gtr:'heavy',bass:'eighths',bassSnd:'pick',pad:false,chord:'power',voice:'power',modes:{5:3,2:1,1:1},
+    pats:['D-D-D-DMD-D-D-DM','D--MD-M-D--MD-M-','D-------D-M-D---']},
+  metal:{name:'Metal',tempo:120,beat:'metal:1',gtr:'metal',bass:'pedal16',bassSnd:'pick',pad:false,chord:'power',voice:'power',modes:{2:3,5:3},
+    pats:['M-MMM-MMM-MMD---','MMMMD---MMMMD---','D---MMMMD-MMD---']},
+  jazz:{name:'Jazz swing',tempo:132,beat:'walking:0',swing:true,gtr:'clean',bass:'walking',bassSnd:'upright',pad:false,chord:'7th',voice:'shell',modes:{0:3,1:2,5:1},
+    pats:['C---C---C---C---','C---C--CC---C---','C--C--C-C---C---']},
+  reggae:{name:'Reggae',tempo:76,beat:'pop:5',gtr:'clean',bass:'reggae',bassSnd:'finger',pad:true,chord:'triad',voice:'skank',modes:{0:2,5:2,1:2},
+    pats:['--S---S---S---S-','--S---S---SS--S-']},
+  bossa:{name:'Bossa nova',tempo:128,beat:'walking:4',gtr:'nylon',bass:'bossa',bassSnd:'upright',pad:true,chord:'7th',voice:'shell',modes:{0:3,1:2,5:1},
+    pats:['S--S--S---S--S--','S--S--S--S--S---']}};
+// common progressions as scale degrees (0 = I), with the modes they suit
+const BT_PROGS=[
+  {d:[0,4,5,3],m:[0]},{d:[0,3,4,3],m:[0,4]},{d:[0,5,3,4],m:[0]},{d:[0,3,0,4],m:[0]},{d:[1,4,0,0],m:[0,1]},{d:[0,5,1,4],m:[0]},{d:[0,3],m:[0,1,4]},
+  {d:[0,6,3,0],m:[4]},{d:[0,6],m:[4,1]},{d:[0,4,3,3],m:[4]},{d:[0,3,0,6],m:[4]},
+  {d:[0,3],m:[1]},{d:[0,2,3,3],m:[1]},{d:[0,6,3,0],m:[1]},{d:[0,1],m:[1,3]},
+  {d:[0,1],m:[2]},{d:[0,1,2,1],m:[2]},{d:[0,6,5,1],m:[2]},
+  {d:[0,1,0,6],m:[3]},{d:[0,1,4,0],m:[3]},
+  {d:[0,6,5,6],m:[5]},{d:[0,5,2,6],m:[5]},{d:[0,3,4,4],m:[5]},{d:[0,5,6,0],m:[5]},{d:[0,3,6,2],m:[5]},{d:[1,4,0,0],m:[5]},
+  {d:[0,1,0,6],m:[6]},{d:[0,5,1,0],m:[6]}];
+const BT_BLUES={id:'blues12',name:'12-bar blues',d:[0,0,0,0,3,3,0,0,4,3,0,4]};
+const ROMAN=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
+const BTD={style:'rock',key:4,mode:'auto',prog:'auto',bpc:1,tempo:112,beat:'auto',
+  on:{drums:true,gtr:true,pad:false,bass:true},vol:{drums:.8,gtr:.7,pad:.5,bass:.85},bassType:'auto',gtrSnd:'auto',track:null};
+S.bt=Object.assign({},BTD,S.bt||{});S.bt.on=Object.assign({},BTD.on,S.bt.on);S.bt.vol=Object.assign({},BTD.vol,S.bt.vol);
+const BT=S.bt;
+// the chord on scale degree i of a mode: triad, 7th, dominant 7th (blues) or power chord
+function btChord(root,mode,deg,kind){
+  const sc=scaleOf(mode),at=k=>{const o=Math.floor(k/7);return sc[(deg+k)%7]+12*Math.floor((deg+k)/7)-sc[deg]};
+  const r=(root+sc[deg%7])%12,third=at(2),fifth=at(4),sev=at(6);
+  let iv=kind==='power'?[0,7]:kind==='dom7'?[0,4,7,10]:kind==='7th'?[0,third,fifth,sev]:[0,third,fifth];
+  const q=kind==='dom7'?'7':kind==='power'?'5':third===3?(fifth===6?(kind==='7th'?(sev===10?'m7♭5':'°7'):'°'):kind==='7th'?(sev===11?'m(maj7)':'m7'):'m'):kind==='7th'?(sev===11?'maj7':'7'):fifth===8?'+':'';
+  const minor=third===3,semi=(sc[deg%7])%12;
+  let rn=ROMAN[semi];if(minor&&kind!=='dom7'&&kind!=='power')rn=rn.toLowerCase();if(q==='°'||q==='m7♭5'||q==='°7')rn+=q==='m7♭5'?'ø':'°';
+  return {r,iv,q,rn,third:kind==='dom7'?4:third,fifth,deg}}
+function btModeFor(st){const M=BT_STYLES[st].modes;return BT.mode==='auto'?+slPick(Object.keys(M),Object.values(M)):+BT.mode}
+// power-chord styles skip chords whose 5th isn't in the scale (e.g. ii in Aeolian), so the riffs never clash
+function btProgList(mode,st){if(BT_STYLES[st].blues)return [BT_BLUES];const sc=scaleOf(mode),p5=d=>((sc[(d+4)%7]+12*Math.floor((d+4)/7))-sc[d])===7;
+  let L=BT_PROGS.filter(p=>p.m.includes(mode));if(BT_STYLES[st].chord==='power'){const L2=L.filter(p=>p.d.every(p5));L=L2.length?L2:[{d:[0,5,6,0].filter(p5).length===4?[0,5,6,0]:[0,0]}]}
+  return L.map(p=>({id:p.d.join('-'),d:p.d}))}
+// ---- one bar of suggested bass for a chord (16 sixteenths), heading for the next chord's root
+function btBassBar(type,ch,next,root,mode,swing){
+  const sc=scaleOf(mode).map(x=>(root+x)%12),lowR=m=>{let x=28+((m-28)%12+12)%12;if(x>40)x-=12;return x};
+  const R=lowR(ch.r),N=next?lowR(next.r):R,F=R+ch.fifth,T3=R+ch.third,O=R+12;
+  const app=()=>{const up=N-1,dn=N+1;return Math.random()<.5&&up>=28?up:dn}; // chromatic approach into the next root
+  const st=Array.from({length:16},()=>({s:'-'}));const put=(i,m,len,mu)=>{st[i]={s:'T',m,len:len||1,muted:!!mu}};
+  const P={
+    roots:()=>{[0,4,8,12].forEach(i=>put(i,R,.9))},
+    root8:()=>{for(let i=0;i<16;i+=2)put(i,R,.8);put(14,Math.random()<.5?F-12>=28?F-12:F:app(),.8)},
+    eighths:()=>{for(let i=0;i<16;i+=2)put(i,R,.75);if(Math.random()<.6)put(12,F>R+12?F-12:F,.75);put(14,app(),.75)},
+    root5:()=>{put(0,R,1.5);put(6,R,.5);put(8,F,1.5);put(14,app(),.8)},
+    octaves:()=>{for(let i=0;i<16;i+=2)put(i,i%4?O:R,.6)},
+    pedal16:()=>{for(let i=0;i<16;i++)put(i,R,.45,i%4!==0&&i!==6);put(12,R,1);put(14,app(),.8)},
+    walking:()=>{const tones=[R,Math.random()<.5?T3:F,sc.includes((F+2)%12)?F+2-((F+2)>R+12?12:0):F];put(0,R,1);put(4,tones[1],1);put(8,tones[2]>45?tones[2]-12:tones[2],1);put(12,app(),1)},
+    boogie:()=>{const L=[0,4,7,9,10,9,7,4];L.forEach((d,k)=>put(k*2,R+d,.8))},
+    funk:()=>{const Ls=[[0,R],[3,O],[6,R],[7,0],[10,R+10],[11,O],[14,R]];put(0,R,.6);put(2,0,.3,1);put(3,O,.4);put(6,F,.4);put(7,0,.2,1);put(8,R,.4);put(10,R+10,.4);put(11,O,.4);put(13,0,.2,1);put(14,app(),.5)},
+    reggae:()=>{put(2,R,1.4);put(6,R,.6);put(8,F,1);put(11,T3,.6);put(14,R,1)},
+    bossa:()=>{put(0,R,1.4);put(6,F,1.8);put(8,F>R+12?F-12:F,1.4);put(14,app(),1.6)}};
+  (P[type]||P.roots)();
+  return st}
+function btBassPos(steps,root){const {lo}=srBox(root);return steps.map(x=>{if(x.s==='-'||x.muted&&!x.m)return x;let m=x.m;if(x.muted&&!m)return x;
+  while(m<28)m+=12;while(m>55)m-=12;x.m=m;let q=posFor(m,[0,1,2,3],lo,lo+4);if(!q){const c=positions(m,'bass').sort((a,b)=>Math.abs(a.f-lo)-Math.abs(b.f-lo))[0];q=c||{s:0,f:m-28}}x.pos=q;return x})}
+// ---- build a track from the settings
+function btNew(){
+  const st=BT.style,STY=BT_STYLES[st],root=+BT.key,mode=STY.blues?4:btModeFor(st);
+  const L=btProgList(mode,st);let P=BT.prog!=='auto'&&L.find(p=>p.id===BT.prog)||L[rnd(L.length)]||{id:'0',d:[0]};
+  const kind=STY.chord,chords=P.d.map(d=>btChord(root,mode,d,kind));
+  const bassType=BT.bassType==='auto'?STY.bass:BT.bassType,pat=STY.pats[rnd(STY.pats.length)];
+  const bars=[];chords.forEach((c,i)=>{for(let k=0;k<BT.bpc;k++){const last=k===BT.bpc-1;bars.push({ci:i,ch:c,bass:btBassPos(btBassBar(bassType,c,last?chords[(i+1)%chords.length]:c,root,mode,STY.swing),root)})}});
+  BT.track={root,mode,prog:P.id,style:st,pat,bars,chords,bassType};saveS();btRender()}
+// ---- playback
+let btGen=0,btBus=null,btTimer=null,btRaf=0,btSched=[],btBar=-1,btBuses={};
+const btName=(c,root,mode)=>namesFor(root,mode)[c.r]+c.q;
+function btVoicing(ch,voice,step){
+  let R=40+((ch.r-40)%12+12)%12;if(R>47)R-=0;const t=ch.third,f=ch.fifth,s7=ch.iv[3];
+  switch(voice){
+    case 'power':return [R,R+7,R+12];
+    case 'boogie':return step%4<2?[R,R+7]:[R,R+9];
+    case 'funk':return [R+12+(s7||10)-12+12,R+12+t+12-12,R+12+f].map(x=>x>79?x-12:x).sort((a,b)=>a-b);
+    case 'shell':return s7!=null?[R,R+s7,R+12+t]:[R,R+t+12,R+f+12];
+    case 'skank':return [R+12,R+12+t,R+12+f].map(x=>x>76?x-12:x);
+    case 'open':return [R,R+f,R+12,R+12+t,R+12+f].filter(x=>x<=76);
+    default:return s7!=null?[R,R+f,R+s7,R+12+t,R+12+f]:[R,R+f,R+12,R+12+t,R+12+f]}}
+function btPlayBar(bar,t0,e16,first){
+  const STY=BT_STYLES[BT.track.style],sw=STY.swing?.67*e16:0,tt=i=>t0+i*e16+(i%4===2?sw:0);
+  const keepO=OUTBUS,keepS={...S.sounds};
+  try{
+    if(BT.on.drums){OUTBUS=btBuses.drums;const [bs,bi]=(BT.beat==='auto'?STY.beat:BT.beat).split(':');playDrums(t0,16,bs,e16,first,(BEATS[bs]||BEATS.rock)[+bi]||BEATS[bs][0])}
+    if(BT.on.gtr){OUTBUS=btBuses.gtr;S.sounds.guitar=BT.gtrSnd==='auto'?STY.gtr:BT.gtrSnd;const pat=BT.track.pat;
+      for(let i=0;i<16;i++){const c=pat[i];if(c==='-')continue;const v=btVoicing(bar.ch,STY.voice,i),t=tt(i)+(Math.random()-.5)*.006;
+        let n=1;while(i+n<16&&pat[i+n]==='-')n++;const ring=Math.min(n,c==='S'||c==='C'?1.6:8)*e16*.95;
+        if(c==='M'){const low=v.slice(0,2);low.forEach((m,k)=>{if(!chug(t+k*.003,m,.75))ghostNote('guitar',t,m)});continue}
+        const up=c==='U',vel=up?.62:c==='S'?.8:c==='C'?.7:.9,notes=up?v.slice().reverse().slice(0,3):v;
+        notes.forEach((m,k)=>playTone('guitar',t+k*(c==='S'||c==='C'?.004:.011),m,ring,vel*(1-k*.04)))}}
+    if(BT.on.pad&&first!==null){OUTBUS=btBuses.pad;S.sounds.voice='oohs';const R=48+((bar.ch.r-48)%12+12)%12;[R,R+bar.ch.third,R+bar.ch.fifth].forEach((m,k)=>playTone('voice',t0+k*.02,m,16*e16*.98,.45))}
+    if(BT.on.bass){OUTBUS=btBuses.bass;S.sounds.bass=STY.bassSnd;const st=bar.bass;
+      st.forEach((x,i)=>{if(x.s==='-')return;const t=tt(i)+(Math.random()-.5)*.005;if(x.muted||x.m==null){ghostNote('bass',t,x.m||(28+((BT.track.root-28)%12+12)%12));return}playTone('bass',t,x.m,(x.len||1)*e16*.95,i%4===0?.95:.85)})}
+  }finally{OUTBUS=keepO;Object.assign(S.sounds,keepS)}}
+async function btStart(){
+  if(btBus)return btStop();if(!BT.track)btNew();ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
+  const g=++btGen,STY=BT_STYLES[BT.track.style];btBus=newBus();btBuses={};
+  for(const k of ['drums','gtr','pad','bass']){const x=ctx.createGain();x.gain.value=BT.vol[k]*(k==='drums'?1.6:1);x.connect(btBus);btBuses[k]=x}
+  btRenderPlay();
+  const gs=BT.gtrSnd==='auto'?STY.gtr:BT.gtrSnd,[bs]=(BT.beat==='auto'?STY.beat:BT.beat).split(':');
+  await Promise.all([soundReady('guitar',gs),soundReady('guitar','muted'),soundReady('bass',STY.bassSnd),BT.on.pad?soundReady('voice','oohs'):0,kitReady(bs)]);
+  if(g!==btGen)return;
+  const e16=()=>60/BT.tempo/4;let t0=ctx.currentTime+.15,bi=0,first=true;
+  // count-in: four sticks
+  {const k=KITS[bs]||'zep',ko=OUTBUS;for(let i=0;i<4;i++){const tt=t0+i*4*e16();OUTBUS=btBuses.drums;try{drumHit(k,'stick',tt,i?.7:1)}finally{OUTBUS=ko}btSched.push({t:tt,bar:-1,count:4-i})}t0+=16*e16()}
+  const cycle=()=>{if(g!==btGen)return;const T=BT.track;if(!T)return;
+    while(t0<ctx.currentTime+.6){const b=T.bars[bi%T.bars.length];btPlayBar(b,t0,e16(),first&&bi===0);btSched.push({t:t0,bar:bi%T.bars.length});first=false;t0+=16*e16();bi++}
+    btTimer=setTimeout(cycle,120)};
+  cycle();
+  const tick=()=>{if(g!==btGen)return;const now=ctx.currentTime;while(btSched.length>1&&now>=btSched[1].t)btSched.shift();const s=btSched[0];
+    if(s&&now>=s.t){$('btCount').textContent=s.count?String(s.count):'';if(s.bar!==btBar&&s.bar>=0){btBar=s.bar;btHighlight()}}
+    btRaf=requestAnimationFrame(tick)};btRaf=requestAnimationFrame(tick)}
+function btStop(){btGen++;clearTimeout(btTimer);cancelAnimationFrame(btRaf);btSched=[];btBar=-1;
+  if(btBus&&ctx){const g=btBus,now=ctx.currentTime;try{g.gain.setValueAtTime(g.gain.value,now);g.gain.linearRampToValueAtTime(0,now+.05)}catch(e){}setTimeout(()=>{try{g.disconnect()}catch(e){}},200)}
+  btBus=null;$('btCount').textContent='';btRenderPlay();btHighlight()}
+function btRestart(){if(btBus){btStop();btStart()}}
+function btRenderPlay(){const b=$('btPlay');b.querySelector('span').textContent=btBus?'Stop':'Play';b.classList.toggle('stopping',!!btBus)}
+// ---- screen
+function btHighlight(){const T=BT.track;if(!T)return;const b=T.bars[Math.max(0,btBar)],nm=namesFor(T.root,T.mode);
+  document.querySelectorAll('#btChart .btc').forEach((el,i)=>el.classList.toggle('on',btBar>=0&&+el.dataset.ci===b.ci));
+  $('btNowChord').textContent=btName(b.ch,T.root,T.mode);$('btNowTones').textContent=b.ch.iv.map(i=>nm[(b.ch.r+i)%12]).join(' · ');
+  document.querySelectorAll('#btTab [data-bar]').forEach(el=>el.setAttribute('opacity',btBar<0||+el.dataset.bar===btBar?1:.35))}
+function btRender(){
+  const T=BT.track;if(!T)return btNew();const nm=namesFor(T.root,T.mode),STY=BT_STYLES[T.style];
+  $('btKey').textContent=`${nm[T.root]} ${MODES[T.mode].name}`;
+  $('btChart').innerHTML=T.chords.map((c,i)=>`<button class="btc" data-ci="${i}"><b>${btName(c,T.root,T.mode)}</b><small>${c.rn}</small></button>`).join('');
+  $('btChart').style.gridTemplateColumns=`repeat(${Math.min(4,T.chords.length)},minmax(0,1fr))`;
+  const sc=scaleOf(T.mode).map(x=>nm[(T.root+x)%12]);
+  $('btScale').innerHTML=STY.blues?`Improvise with <b>${nm[T.root]} minor pentatonic / blues</b>: ${[0,3,5,6,7,10].map(x=>nm[(T.root+x)%12]).join(' ')} · or ${nm[T.root]} Mixolydian: ${sc.join(' ')}`:`Improvise with <b>${nm[T.root]} ${MODES[T.mode].name}</b>: ${sc.join(' ')}`;
+  // bass tab: one row per bar, four strings
+  const bars=T.bars,RH=62,W=20,X0=26,SY=[12,24,36,48];let h=`<svg viewBox="0 0 352 ${RH*bars.length}">`;
+  bars.forEach((b,k)=>{const y0=k*RH;h+=`<g data-bar="${k}">`;['G','D','A','E'].forEach((n,j)=>{h+=`<text x="6" y="${y0+SY[j]+4}" font-size="10" font-weight="700" fill="var(--muted)">${n}</text><line x1="${X0}" y1="${y0+SY[j]}" x2="${X0+16*W}" y2="${y0+SY[j]}" stroke="var(--str)" stroke-width="1"/>`});
+    h+=`<line x1="${X0}" y1="${y0+SY[0]}" x2="${X0}" y2="${y0+SY[3]}" stroke="var(--ink)" stroke-width="2"/><text x="${X0+16*W}" y="${y0+SY[3]+14}" text-anchor="end" font-size="10" font-weight="700" fill="var(--acc)">${btName(b.ch,T.root,T.mode)}</text>`;
+    b.bass.forEach((x,i)=>{if(x.s==='-')return;const cx=X0+i*W+W/2,s=x.pos?x.pos.s:0,y=y0+SY[3-s];h+=`<rect x="${cx-7}" y="${y-6.5}" width="14" height="13" fill="var(--bg)"/><text x="${cx}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="700" fill="${x.muted?'var(--muted)':'var(--ink)'}">${x.muted||!x.pos?'x':x.pos.f}</text>`});
+    for(let q=0;q<4;q++)h+=`<text x="${X0+q*4*W+W/2}" y="${y0+SY[3]+14}" text-anchor="middle" font-size="10" fill="var(--muted)">${q+1}</text>`;
+    h+='</g>'});
+  $('btTab').innerHTML=h+'</svg>';
+  $('btBassHint').textContent={roots:'Roots on every beat.',root8:'Driving 8th-note roots, with a pickup into the next chord.',eighths:'8th-note roots with the 5th and a chromatic approach into the next chord.',root5:'Root and 5th, with a lead-in to the next chord.',octaves:'Root and octave, disco style.',pedal16:'Palm-muted 16th roots, accents on the beat.',walking:'Walking quarter notes: root, chord tone, scale tone, then a half step into the next root.',boogie:'Boogie line: 1, 3, 5, 6, ♭7, 6, 5, 3.',funk:'Funk: root and octave with dead notes on the 16ths.',reggae:'Reggae: skips the one, root and 5th around the chord.',bossa:'Bossa nova: root on 1, 5th anticipating 3.'}[T.bassType]||'';
+  btHighlight();btRenderControls()}
+function btRenderControls(){
+  const STY=BT_STYLES[BT.style],T=BT.track;
+  $('btStyle').innerHTML=Object.entries(BT_STYLES).map(([k,s])=>opt(k,s.name)).join('');$('btStyle').value=BT.style;
+  const nm=SHARP;$('btKeySel').innerHTML=nm.map((n,i)=>opt(i,(FLAT[i]!==n?n+'/'+FLAT[i]:n))).join('');$('btKeySel').value=String(BT.key);
+  $('btModeSel').innerHTML=opt('auto','Style recommended')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('btModeSel').value=STY.blues?'auto':String(BT.mode);$('btModeSel').disabled=!!STY.blues;
+  if(T){const L=btProgList(T.mode,BT.style);$('btProg').innerHTML=(STY.blues?'':opt('auto','Random for this mode'))+L.map(p=>{const cs=(p.d).map(d=>btChord(T.root,T.mode,d,STY.chord));return opt(p.id,(p.name?p.name+': ':'')+cs.map(c=>c.rn).join(' – ')+'   ('+cs.map(c=>btName(c,T.root,T.mode)).join(' ')+')')}).join('');$('btProg').value=STY.blues?'blues12':(BT.prog!=='auto'&&L.some(p=>p.id===BT.prog)?BT.prog:'auto')}
+  $('btBpc').value=String(BT.bpc);
+  const bl=['rock','funk','pop','metal','walking'];$('btBeat').innerHTML=opt('auto','Style default')+bl.map(st=>`<optgroup label="${st==='walking'?'Swing, shuffle and Latin':st[0].toUpperCase()+st.slice(1)}">${BEATS[st].map((B,i)=>opt(st+':'+i,B.name)).join('')}</optgroup>`).join('');$('btBeat').value=BT.beat;
+  $('btTempo').value=BT.tempo;$('btTempoVal').textContent=BT.tempo;
+  const BTYPES={auto:'Style default',roots:'Roots',root8:'Root 8ths',eighths:'Rock 8ths',root5:'Root and 5th',octaves:'Octaves',pedal16:'Palm-muted 16ths',walking:'Walking',boogie:'Boogie',funk:'Funk with dead notes',reggae:'Reggae',bossa:'Bossa nova'};
+  const GS={auto:'Style default',clean:'Clean',crunch:'Amp: crunch',heavy:'Amp: heavy',metal:'Amp: metal',steel:'Acoustic',nylon:'Nylon'};
+  const row=(k,name,extra)=>`<div class="btrow${BT.on[k]?'':' off'}"><div class="bth"><button class="btsw" data-on="${k}" aria-pressed="${!!BT.on[k]}" aria-label="${name} on or off"></button><b>${name}</b></div><input type="range" min="0" max="100" value="${Math.round(BT.vol[k]*100)}" data-vol="${k}" aria-label="${name} volume">${extra||''}</div>`;
+  $('btInst').innerHTML=row('drums','Drums')+row('gtr','Guitar',`<select data-sel="gtrSnd" aria-label="Guitar sound">${Object.entries(GS).map(([k,v])=>opt(k,v)).join('')}</select>`)+row('pad','Pad (choir)')+row('bass','Suggested bass line',`<select data-sel="bassType" aria-label="Bass line type">${Object.entries(BTYPES).map(([k,v])=>opt(k,v)).join('')}</select>`);
+  $('btInst').querySelector('[data-sel=gtrSnd]').value=BT.gtrSnd;$('btInst').querySelector('[data-sel=bassType]').value=BT.bassType}
+function btEnter(){fetchKit('zep');fetchKit('pearl');fetchKit('jazz');if(!BT.track)btNew();else btRender()}
+$('btPlay').onclick=()=>btStart();
+$('btNew').onclick=()=>{btNew();btRestart()};
+chg('btStyle',v=>{BT.style=v;const s=BT_STYLES[v];BT.tempo=s.tempo;BT.mode='auto';BT.prog='auto';BT.beat='auto';BT.gtrSnd='auto';BT.bassType='auto';BT.on.pad=s.pad;btNew();btRestart()});
+chg('btKeySel',v=>{BT.key=+v;btNew();btRestart()});
+chg('btModeSel',v=>{BT.mode=v;BT.prog='auto';btNew();btRestart()});
+chg('btProg',v=>{BT.prog=v;btNew();btRestart()});
+chg('btBpc',v=>{BT.bpc=+v;btNew();btRestart()});
+chg('btBeat',v=>{BT.beat=v;saveS();btRestart()});
+const btSetTempo=v=>{BT.tempo=Math.max(50,Math.min(200,v));$('btTempo').value=BT.tempo;$('btTempoVal').textContent=BT.tempo;saveS()};
+$('btTempo').oninput=e=>btSetTempo(+e.target.value);$('btTDown').onclick=()=>btSetTempo(BT.tempo-2);$('btTUp').onclick=()=>btSetTempo(BT.tempo+2);
+$('btInst').onclick=e=>{const b=e.target.closest('[data-on]');if(!b)return;const k=b.dataset.on;BT.on[k]=!BT.on[k];saveS();btRenderControls();if(btBuses[k])btBuses[k].gain.setTargetAtTime(BT.on[k]?BT.vol[k]*(k==='drums'?1.6:1):0,ctx.currentTime,.03)};
+$('btInst').oninput=e=>{const k=e.target.dataset.vol;if(!k)return;BT.vol[k]=+e.target.value/100;saveS();if(btBuses[k]&&BT.on[k])btBuses[k].gain.setTargetAtTime(BT.vol[k]*(k==='drums'?1.6:1),ctx.currentTime,.03)};
+$('btInst').onchange=e=>{const k=e.target.dataset.sel;if(!k)return;BT[k]=e.target.value;if(k==='bassType')btNew();else saveS();btRestart()};
+$('btChart').onclick=e=>{const b=e.target.closest('[data-ci]');if(!b||!BT.track)return;const T=BT.track,c=T.chords[+b.dataset.ci],nm=namesFor(T.root,T.mode);ensureCtx();const t=ctx.currentTime+.02;S.sounds.guitar=S.sounds.guitar;btVoicing(c,'open',0).forEach((m,k)=>playTone('guitar',t+k*.012,m,1.2,.7))};
+
+// ---- simple page routing (#home, #ear, #create, #slap, #backing) ----
 let route='home';
 function renderHomeSaved(){const a=$('homeSaved');if(!a)return;a.textContent=saved.length?`My saved riffs (${saved.length}) →`:'';a.hidden=!saved.length}
 function go(r){if(location.hash!=='#'+r)location.hash=r;else showRoute()}
 function showRoute(){
   let r=(location.hash||'#home').slice(1),sub=null;
   if(r==='sriff')r='creator';if(r.startsWith('creator/')){sub=r.split('/')[1];r='creator'}
-  const next=['home','ear','slap','creator'].includes(r)?r:'home';
+  const next=['home','ear','slap','creator','backing'].includes(r)?r:'home';
   if(route==='ear'&&next!=='ear'){if(playSched||loopMode>0)stopPlayback(false);if(listening)stopListening()}
   if((route==='slap'||route==='creator')&&next!==route&&slBus)slapStop();
+  if(route==='backing'&&next!=='backing'&&btBus)btStop();
   route=next;$('viewSlap').hidden=route!=='slap';$('viewSRiff').hidden=route!=='creator';
   if(route==='creator'){if(sub==='slap'){if(crMode!=='bass')setCrMode('bass');if(!isSlapKey(SR.style)){SR.style='slap_mix';SR.riff=null}srEnter()}else if(sub&&['bass','guitar'].includes(sub)&&sub!==crMode)setCrMode(sub);else srEnter()}
+  $('viewBacking').hidden=route!=='backing';if(route==='backing')btEnter();
   $('viewHome').hidden=route!=='home';$('viewEar').hidden=route!=='ear';$('viewCreate').hidden=route!=='create';
   if(route==='create')renderEditor();if(route==='slap')slapEnter();if(route==='home')renderHomeSaved();
   window.scrollTo({top:0});
