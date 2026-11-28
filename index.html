@@ -587,7 +587,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0214';
+const APP_VERSION='2026.11.28-0219';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2805,11 +2805,13 @@ function renderSRControls(){
   {const S0=STY()[SR.style]||{};$('srModeSel').innerHTML=opt('random',S0.cmp||S0.compose?'Band recommended':'Player recommended')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode}
   const ST=STY();
   if(crMode==='bass'){const fk=Object.keys(BASS_STYLES),sk=Object.keys(SR_STYLES);
-    $('srStyle').innerHTML=`<optgroup label="Fingerstyle &amp; pick">${fk.map(k=>opt(k,k==='mix'?'Mixed fingerstyle (no particular player)':BASS_STYLES[k].name)).join('')}</optgroup><optgroup label="Slap">${sk.map(k=>opt('slap_'+k,'Slap · '+SR_STYLES[k].name)).join('')}</optgroup><optgroup label="Fingerstyle players, slapped">${fk.filter(k=>k!=='mix').map(k=>opt('slap_of_'+k,'Slap · '+BASS_STYLES[k].name.split(':')[0]+' line')).join('')}</optgroup>`}
+    $('srStyle').innerHTML=`<optgroup label="Fingerstyle &amp; pick">${fk.map(k=>opt(k,k==='mix'?'Mixed fingerstyle (no particular player)':BASS_STYLES[k].name)).join('')}</optgroup><optgroup label="Slap">${sk.map(k=>opt('slap_'+k,'Slap · '+SR_STYLES[k].name)).join('')}</optgroup>`}
   else $('srStyle').innerHTML=Object.keys(ST).map(k=>opt(k,ST[k].name)).join('');
-  $('srStyle').value=ST[SR.style]?SR.style:'mix';const ci=curInst();
-  const G=geomOf(crMode);$('srSoundF').hidden=ci==='slap';$('srToneF').hidden=ci!=='slap';$('srNamesF').hidden=ci!=='slap';
+  const slapOf=crMode==='bass'&&/^slap_of_/.test(SR.style)?SR.style.slice(8):null;
+  $('srStyle').value=slapOf||(ST[SR.style]?SR.style:'mix');const ci=curInst();
+  const G=geomOf(crMode);$('srSoundF').hidden=ci==='slap'&&!slapOf;$('srToneF').hidden=ci!=='slap';$('srNamesF').hidden=ci!=='slap';
   if(ci!=='slap'){const L=SOUNDS[G];$('srSound').innerHTML=`<optgroup label="Real recordings">${L.filter(s=>s.real).map(s=>opt(s.id,s.name)).join('')}</optgroup><optgroup label="Synth">${L.filter(s=>!s.real).map(s=>opt(s.id,s.name)).join('')}</optgroup>`;$('srSound').value=SR.sound}
+  if(slapOf){const L=SOUNDS[G];$('srSound').innerHTML=`<optgroup label="Real recordings">${L.filter(s=>s.real).map(s=>opt(s.id,s.name)).join('')}</optgroup><optgroup label="Synth">${L.filter(s=>!s.real).map(s=>opt(s.id,s.name)).join('')}</optgroup>`;$('srSound').value='slap'}
   document.querySelectorAll('#crTabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===crMode)));
   $('legSlap').hidden=ci!=='slap';$('legInst').hidden=ci==='slap';
   // the rhythm yardstick is a slap tool: shown (open) only for slap players
@@ -2834,7 +2836,8 @@ function setCrMode(m){
 $('crTabs').onclick=e=>{const b=e.target.closest('[data-v]');if(b)setCrMode(b.dataset.v)};
 $('yardBox').ontoggle=()=>{SR.yardOpen=$('yardBox').open;saveS()};
 // picking the Slap sound on a bass line means slap technique: switch to the mixed slap player and convert the line
-chg('srSound',v=>{if(crMode==='bass'&&v==='slap'){onStyle(BASS_STYLES[SR.style]&&SR.style!=='mix'?'slap_of_'+SR.style:'slap_mix');return}SR.sound=v;fetchSamples(geomOf(crMode),v);saveS();if(slKind==='riff')slRestart()});
+chg('srSound',v=>{if(crMode==='bass'&&/^slap_of_/.test(SR.style)&&v!=='slap'){onStyle(SR.style.slice(8));SR.sound=v;fetchSamples('bass',v);saveS();renderSRControls();if(slKind==='riff')slRestart();return}
+  if(crMode==='bass'&&v==='slap'){onStyle(BASS_STYLES[SR.style]&&SR.style!=='mix'?'slap_of_'+SR.style:'slap_mix');return}SR.sound=v;fetchSamples(geomOf(crMode),v);saveS();if(slKind==='riff')slRestart()});
 const srNew=()=>{SR.riff=genSlapRiff();SR.barOn=null;SR.pos=0;saveS();renderSR();renderSRSaved();if(slBus&&slKind==='riff')slRestart()};
 $('srPlay').onclick=()=>slBus&&slKind==='riff'?slapStop():slapPlay('riff');
 
