@@ -587,7 +587,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0142';
+const APP_VERSION='2026.11.28-0154';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2208,7 +2208,10 @@ const GTR_STYLES={
   // low strings, the low D ping-ponging with its octave, "outside" notes like the flat 2 and major 7, riffs
   // that start off the one, repeat, then stop dead
   ratm:{name:'Rage Against the Machine: drop-D riffs',sound:'crunch',tempo:88,beat:'rock:7',keys:{2:8,4:1},modes:{5:2,1:2,2:1},jit:.004,
-    cmp:{tune:'D',full:.3,accV:1,ways:{hook:3,poly:1.2,group:1},polys:[{c:'A.XA.X',seqs:[[0,12],[0,3,5],[0,0,12,10]]},{c:'AXA.X',seqs:[[0,3],[0,12,10],[5,3,0]]},{c:'A..A.',seqs:[[0,12],[0,3,5,6]]}],
+    cmp:{tune:'D',full:.6,accV:1,ways:{break:3,chords:2.2,hook:1.3,poly:.7,group:.7},
+      chords:{rhy:['C..C..C.','C.XXC..C','C...C.C.','C..C.C..','C..XXC..','C.C..C.C','X.XXC..C','C...XXC.','C..C.XX.'],
+        ans:{repeat:2,move:1.5,vary:1.5,stabs:1.5},ends:['C...','C.C.','XXC.','C..C','X.C.'],figs:[[0,3,5]],ch2:[3,5,10,7,1,8,6],moves:[5,3,7,-2,1],
+        stabs:['C3 . . C5 . . C0 .','C5 . C3 . C0 . . .','C10 . . C8 . . C7 .','C1 . . . C0 . . .','C6 . . C5 . . C3 .']},polys:[{c:'A.XA.X',seqs:[[0,12],[0,3,5],[0,0,12,10]]},{c:'AXA.X',seqs:[[0,3],[0,12,10],[5,3,0]]},{c:'A..A.',seqs:[[0,12],[0,3,5,6]]}],
       groups:[[3,3,2,3,3,2],[3,3,3,3,4],[3,3,2,8]],fill:'X',fillP:.4,accChord:.2,acc:[[0,12,0,10],[0,3,5,3],[0,6,5,3],[0,1,0,11]],rhy:['N..N..N.','NN.N.N..','N.NN..N.','X..N.NN.','N.N..NN.','.N.NN..N','X.N..N.N','N...N.NN','NN..V.V.','V..V..N.'],
       figs:[[0,12,0,12],[0,12,10,12],[0,3,5,3],[0,10,0,3],[5,3,0,0],[0,0,3,5],[0,1,0,11],[7,5,3,0],[0,6,5,3],[3,5,6,5],[0,3,0,10]],ch2:[3,5,10],
       ans:{repeat:3,vary:2,stop:1.5,move:1},moves:[5,3,-2],ends:['N.N.','NN..','C...','X.N.','N..N','V.V.'],
@@ -2475,8 +2478,14 @@ function genBand(st,ST,root,mode,nb,fixed){
   const stompWay=()=>{const A=parse(pick(C.stomps)),B=parse(pick(C.stomps)),T=mkTurn(null);
     return (b,fresh)=>{if(fresh)return parse(pick(C.stomps));if(nb>1&&b===nb-1)return A.slice(0,8).concat(T);return b%2&&nb>1?B:A}};
   // drone: the open low string keeps ringing under dissonant notes higher up (flat 9, tritone, flat 6)
-  const droneWay=()=>{const keep=[C.rhy,C.figs,C.ans];C.rhy=C.drone.rhy;C.figs=C.drone.figs;C.ans=C.drone.ans;try{return hookWay()}finally{[C.rhy,C.figs,C.ans]=keep}};
-  const WAYS={hook:hookWay,group:groupWay,prog:progWay,poly:polyWay,stomp:stompWay,drone:droneWay};
+  const withCfg=(cfg,fn)=>{const keep={};for(const k in cfg){keep[k]=C[k];C[k]=cfg[k]}try{return fn()}finally{Object.assign(C,keep)}};
+  const droneWay=()=>withCfg(C.drone,hookWay);
+  // chord riff: the band's hook ideas played as heavy power chords
+  const chordsWay=()=>withCfg(C.chords,hookWay);
+  // break: a single-note riff that breaks into heavy chords (second half of the riff, or beats 3-4 of a 1-bar riff)
+  const breakWay=()=>{const hb=hookWay(),cb=chordsWay(),half=Math.max(1,nb/2);
+    return (b,fresh)=>nb===1?hb(b,fresh).slice(0,8).concat(cb(b,fresh).slice(0,8)):b<half?hb(b,fresh):cb(b,fresh)};
+  const WAYS={hook:hookWay,group:groupWay,prog:progWay,poly:polyWay,stomp:stompWay,drone:droneWay,chords:chordsWay,break:breakWay};
   if(WAYS[way])barOf=WAYS[way]();
   else if(way==='vc'){ // verse into chorus: a quieter single-note riff, then the chords come in loud
     const hb=hookWay(),pb=progWay(),half=Math.max(1,nb/2);
@@ -2484,8 +2493,8 @@ function genBand(st,ST,root,mode,nb,fixed){
   else barOf=progWay();
   // 8 bars: the middle section (bars 5-6) switches to a different kind of riff for contrast, then the opening
   // riff comes back for bars 7-8
-  if(nb===8){const have={hook:!!C.rhy,group:!!C.groups,prog:!!C.prog,poly:!!C.polys,stomp:!!C.stomps,drone:!!C.drone};
-    const main=way==='vc'?'prog':way,opts=Object.keys(have).filter(k=>have[k]&&k!==main);
+  if(nb===8){const have={hook:!!C.rhy,group:!!C.groups,prog:!!C.prog,poly:!!C.polys,stomp:!!C.stomps,drone:!!C.drone,chords:!!C.chords};
+    const main=way==='vc'?'prog':way==='break'?'chords':way,opts=Object.keys(have).filter(k=>have[k]&&k!==main);
     if(opts.length){const w2=W(Object.fromEntries(opts.map(k=>[k,(C.ways&&C.ways[k])||(C.secWays&&C.secWays[k])||1])));const b2=WAYS[w2](),b1=barOf;
       barOf=(b,fresh)=>sec(b)?b2(b,fresh):b1(b,fresh)}}
   // one bar at a time, each with its own random stream so a regenerated bar leaves the others exactly as they were
@@ -2516,7 +2525,7 @@ function genBand(st,ST,root,mode,nb,fixed){
   steps.forEach((x,i)=>{x.bar=Math.floor(i/16);x.blk=i>>1;x.k=i&1;const on=i%4===0;
     x.vel=x.s==='-'?0:x.muted?(C.chugV||.8)*(on?1.08:1):x.m2!=null?(on?1.08:1):x.pedal?.84:on?.98:.9;
     x.vel*=(x.open?.7:x.s==='L'?.9:1)*(QV[i]?.78:1);x.len=x.open?.5:x.m2!=null?1:x.pedal?.55:.85;delete x.pedal;delete x.open});
-  return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[Math.max(1,rf),Math.max(1,rf)+3],style:st,inst:'guitar',seed,tune:drop?DROPD.slice():undefined,kind:{hook:'hook riff',group:'accent groups',poly:'pattern across the bar line',stomp:'half-time stomp',drone:'drone',prog:'chord progression',vc:'verse into chorus'}[way]+(nb===8?' (new section in bars 5–6)':'')};
+  return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[Math.max(1,rf),Math.max(1,rf)+3],style:st,inst:'guitar',seed,tune:drop?DROPD.slice():undefined,kind:{hook:'hook riff',group:'accent groups',poly:'pattern across the bar line',stomp:'half-time stomp',drone:'drone',prog:'chord progression',vc:'verse into chorus',chords:'power-chord riff',break:'single notes breaking into heavy chords'}[way]+(nb===8?' (new section in bars 5–6)':'')};
 }
 // ---- Mode colour ----
 // The notes that change between modes: 2nd (b2/2), 3rd (b3/3), 6th (b6/6), 7th (b7/7), and the 4th in Lydian (#4).
