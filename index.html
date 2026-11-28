@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2324';
+const APP_VERSION='2026.11.27-2331';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1959,7 +1959,9 @@ function crHit(x,t,v,ring,inst){
   const G=geomOf(inst),keepO=OUTBUS,keepU=S.octUp,keepS=S.sounds[G];
   OUTBUS=slBus;S.octUp=false;S.sounds[G]=SR.sound||keepS;
   try{
-    if(x.muted||x.m==null)ghostNote(G,t,TUNING[G][x.s==='P'?TUNING[G].length-2:x.s==='T'?1:0]);
+    if(x.muted||x.m==null){
+      if(G==='guitar'&&x.s==='T'&&SR.riff){const r0=TUNING.guitar[0]+((SR.riff.root-TUNING.guitar[0])%12+12)%12;playTone(G,t,r0,.075,v*.8);if(AMPS[S.sounds.guitar])playTone(G,t,r0+7,.075,v*.5)} // palm-muted chug
+      else ghostNote(G,t,TUNING[G][x.s==='P'?TUNING[G].length-2:x.s==='T'?1:0])}
     else{const vv=x.s==='O'||x.s==='L'?v*.72:v;playTone(G,t,x.m,ring,vv,x.slide?-x.slide:0);if(x.m2!=null)playTone(G,t+.006,x.m2,ring,vv*.85)}
   }finally{OUTBUS=keepO;S.octUp=keepU;S.sounds[G]=keepS}
 }
@@ -2069,9 +2071,14 @@ const GTR_STYLES={
     A:['PpPp','P-pP','PppP','DpPp'],B:['pPpP','-PpP','PpP-','ppPp','DpDp','pPPp','PpDp'],popStr:[3,4,5],oct:.3,ghost:.05,
     popDeg:{0:3,7:2.5,10:2,3:2,2:1.5},chrom:.08,maxRing:11,choke:.7,slide:.05,lag:{P:.002,dead:-.002,LH:.003},jit:.003,vary:.08},
   // Tony Iommi: slow, heavy minor-pentatonic riffs of power chords and single notes, the tritone, plenty of weight
-  iommi:{name:'Tony Iommi: heavy power-chord riffs',sound:'heavy',tempo:84,beat:'metal:0',modes:{5:3,2:2,6:1},shape:'ABAC',pent:true,power:true,tritone:.25,
-    A:['D-D-','D--D','D-TT','D---'],B:['D-DD','T-D-','--D-','DD--','T-T-','D---','TTD-','-D-D'],oct:.2,ghost:.04,thumbDeg:{0:5,3:2,5:2,6:1.5,7:2,10:2},
-    chrom:.15,choke:.3,slide:.12,lag:{P:.002,dead:0,LH:.003},jit:.006,vary:.04},
+  // Tony Iommi: slow, dark riffs on the bottom two strings — E-rooted power chords that slide chromatically, the
+  // tritone (root to flat 5th), the blues scale with its flat 5th, the minor 6th sliding down to the 5th, palm-muted
+  // open-string chugs, and big chords left to ring
+  iommi:{name:'Tony Iommi: dark Sabbath riffs',sound:'heavy',tempo:76,beat:'metal:0',modes:{5:3,2:2},shape:'ABAC',power:true,
+    keys:{4:6,1:2,2:1,9:1,7:.5,0:.3},notes:[0,1,3,5,6,7,8,10],
+    prog:[[0,6,0,5],[0,3,5,6],[0,10,8,7],[0,3,0,6],[0,7,6,5],[0,0,3,5],[0,8,7,6],[0,3,6,5]],
+    A:['D---','D--D','D-tt','D-D-','D--t'],B:['D---','--D-','tD-D','D-tt','tttt','T-T-','TTD-','D--t','-D--','ttD-','D-D-','T-TT'],
+    oct:.1,ghost:.02,thumbDeg:{0:6,3:2,5:2,6:2,7:2,10:2},chrom:.25,choke:.12,slide:.1,maxRing:14,lag:{P:.002,dead:0,LH:.003},jit:.006,vary:.03},
   // Jimmy Page: blues-rock riffs from the minor pentatonic, open-string pedals, hammer-ons and pull-offs, syncopation
   page:{name:'Jimmy Page: blues-rock riffs',sound:'crunch',tempo:96,beat:'rock:1',modes:{5:3,4:2,1:2},shape:'ABAC',pent:true,pedal:.3,pullOpen:.7,
     A:['T-TT','THO-','T-PL','T-TP','D-T-'],B:['-TPL','HOT-','T-HO','PLT-','TT-P','-T-T','TPLT','D-DT'],power:true,oct:.25,ghost:.05,chrom:.12,
@@ -2185,7 +2192,7 @@ function posFor(m,strings,lo,hi,TU=TUNING.bass){let best=null;for(const s of str
 function genStyledRiff(st,fixed,instIn){
   const inst=instIn||crMode,ST=styOf(inst)[st],mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
   const root=fixed?fixed.root:SR.key==='random'?(ST.keys?slPick(Object.keys(ST.keys).map(Number),Object.values(ST.keys)):rnd(12)):+SR.key,mode=fixed?fixed.mode:SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
-  const sc=scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
+  const sc=ST.notes?ST.notes.map(x=>(root+x)%12):scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
   let {lo,hi,rootM}=srBox(root,TU);if(fixed&&fixed.lo){lo=fixed.lo;hi=lo+3}
   const spots=[];for(let s=0;s<NS;s++)for(const f of [0,lo,lo+1,lo+2,lo+3]){const m=TU[s]+f;if(inS(m))spots.push({s,f,m})}
   // Funk lines live on root, octave, 5th and 7th, plus the 3rd and 4th (pentatonic/blues); other scale notes are rare passing tones
@@ -2249,7 +2256,8 @@ function genStyledRiff(st,fixed,instIn){
     for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm===shape[0]||p.rhythm==='b'+shape[0]?spaceAdj(pickCell(ST.A,true),true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
     if(cellOf.F){const busy=ST.B.concat(ST.A).filter(c=>okCell(c)&&(c.match(/[TPHOD]/g)||[]).length>=3);if(busy.length)cellOf.F=spaceAdj(busy[rnd(busy.length)])}
   }
-  const memo={},steps=[];let lastT=rootM;
+  const memo={},steps=[];let lastT=rootM,progI=0,lastChord=null;
+  const progA=ST.prog?ST.prog[rnd(ST.prog.length)]:null,progB=ST.prog?ST.prog[rnd(ST.prog.length)]:null;
   const pickT=(first,resp)=>{
     if(first){const d=center,nearLow=spots.filter(q=>q.s<=LOW[LOW.length-1]+1&&deg(q.m)===d);return (thumbs.some(q=>deg(q.m)===d)?thumbs:nearLow).filter(q=>deg(q.m)===d).sort((a,b)=>(st==='king'||st==='flea'?(a.f===0?-1:0)-(b.f===0?-1:0):0)||Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||thumbs.find(q=>q.m===rootM)||thumbs[0]}
     if(ST.rootLock&&Math.random()<ST.rootLock){const d=center;return thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>(a.f===0?-1:0)-(b.f===0?-1:0)||Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||slPick(thumbs,thumbs.map(tW))}
@@ -2283,6 +2291,12 @@ function genStyledRiff(st,fixed,instIn){
           if(!p&&ST.tritone&&Math.random()<ST.tritone){const q=posFor(rootM+18,ST.popStr||HIGH,lo,hi,TU);if(q)p={...q,m:rootM+18}}
           if(!p)p=pops.length?slPick(pops,pops.map(pW)):slPick(thumbs,thumbs.map(tW));
           const x={s:'P',m:p.m,pos:{s:p.s,f:p.f},muted:c==='P'&&Math.random()<ST.ghost*.6};
+          if(c==='D'&&ST.prog){ // riff progression of E-rooted power chords that slide along the low strings
+            if(k===0&&pl.head)progI=0;const prog=pl.resp?progB:progA,d=first?(pl.resp?center:0):prog[progI++%prog.length];
+            const rE=TU[0]+((root-TU[0])%12+12)%12,m0=rE+d,s0=m0-TU[0]<=12?0:1,f0=m0-TU[s0];
+            const x={s:'T',m:m0,pos:{s:s0,f:f0},m2:m0+7,pos2:{s:s0+1,f:f0+2},muted:false};
+            if(lastChord!=null&&Math.abs(lastChord-m0)<=2&&lastChord!==m0&&f0>=2)x.slide=Math.abs(lastChord-m0);
+            lastChord=m0;lastT=m0;out.push(x);continue}
           if(c==='D'&&ST.power){ // power chord: root plus the 5th on the next string up, two frets higher
             const r=pickT(first,pl.resp),pc=r.s<LOW[LOW.length-1]+1&&r.f+2<=20?r:thumbs.find(q=>q.m%12===r.m%12&&q.s<=2)||r;
             out.push({s:'T',m:pc.m,pos:{s:pc.s,f:pc.f},m2:pc.m+7,pos2:{s:pc.s+1,f:pc.f+2},muted:false});lastT=pc.m;continue}
@@ -2307,7 +2321,7 @@ function genStyledRiff(st,fixed,instIn){
   }
   // chromatic approach: a thumb on the last 16th before a beat slides in from a half step below the next thumb
   for(let i=3;i<steps.length-1;i+=4){const a=steps[i],b=steps[i+1];
-    if(plain(a)&&a.s==='T'&&plain(b)&&b.s==='T'&&Math.random()<ST.chrom&&b.pos.f>0){a.m=b.m-1;a.pos={s:b.pos.s,f:b.pos.f-1}}}
+    if(plain(a)&&a.s==='T'&&a.m2==null&&plain(b)&&b.s==='T'&&Math.random()<ST.chrom&&b.pos.f>0){a.m=b.m-1;a.pos={s:b.pos.s,f:b.pos.f-1}}}
   // dead-note pickup: a ghosted thumb on the 16th right before an accented note gives the line its push
   for(let i=1;i<steps.length;i++){const a=steps[i-1],b=steps[i];
     if(a.s==='-'&&b.m!=null&&!b.muted&&(i%4===0||b.s==='P')&&Math.random()<(ST.pickup??.35)*[1.2,1,.35,0][SR.space??1])Object.assign(a,{s:'T',muted:true,m:undefined,pos:undefined})}
