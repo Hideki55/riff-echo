@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2240';
+const APP_VERSION='2026.11.27-2247';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2408,7 +2408,39 @@ function srRegenBar(b){
 }
 $('srNew').onclick=srNew;
 $('srStick').onclick=e=>{const rg=e.target.closest('[data-regen]');if(rg){srRegenBar(+rg.dataset.regen);return}const g=e.target.closest('[data-bar]');if(g)srToggleBar(+g.dataset.bar)};
-chg('srStyle',v=>{SR.style=v;const X=STY()[v];if(isSlapKey(v)){fetchSamples('bass','slap');fetchDead()}else if(X.sound){SR.sound=X.sound;fetchSamples(geomOf(crMode),X.sound)}if(X.tempo){SR.tempo=X.tempo;SR.beat=X.beat;SR.back=SR.back==='none'?'drums':SR.back}saveS();renderSRControls();srNew()});
+// Switching a bass line between fingerstyle and slap keeps the line (same notes and rhythm) and changes the technique
+const newId=()=>'s'+Date.now().toString(36)+rnd(1e6).toString(36);
+function slapAccents(st){st.forEach((x,i)=>{x.vel=x.s==='-'?0:x.muted?(x.s==='S'?.85:.78):i%16===0?1.08:i%4===0?.98:x.s==='P'?1:x.s==='O'||x.s==='L'?.9:i%2===0?.9:.84;x.blk=i>>1;x.k=i&1})}
+function toSlap(r,key){
+  const ST=SR_STYLES[key]||SR_STYLES.mix,st=r.steps.map(x=>({...x})),N=st.length,LH=x=>x.s==='O'||x.s==='L';
+  // ringing notes: low strings are thumbed, D and G strings popped
+  st.forEach(x=>{if(x.s==='-'||LH(x))return;if(x.m!=null&&!x.muted)x.s=x.pos&&x.pos.s>=2?'P':'T';else Object.assign(x,{s:'T',muted:true,m:undefined,pos:undefined})});
+  // dead notes on weak 16ths between right-hand strokes become left-hand slaps (more for Mark King)
+  const lhP=ST.linear==='king'?.7:.4;
+  st.forEach((x,i)=>{const p=st[(i-1+N)%N];if(x.muted&&x.s==='T'&&i%2===1&&p.s!=='-'&&p.s!=='S'&&!LH(p)&&Math.random()<lhP)x.s='S'});
+  // slap percussion in the gaps: a dead-thumb pickup before a ringing note, a left-hand slap between strokes
+  const fill=SR.space===2?.15:SR.space===0?.6:.35;
+  st.forEach((x,i)=>{if(x.s!=='-')return;const p=st[(i-1+N)%N],n=st[(i+1)%N];
+    if(n.m!=null&&!n.muted&&Math.random()<fill)Object.assign(x,{s:'T',muted:true});
+    else if(i%2===1&&p.s!=='-'&&p.s!=='S'&&!LH(p)&&n.s!=='-'&&Math.random()<fill*.8)Object.assign(x,{s:'S',muted:true})});
+  // pops: if a bar has fewer than two, turn a thumbed note on an off-beat 8th into its octave pop (same note, octave up)
+  for(let b=0;b<N/16;b++){let pops=st.slice(b*16,b*16+16).filter(x=>x.s==='P'&&!x.muted).length;
+    for(const i of [2,6,10,14,7,15,3,11]){if(pops>=2)break;const x=st[b*16+i],prev=st[b*16+i-1];
+      if(x.s==='T'&&!x.muted&&x.m!=null&&!x.ham&&x.m2==null){const q=posFor(x.m+12,[2,3],Math.max(1,x.pos.f-1),x.pos.f+3);if(q){Object.assign(x,{s:'P',m:x.m+12,pos:q,slide:0});pops++}}}}
+  slapAccents(st);slHands(st,SR.tempo,ST.maxThumb);
+  return {...r,steps:st,inst:'slap',style:key,id:newId(),v:0};
+}
+function toFinger(r,key){
+  const st=r.steps.map(x=>x.s==='S'?{...x,s:'T',muted:true}:{...x});st.forEach((x,i)=>{x.blk=i>>1;x.k=i&1});
+  return {...r,steps:st,inst:'bass',style:key,id:newId(),v:0};
+}
+chg('srStyle',v=>{const was=SR.riff&&(SR.riff.inst||'slap'),now=crMode==='guitar'?'guitar':isSlapKey(v)?'slap':'bass';
+  SR.style=v;const X=STY()[v];if(isSlapKey(v)){fetchSamples('bass','slap');fetchDead()}else if(X.sound){SR.sound=X.sound;fetchSamples(geomOf(crMode),X.sound)}
+  if(was&&crMode==='bass'&&was!==now){ // convert the current line instead of replacing it; keep its tempo and drums
+    SR.riff=now==='slap'?toSlap(SR.riff,v.slice(5)):toFinger(SR.riff,v);saveS();renderSRControls();renderSR();renderSRSaved();
+    toast(now==='slap'?'Same line, now slapped: thumbs, pops and left-hand slaps added':'Same line, now played fingerstyle');
+    if(slBus&&slKind==='riff')slapPlay('riff',SR.pos||0);return}
+  if(X.tempo){SR.tempo=X.tempo;SR.beat=X.beat;SR.back=SR.back==='none'?'drums':SR.back}saveS();renderSRControls();srNew()});
 chg('srKeySel',v=>{SR.key=v;srNew()});chg('srModeSel',v=>{SR.mode=v;srNew()});
 chg('srBars',v=>{SR.bars=+v;srNew()});chg('srSpace',v=>{SR.space=+v;srNew()});chg('srGhosts',v=>{SR.ghosts=+v;srNew()});
 chg('srBack',v=>{SR.back=v;saveS();renderSRControls();if(slKind==='riff')slRestart()});
