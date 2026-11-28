@@ -587,7 +587,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0219';
+const APP_VERSION='2026.11.28-0223';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1869,12 +1869,30 @@ function slapSteps(){
 const regenIcon=(x,y,b)=>`<g data-regen="${b}" style="cursor:pointer" role="button" aria-label="New version of bar ${b+1}"><rect x="${x}" y="${y}" width="30" height="24" rx="8" fill="var(--soft)"/><path d="M${x+20.5} ${y+8.5}a6 6 0 1 0 1.2 5" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/><path d="M${x+21.5} ${y+4}v5h-5" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 const SLCOL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var(--mint)',L:'var(--mint)'};
 // one yardstick row (16 steps) as SVG; get(i) returns the step for column i
+// Repeated bars: each bar is compared with every other bar. If it matches one exactly, the whole bar is marked;
+// if it's mostly the same (12+ of 16 steps and most of its notes), only the matching stretches (3+ steps in a row) are marked, so the
+// part that changes stays clear. Returns per bar {mask, of (the other bar), full}.
+function barRepeats(steps){
+  const nb=steps.length/16,sig=x=>x.s==='-'?'-':x.s+'|'+(x.muted?'x':(x.m??''))+'|'+(x.m2??'')+'|'+(x.ham?'h':'')+(x.pull?'p':'');
+  const S=steps.map(sig),out=[];
+  for(let b=0;b<nb;b++){let best=null;
+    for(let o=0;o<nb;o++){if(o===b)continue;let eq=0,snd=0,nb1=0,nb2=0;const m=[];for(let i=0;i<16;i++){const e=S[b*16+i]===S[o*16+i];m.push(e);if(S[b*16+i]!=='-')nb1++;if(S[o*16+i]!=='-')nb2++;if(e){eq++;if(S[b*16+i]!=='-')snd++}}
+      const r=snd/Math.max(1,nb1,nb2);if(!best||eq+r>best.eq+best.r)best={o,eq,snd,m,r}}
+    // mostly the same: 12+ of 16 steps equal and 70%+ of the notes shared
+    if(!best||best.eq<12||best.r<.7||best.snd<3){out.push(null);continue}
+    const full=best.eq===16,mask=best.m.slice();
+    if(!full)for(let i=0;i<16;){if(!mask[i]){i++;continue}let j=i;while(j<16&&mask[j])j++;if(j-i<3)for(let k=i;k<j;k++)mask[k]=false;i=j}
+    out.push({mask,of:best.o,full})}
+  return out}
+const REPCOL='rgba(52,199,89,.17)';
+function repRects(mask,x0,w,y,h){let s='';for(let i=0;i<16;){if(!mask[i]){i++;continue}let j=i;while(j<16&&mask[j])j++;s+=`<rect x="${x0+i*w}" y="${y}" width="${(j-i)*w}" height="${h}" rx="5" fill="${REPCOL}"/>`;i=j}return s}
 function yardRow(get,y0,opts){
   const W=20,X0=16,cnt=['1','e','&','a'];let h='';
   if(opts.label){const ck=opts.check!=null,c=opts.labelC||'var(--muted)';
     if(ck)h+=`<g data-bar="${opts.bar}" style="cursor:pointer" role="checkbox" aria-checked="${opts.check}"><rect x="${X0-6}" y="${y0-4}" width="200" height="22" fill="transparent"/><circle cx="${X0+5}" cy="${y0+6.5}" r="7" fill="${opts.check?c:'#fff'}" stroke="${c}" stroke-width="2"/>${opts.check?`<path d="M${X0+1.8} ${y0+6.8}l2.3 2.4 4.4-4.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:''}`;
     h+=`<text x="${X0+(ck?17:0)}" y="${y0+10}" font-size="10" font-weight="800" fill="${c}" letter-spacing=".06em">${opts.label}</text>`;if(ck)h+='</g>';
     if(opts.regen)h+=regenIcon(X0+16*20-30,Math.max(0,y0-5),opts.bar);y0+=14}
+  if(opts.rep)h+=repRects(opts.rep.mask,X0,W,y0+2,38);
   const pill=(x,w,dash,op)=>`<rect x="${x}" y="${y0+6}" width="${w}" height="30" rx="${dash?8:15}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" opacity="${op}"${dash?' stroke-dasharray="3 3"':''}/>`;
   for(let i=0;i<16;i++){const a=get(i),b=get(i+1),op=opts.fade(i)?.45:1;
     if(a.k===0&&b&&b.blk===a.blk&&b.k===1&&b.bar===a.bar){if(i<15)h+=pill(X0+i*W+3,2*W-6,0,op);else if(opts.wrap)h+=pill(X0+15*W+3,W-3,1,op)+pill(X0,W-3,1,1)}}
@@ -2787,7 +2805,8 @@ function renderSR(){
   const on=srBarsOn(nb);
   const inst=r.inst||'slap';
   syncYard(inst);
-  for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{RH:108,wrap:false,fade:()=>!on[b],check:nb>1?on[b]:null,regen:nb>1,bar:b,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:inst==='slap'&&SR.showNames?nm:null,nmIn:inst==='slap'?null:nm,label:nb>1?`BAR ${b+1} · ${LB[b]}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
+  const REP=nb>1?barRepeats(st):[];
+  for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{rep:REP[b],RH:108,wrap:false,fade:()=>!on[b],check:nb>1?on[b]:null,regen:nb>1,bar:b,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:inst==='slap'&&SR.showNames?nm:null,nmIn:inst==='slap'?null:nm,label:nb>1?`BAR ${b+1} · ${LB[b]}${REP[b]?(REP[b].full?' · = BAR '+(REP[b].of+1):' · ≈ BAR '+(REP[b].of+1)):''}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
   $('srStick').innerHTML=h+'</svg>';
   $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}${r.tune?' · Drop D':''}`;
   {const k=$('srKind');if(k){k.textContent=r.kind?'This riff: '+r.kind:'';k.hidden=!r.kind}}
@@ -2961,7 +2980,8 @@ function renderTab(){
   const key=SR.riff.id+'|'+(SR.riff.v||0)+'|'+on.join();if(box.dataset.key===key&&$('tabSvg'))return;box.dataset.key=key;
   const yOf=s=>SY[n-1-s];let lastTs=0,lastPs=n-1,h=`<svg viewBox="0 0 352 ${RH*nb}" id="tabSvg">`;
   const TECH=inst==='slap'?{T:'T',P:'P',S:'S',H:'T',O:'H',L:'PO'}:{O:'H',L:'PO'};
-  for(let b=0;b<nb;b++){const y0=b*RH,op=on[b]?1:.4;h+=`<g opacity="${op}">`;
+  const REP=nb>1?barRepeats(st):[];
+  for(let b=0;b<nb;b++){const y0=b*RH,op=on[b]?1:.4;h+=`<g opacity="${op}">`;if(REP[b])h+=repRects(REP[b].mask,X0,W,y0+SY[0]-9,SY[n-1]-SY[0]+18);
     names.forEach((nm,k)=>{h+=`<text x="6" y="${y0+SY[k]+4}" font-size="10" font-weight="800" fill="var(--muted)">${nm}</text><line x1="${X0}" y1="${y0+SY[k]}" x2="${X0+16*W}" y2="${y0+SY[k]}" stroke="#c9c8d8" stroke-width="1.2"/>`});
     for(const xb of [X0,X0+16*W])h+=`<line x1="${xb}" y1="${y0+SY[0]}" x2="${xb}" y2="${y0+SY[n-1]}" stroke="var(--ink)" stroke-width="2"/>`;
     if(nb>1){const c=b%2?'var(--blue)':'var(--coral)';h+=`<g data-bar="${b}" style="cursor:pointer"><rect x="0" y="${y0}" width="24" height="22" fill="transparent"/><circle cx="11" cy="${y0+10}" r="7" fill="${on[b]?c:'#fff'}" stroke="${c}" stroke-width="2"/>${on[b]?`<path d="M7.8 ${y0+10.3}l2.3 2.4 4.4-4.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:''}</g>`+regenIcon(X0+16*W-30,y0+1,b)}
