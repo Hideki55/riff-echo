@@ -528,6 +528,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
       <h2>Settings</h2>
       <div class="fields">
         <label class="fld full"><span>In the style of</span><select id="srStyle"></select></label>
+        <div class="fld full" id="srFeatF"><span>Techniques <small style="font-weight:600">(tap to turn on or off)</small></span><div class="slchips" id="srFeat"></div></div>
         <label class="fld full" id="srSoundF"><span>Sound</span><select id="srSound"></select></label>
         <label class="fld"><span>Key</span><select id="srKeySel"></select></label>
         <label class="fld"><span>Mode</span><select id="srModeSel"></select></label>
@@ -587,7 +588,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0223';
+const APP_VERSION='2026.11.28-0232';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2171,7 +2172,7 @@ const GTR_STYLES={
   // muted strums between them, open strings strummed on the last 16th before a chord change, and on the
   // punkier songs palm-muted single-note riffs with chromatic passing notes; standard or drop D
   nirvana:{name:'Nirvana: power-chord grunge',sound:'heavy',tempo:116,beat:'rock:1',keys:{5:2,4:2,9:1.5,2:1,1:1,0:1,7:1},modes:{5:2,1:2,2:1},jit:.007,
-    cmp:{tune:'mix',dropP:.3,progP:.7,vcP:.3,pushP:.35,full:1,
+    cmp:{tune:'mix',dropP:.3,ways:{prog:5,hook:2,vc:3},pushP:.35,full:1,
       prog:[[0,5,3,8],[0,3,10,5],[0,8,3,10],[0,1,5,3],[0,6,5,3],[0,10,8,5],[0,3,5,0],[0,1,5,7],[0,10,3,5],[0,5,8,6],[0,3,8,6],[0,5,10,3],[0,8,5,3],[0,4,5,3],[0,3,0,10]],
       feels:{drive:{w:3,push:false,c4:['C.C.','C.C.','C.CZ'],c8:['C.C.C.C.','C.C.C.CZ','C.C.C..Z']},
         ring:{w:2,c4:['C...','C..Z'],c8:['C.......','C......Z','C.....C.']},
@@ -2335,16 +2336,16 @@ function ohpBar(){
 //  - the left-hand slap (S) is a filler between right-hand strokes: never twice in a row, never right after a
 //    hammer-on or pull-off (that hand is holding the note), never on the one
 //  - the thumb strikes at most 3 times in a row (4 at slow tempos, more with double thumbing); pops at most twice
-function slHands(st,tempo,maxThumb){
+function slHands(st,tempo,maxThumb,noS){
   const N=st.length,thumb=x=>x.s==='T'||x.s==='H',pop=x=>x.s==='P',maxT=maxThumb||(tempo<=96?4:3),LH=x=>x.s==='O'||x.s==='L';
   const dead=(x,s)=>x.ham?x:Object.assign(x,{s,muted:true,m:undefined,pos:undefined,m2:undefined,pos2:undefined,slide:0});
   for(let pass=0;pass<2;pass++)for(let i=0;i<N;i++){
     const x=st[i],prev=st[(i-1+N)%N];
     if(x.s==='S'&&(prev.s==='S'||LH(prev)||i%16===0)){dead(x,thumb(prev)?'P':'T');continue}
     if(thumb(x)){let r=1;while(r<8&&thumb(st[(i-r+N)%N]))r++;
-      if(r>maxT){if(x.muted&&x.s==='T')dead(x,prev.s==='S'||LH(prev)?'P':'S');
-        else{let fixed=false;for(let k=1;k<r;k++){const y=st[(i-k+N)%N],yp=st[(i-k-1+N)%N];if(y.s==='T'&&y.muted&&yp.s!=='S'&&!LH(yp)){dead(y,'S');fixed=true;break}}
-          if(!fixed&&x.s==='T'&&!x.ham&&i%16!==0)dead(x,prev.s==='S'||LH(prev)?'P':'S')}}}
+      if(r>maxT){if(x.muted&&x.s==='T')dead(x,noS||prev.s==='S'||LH(prev)?'P':'S');
+        else{let fixed=false;for(let k=1;k<r;k++){const y=st[(i-k+N)%N],yp=st[(i-k-1+N)%N];if(y.s==='T'&&y.muted&&yp.s!=='S'&&!LH(yp)){dead(y,noS?'P':'S');fixed=true;break}}
+          if(!fixed&&x.s==='T'&&!x.ham&&i%16!==0)dead(x,noS||prev.s==='S'||LH(prev)?'P':'S')}}}
     if(pop(x)){let r=1;while(r<4&&pop(st[(i-r+N)%N]))r++;
       if(r>2){if(x.muted)dead(x,'T');else{const y=prev;if(y.muted)dead(y,'T')}}}
   }
@@ -2411,7 +2412,7 @@ function genSabbath(ST,root,mode,nb){
 const DROPD=[38,45,50,55,59,64];
 function mkRng(seed){let a=seed>>>0;return ()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
 function genBand(st,ST,root,mode,nb,fixed){
-  const C=ST.cmp,seed=fixed&&fixed.seed!=null?fixed.seed:Math.floor(Math.random()*4294967295),regen=fixed&&fixed.regen!=null?fixed.regen:-1;
+  const C=featBand(ST,st),seed=fixed&&fixed.seed!=null?fixed.seed:Math.floor(Math.random()*4294967295),regen=fixed&&fixed.regen!=null?fixed.regen:-1;
   let R=mkRng(seed);
   const pick=a=>a[Math.floor(R()*a.length)];
   const W=o=>{const k=Object.keys(o);let s=Object.values(o).reduce((a,b)=>a+b,0)*R();for(const x of k){s-=o[x];if(s<=0)return x}return k[k.length-1]};
@@ -2453,7 +2454,8 @@ function genBand(st,ST,root,mode,nb,fixed){
     const ch=(C.ch2||[3,5]).filter(d=>d);const a=pick(ch),b=pick([1,-1,2,-2,a+(a>6?-2:2)]);const slots=pick([[0,2,4],[0,3,6],[0,4,6],[2,4,6]]);
     E[slots[0]]={k:'C',d:a};E[slots[1]]={k:'C',d:b};E[slots[2]]={k:'C',d:0};return E};
   const pickAns=not=>{let a=W(C.ans);for(let k=0;k<5&&a===not;k++)a=W(C.ans);return a};
-  const way=C.ways?W(C.ways):C.vcP&&nb>1&&R()<C.vcP?'vc':C.prog&&R()<(C.progP??1)?'prog':C.groups&&R()<(C.grpP??1)?'group':'hook';
+  let way=C.ways?W(C.ways):C.vcP&&nb>1&&R()<C.vcP?'vc':C.prog&&R()<(C.progP??1)?'prog':C.groups&&R()<(C.grpP??1)?'group':'hook';
+  if(way==='vc'&&nb===1)way=C.ways&&C.ways.prog?'prog':'hook';
   const sec=b=>nb===8&&(b===4||b===5);
   let barOf;
   const hookWay=()=>{
@@ -2511,7 +2513,7 @@ function genBand(st,ST,root,mode,nb,fixed){
   else barOf=progWay();
   // 8 bars: the middle section (bars 5-6) switches to a different kind of riff for contrast, then the opening
   // riff comes back for bars 7-8
-  if(nb===8){const have={hook:!!C.rhy,group:!!C.groups,prog:!!C.prog,poly:!!C.polys,stomp:!!C.stomps,drone:!!C.drone,chords:!!C.chords};
+  if(nb===8){const have={hook:!!C.rhy,group:!!C.groups,prog:!!C.prog,poly:!!C.polys,stomp:!!C.stomps,drone:!!C.drone,chords:!!C.chords};for(const k of C.__off||[])have[k]=false;
     const main=way==='vc'?'prog':way==='break'?'chords':way,opts=Object.keys(have).filter(k=>have[k]&&k!==main);
     if(opts.length){const w2=W(Object.fromEntries(opts.map(k=>[k,(C.ways&&C.ways[k])||(C.secWays&&C.secWays[k])||1])));const b2=WAYS[w2](),b1=barOf;
       barOf=(b,fresh)=>sec(b)?b2(b,fresh):b1(b,fresh)}}
@@ -2583,16 +2585,86 @@ function bandColor(r,ST,explicit,mode){
 // Per-riff character for the cell-based players (bass, slap and the non-band guitarists): each new riff leans a
 // different way, e.g. more octaves, more dead notes, more chromatic approaches or slides, a busier or sparser
 // rhythm, and a different phrase shape (ABAC, AABC, ABAB…). Stored with the riff so a regenerated bar matches it.
-function varySt(S0,fixed){if(!S0||S0.cmp||S0.compose)return S0;
+// ---- Techniques: per-player on/off toggles ----
+// Shared techniques (what turning one off/on does) and, per player, which ones they get and their default.
+// 'k:<kind>' toggles one of the player's kinds of riff, 'w:<way>' one of a band's kinds of riff.
+const FT={
+  ds:{name:'Double stops',on:{add:{A:['T-D-'],B:['--D-','D-P-','-D-D','TD--']}},off:{rep:[['D','P']]}},
+  ham:{name:'Hammer-ons',off:{rep:[['HO','T-'],['H','T'],['O','-']]}},
+  pull:{name:'Pull-offs',off:{rep:[['L','-']],set:{pullP:0,pullOpen:0}},offBand:{rep:[['L','X']],set:{pullP:0}}},
+  lhs:{name:'Left-hand slaps',off:{rep:[['S','t']],set:{noLHS:true}}},
+  oct:{name:'Octaves',off:{set:{oct:0,octMove:0}}},
+  slide:{name:'Slides',off:{set:{slide:0,slideN:0}}},
+  chrom:{name:'Chromatic approaches',off:{set:{chrom:0}}},
+  drone:{name:'Open-string drone',off:{set:{pedal:0,droneD:0}}},
+  tri:{name:'Tritone',off:{set:{tritone:0}}},
+  octV:{name:'Octave shapes',off:{rep:[['V','N']],set:{accV:0}}},
+  strum:{name:'Open-string strums',off:{rep:[['Z','X']]}},
+  push:{name:'Pushed chord changes',off:{set:{pushP:0}}},
+  inv:{name:'Inverted chords',off:{set:{inv:0}}}};
+const FEATS={
+  slap:{mix:[['ds',0],['ham',1],['pull',1],['lhs',1],['oct',1],['slide',1]],
+    graham:[['oct',1],['ds',0],['ham',1],['lhs',1],['slide',1],['k:busy octave 16ths',1],['k:sparse funk with space',1]],
+    king:[['lhs',1],['oct',1],['ham',1],['chrom',1],['k:machine-gun with more pops',1]],
+    flea:[['ds',0],['ham',1],['oct',1],['drone',1,'Open-string thumbing'],['chrom',1],['lhs',1],['k:melodic pentatonic pops',1],['k:laid-back groove with space',1]],
+    claypool:[['ds',0],['drone',1],['tri',1],['pull',1],['k:galloping thumbs',1],['k:pop melody on the G string',1]],
+    miller:[['ds',1],['slide',1],['oct',1],['ham',1],['k:busier 16th funk',1],['k:double stops',1,'Double-stop riffs']],
+    wooten:[['ham',1],['ds',0],['k:thumb grooves',1]]},
+  bass:{mix:[['k:sparse',1,'Sparse lines'],['k:driving 8ths',1,'Driving 8ths'],['chrom',1],['slide',1],['ds',0]],
+    jamerson:[['chrom',1],['k:walking 8ths with chromatic approaches',1,'Walking 8ths'],['k:sparse ballad line with pickups',1,'Sparse ballad lines'],['slide',1]],
+    chancellor:[['k:melodic high line over a drone',1,'Moody melodic lines'],['k:odd groupings',1,'Odd groupings'],['k:slow and heavy',1,'Slow and heavy'],['slide',1],['ds',0,'Chords / double stops']],
+    jaco:[['k:melodic high-register line',1,'Melodic high lines'],['k:double stops and chords',1,'Double stops and chords'],['chrom',1],['slide',1]],
+    rocco:[['k:staccato 8ths',1,'Staccato 8ths'],['chrom',1]],
+    kaye:[['k:Motown 8ths',1,'Motown 8ths'],['k:syncopated funk',1,'Syncopated funk'],['chrom',1],['slide',1]]},
+  guitar:{mix:[['k:power-chord riff',1,'Power-chord riffs'],['k:single-note line',1,'Single-note lines'],['slide',1],['chrom',1]],
+    rodgers:[['k:choppy chord stabs',1,'Chord stabs'],['k:octave line',1,'Octave lines'],['oct',1]],
+    page:[['k:open-string pedal riff',1,'Open-string riffs'],['k:big chord riff',1,'Big chord riffs'],['ham',1],['pull',1],['slide',1]],
+    hendrix:[['ds',1],['k:R&B chord melody',1,'R&B chord melody'],['k:heavy riff',1,'Heavy riffs'],['ham',1],['slide',1]],
+    angus:[['k:single-note boogie',1,'Single-note boogie'],['k:chord stabs with space',1,'Chord stabs with space'],['slide',1]],
+    iommi:[['w:hook',1,'Hook riffs'],['w:stomp',1,'Doom stomps'],['w:group',1,'Gallop groups'],['w:poly',1,'Chug cycles'],['slide',1]],
+    soundgarden:[['w:group',1,'Odd accent groups'],['w:hook',1,'Hook riffs'],['w:poly',1,'Across the bar line'],['w:drone',1,'Drones'],['w:stomp',1,'Stomps'],['slide',1]],
+    stp:[['w:hook',1,'Grinding riffs'],['w:prog',1,'Ringing chord progressions'],['w:stomp',1,'Stomps'],['inv',1],['slide',1]],
+    nirvana:[['w:prog',1,'Chord progressions'],['w:hook',1,'Single-note riffs'],['w:vc',1,'Verse into chorus'],['strum',1],['push',1]],
+    tool:[['w:group',1,'Odd accent groups'],['w:poly',1,'Across the bar line'],['w:drone',1,'Drones'],['w:stomp',1,'Half-time stomps'],['w:hook',1,'Hook riffs'],['pull',1]],
+    metallica:[['w:hook',1,'Gallop & chug riffs'],['w:poly',1,'Pedal-tone cycles'],['w:group',1,'Chug groups'],['w:stomp',1,'Breakdowns'],['slide',1]],
+    slither:[['w:hook',1,'Groove riffs'],['w:poly',1,'Across the bar line'],['w:group',1,'Accent groups'],['octV',1],['slide',1]],
+    ratm:[['w:break',1,'Notes into chords'],['w:chords',1,'Power-chord riffs'],['w:hook',1,'Single-note riffs'],['w:poly',1,'Across the bar line'],['w:group',1,'3+3+2 pushes'],['octV',1]]}};
+// the toggles for a style, with their current on/off state
+function featList(inst,st){const L=(FEATS[inst]||{})[st]||[],S=((SR.feat||{})[inst+':'+st])||{};
+  return L.map(([id,def,label])=>({id,on:S[id]??!!def,name:label||(FT[id]?FT[id].name:id.includes(':')?id[2].toUpperCase()+id.slice(3):id)}))}
+const featKey=()=>{const ci=curInst(),s=SR.style;if(ci==='slap')return /^slap_of_/.test(s)?['bass',s.slice(8)]:['slap',s.replace(/^slap_/,'')];return [crMode,s]};
+// replace technique letters in every rhythm string of a config (deep), e.g. D→P to drop double stops
+function repDeep(o,rep){const f=s=>{if(s.includes(' '))return s.split(' ').map(tk=>{for(const [a,b] of rep)if(a.length===1&&tk[0]===a&&!(a==='D'&&/^D\d/.test(tk)))return b+tk.slice(1);return tk}).join(' ');for(const [a,b] of rep)s=s.split(a).join(b);return s};
+  if(typeof o==='string')return f(o);if(Array.isArray(o))return o.map(x=>repDeep(x,rep));
+  if(o&&typeof o==='object'){const r={};for(const k in o)r[k]=repDeep(o[k],rep);return r}return o}
+// cell-based players: apply toggles to a style copy (kinds filtered before one is picked)
+function featCell(S1,inst,st){const fl=featList(inst,st);if(!fl.length)return S1;
+  const offK=new Set(fl.filter(f=>!f.on&&f.id.startsWith('k:')).map(f=>f.id.slice(2)));
+  if(S1.kinds&&offK.size){const k=S1.kinds.filter(k=>!offK.has(k.name));if(k.length)S1.kinds=k}
+  S1.__feat=fl;return S1}
+function featCellAfter(S1){for(const f of S1.__feat||[]){if(f.id.includes(':'))continue;const P=f.on?FT[f.id].on:FT[f.id].off;if(!P)continue;
+    if(P.set)Object.assign(S1,P.set);
+    if(P.add){S1.A=(S1.A||[]).concat(P.add.A||[]);S1.B=(S1.B||[]).concat(P.add.B||[])}
+    if(P.rep){const r=c=>repDeep(c,P.rep);S1.A=(S1.A||[]).map(r);S1.B=(S1.B||[]).map(r);S1.__rep=(S1.__rep||[]).concat(P.rep)}}
+  return S1}
+// band composer: apply toggles to a copy of the band's settings
+function featBand(ST,st){const fl=featList('guitar',st);let C=ST.cmp;if(!fl.length)return C;C=JSON.parse(JSON.stringify(C));
+  const off=new Set(fl.filter(f=>!f.on&&f.id.startsWith('w:')).map(f=>f.id.slice(2)));
+  if(C.ways){const w={...C.ways};for(const k of off)delete w[k];if(Object.keys(w).length)C.ways=w;else off.clear()}
+  C.__off=off;
+  for(const f of fl){if(f.id.includes(':')||f.on)continue;const P=FT[f.id].offBand||FT[f.id].off;if(P.set)Object.assign(C,P.set);if(P.rep)C=Object.assign(repDeep(C,P.rep),{__off:off})}
+  return C}
+function varySt(S0,fixed,inst,st){if(!S0||S0.cmp||S0.compose)return S0;
   const fv=fixed&&fixed.fv||{oct:.5+Math.random(),ghost:.5+Math.random(),chrom:.4+Math.random()*1.2,slide:.4+Math.random()*1.3,hook:.6+Math.random()*.8,dens:[-1,0,0,1][rnd(4)],sh:rnd(7)};
   const c=x=>Math.min(.95,x),S1={...S0,__fv:fv,oct:c((S0.oct||0)*fv.oct),ghost:c((S0.ghost||0)*fv.ghost),chrom:c((S0.chrom||0)*fv.chrom),slide:c((S0.slide||0)*fv.slide),hook:c((S0.hook??.6)*fv.hook)};
   // each player has a few kinds of riff (their main style plus others they're known for); one is picked per riff
-  if(S0.kinds){if(fv.kind==null)fv.kind=slPick(S0.kinds.map((_,i)=>i),S0.kinds.map(k=>k.w));const k=S0.kinds[fv.kind]||{};
+  featCell(S1,inst,st);const KS=S1.kinds||S0.kinds;
+  if(KS){if(fv.kindName==null||!KS.some(k=>k.name===fv.kindName))fv.kindName=KS[slPick(KS.map((_,i)=>i),KS.map(k=>k.w))].name;const k=KS.find(k=>k.name===fv.kindName)||{};
     for(const x in k)if(x!=='w'&&x!=='name')S1[x]=k[x];if(k.linear===false)delete S1.linear;S1.kindName=k.name}
   if(S1.shape&&!S1.linear){const alt=[S1.shape,S1.shape,'AABC','ABBC','ABCC','ABAB','AAAB'];S1.shape=alt[fv.sh%alt.length]}
-  return S1}
+  return featCellAfter(S1)}
 function genStyledRiff(st,fixed,instIn){
-  const inst=instIn||crMode,ST=varySt(styOf(inst)[st],fixed),mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
+  const inst=instIn||crMode,ST=varySt(styOf(inst)[st],fixed,inst,st),mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
   const root=fixed?fixed.root:SR.key==='random'?(ST.keys?slPick(Object.keys(ST.keys).map(Number),Object.values(ST.keys)):rnd(12)):+SR.key,mode=fixed?fixed.mode:SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
   const explicit=fixed?!fixed.band:SR.mode!=='random';
   if(ST.compose==='sabbath')return bandColor(genSabbath(ST,root,mode,+SR.bars||1),ST,explicit,mode);
@@ -2649,7 +2721,7 @@ function genStyledRiff(st,fixed,instIn){
   const secOf=b=>nb===8&&(b===4||b===5);
   const secC=[5,10,3].find(d=>sc.includes((root+d)%12));
   if(ST.linear){const mk=()=>ST.linear==='sabbath'?sabbathBar():ST.linear==='ohp'?ohpBar():ST.linear==='odd'?oddBar():ST.linear==='rocco'?roccoBar():kingBar(hams.length);cellOf.W=mk();cellOf.F=mk();
-    cellOf.V=mk();for(const L of ['W','V','F'])cellOf[L]=spaceAdj(cellOf[L],true);
+    cellOf.V=mk();for(const L of ['W','V','F'])cellOf[L]=spaceAdj(ST.__rep?repDeep(cellOf[L],ST.__rep):cellOf[L],true);
     for(let b=0;b<nb;b++){const resp=nb>1&&b%2===1,fin=nb>=4&&b===nb-1,sec=secOf(b);
       plan.push({L:fin?'F':(sec?'b':'')+(resp?'rW':'W'),rhythm:fin?'F':sec?'V':'W',resp,sec,bar:b,head:true})}}
   else{
@@ -2740,7 +2812,7 @@ function genStyledRiff(st,fixed,instIn){
   if(first.m!=null&&(lastS.s==='-'||lastS.muted&&lastS.s!=='S')&&Math.random()<(ST.antic??.45)){
     const opts=[first.m-1,first.m-5,first.m+12].map(m=>({m,q:posFor(m,m>first.m+6?HIGH:LOW.concat(HIGH[0]),lo,hi,TU)})).filter(o=>o.q);
     if(opts.length){const o=opts[0].q&&Math.random()<.6?opts[0]:opts[rnd(opts.length)];Object.assign(lastS,{s:o.m>first.m+6?'P':'T',m:o.m,pos:o.q,muted:false})}}
-  if(inst==='slap')slHands(steps,SR.tempo,ST.maxThumb);
+  if(inst==='slap')slHands(steps,SR.tempo,ST.maxThumb,ST.noLHS);
   // keep it playable and funky: a cap on ringing notes per bar; extras on weak 16ths become dead notes
   for(let b=0;b<steps.length/16;b++){const seg=steps.slice(b*16,b*16+16);let ring=seg.filter(x=>x.m!=null&&!x.muted&&x.s!=='O'&&x.s!=='L').length;
     for(const i of [1,3,9,11,5,13,7,15])if(ring>(ST.maxRing||10)){const x=seg[i];if(plain(x)){x.muted=true;x.m2=undefined;x.pos2=undefined;ring--}}}
@@ -2835,6 +2907,7 @@ function renderSRControls(){
   $('legSlap').hidden=ci!=='slap';$('legInst').hidden=ci==='slap';
   // the rhythm yardstick is a slap tool: shown (open) only for slap players
   $('yardBox').hidden=ci!=='slap';if(ci==='slap')$('yardBox').open=true;
+  {const [fi,fs]=featKey(),fl=featList(fi,fs);$('srFeatF').hidden=!fl.length;$('srFeat').innerHTML=fl.map(f=>`<button type="button" class="slchip" data-feat="${f.id}" aria-pressed="${f.on}">${f.name}</button>`).join('')}
   $('srBars').value=SR.bars;$('srSpace').value=SR.space;$('srGhosts').value=SR.ghosts;$('srBack').value=SR.back;
   $('srBeat').innerHTML=beatOpts();$('srBeat').value=slBeatKey(SR);$('srBeat').disabled=SR.back!=='drums';
   $('srTone').value=SL.tone||'real';$('srNames').checked=SR.showNames;
@@ -2874,11 +2947,17 @@ function srRegenBar(b){
   if(!bar){toast('Couldn’t find a different version, try again');return}
   r.steps.splice(b*16,16,...bar.map(x=>Object.assign({},x,{bar:b})));
   r.steps.forEach((x,i)=>{x.blk=i>>1;x.k=i&1});
-  if((r.inst||'slap')==='slap')slHands(r.steps,SR.tempo,(styOf('slap')[r.style]||{}).maxThumb);
+  if((r.inst||'slap')==='slap'){const fl=featList('slap',String(r.style||'mix').replace(/^slap_/,''));slHands(r.steps,SR.tempo,(styOf('slap')[r.style]||{}).maxThumb,fl.some(f=>f.id==='lhs'&&!f.on))}
   r.v=(r.v||0)+1;saveS();renderSR();renderSRSaved();toast(`New version of bar ${b+1}`);
   if(slKind==='riff')slapPlay('riff',SR.pos||0);
 }
 $('srNew').onclick=srNew;
+$('srFeat').onclick=e=>{const b=e.target.closest('[data-feat]');if(!b)return;const [fi,fs]=featKey(),k=fi+':'+fs,id=b.dataset.feat;
+  const fl=featList(fi,fs),cur=fl.find(f=>f.id===id);if(!cur)return;
+  // keep at least one kind of riff on
+  if(cur.on&&/^[kw]:/.test(id)){const pre=id.slice(0,2),kinds=fl.filter(f=>f.id.startsWith(pre)&&f.on);const total=(FEATS[fi][fs]||[]).filter(x=>x[0].startsWith(pre)).length;
+    if(id.startsWith('w:')&&kinds.length<=1){toast('Keep at least one kind of riff on');return}}
+  SR.feat=SR.feat||{};SR.feat[k]={...(SR.feat[k]||{}),[id]:!cur.on};saveS();renderSRControls();srNew();toast(`${cur.name}: ${cur.on?'off':'on'}`)};
 // same riff, different mode colour: always recoloured from the riff as first written, so you can switch back
 chg('srColor',v=>{const r=SR.riff;if(!r)return;if(!r.base)r.base={steps:JSON.parse(JSON.stringify(r.steps)),mode:r.mode,bandMode:!!r.bandMode};
   const TU=r.tune||TUNING[geomOf(r.inst||'slap')];
