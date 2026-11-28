@@ -529,7 +529,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <label class="fld"><span>Key</span><select id="srKeySel"></select></label>
         <label class="fld"><span>Mode</span><select id="srModeSel"></select></label>
         <label class="fld full"><span>Length</span><select id="srBars"><option value="1">1 bar</option><option value="2">2 bars: call &amp; response</option><option value="4">4 bars: call, response ×2</option><option value="8">8 bars: two phrases with a new call in the middle</option></select></label>
-        <label class="fld"><span>Space (rests)</span><select id="srSpace"><option value="0">None: all 16ths</option><option value="1">Some rests</option><option value="2">Lots of rests</option></select></label>
+        <label class="fld"><span>Space</span><select id="srSpace"><option value="0">Busy: fill the gaps</option><option value="1">Natural for the player</option><option value="2">More space</option><option value="3">Lots of space</option></select></label>
         <label class="fld"><span>Dead notes</span><select id="srGhosts"><option value="0">Few</option><option value="1">Some</option><option value="2">Lots</option></select></label>
         <label class="fld" id="srToneF"><span>Dead-note tone</span><select id="srTone"><option value="real">Recorded (real bass)</option><option value="thunk">Synth: thunky</option><option value="click">Synth: clicky</option></select></label>
         <label class="fld"><span>Backing</span><select id="srBack"><option value="drums">Drums</option><option value="click">Click only</option><option value="none">Nothing</option></select></label>
@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2259';
+const APP_VERSION='2026.11.27-2307';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1762,6 +1762,7 @@ if(!S.crMerged){S.crMerged=1;if(S.crMode==='slap'||!S.crMode){const o=S.sriff;Ob
 let crMode=S.crMode==='guitar'?'guitar':'bass';
 let SR=crMode==='bass'?S.cbass:S.cguit;
 for(const [o,G] of [[S.cbass,'bass'],[S.cguit,'guitar']])if(!SOUNDS[G].some(s=>s.id===o.sound))o.sound=G==='bass'?'finger':'clean';
+for(const o of [S.sriff,S.cbass,S.cguit])if(!o.spaceV2){o.spaceV2=1;if(o.space===2)o.space=3}
 const geomOf=inst=>inst==='guitar'?'guitar':'bass';
 const styOf=inst=>inst==='bass'?BASS_STYLES:inst==='guitar'?GTR_STYLES:SR_STYLES;
 const isSlapKey=k=>typeof k==='string'&&k.startsWith('slap_');
@@ -2191,7 +2192,19 @@ function genStyledRiff(st,fixed,instIn){
   const pedal=ST.pedal?{s:pedalStr,f:0,m:TU[pedalStr]}:null;
   const okCell=c=>(hams.length||!/H/.test(c));
   const pickCell=(L,first)=>{const c=L.filter(c=>okCell(c)&&(!first||c[0]==='T'||inst!=='slap'&&/[DP]/.test(c[0])));return (c.length?c:['T-P-'])[rnd(c.length||1)]};
-  const spaceAdj=c=>SR.space===0?c.replace(/-/g,()=>Math.random()<.6?'t':'-'):SR.space===2?c.replace(/[tp]/g,()=>Math.random()<.6?'-':'t'):c;
+  // Space setting, applied to the rhythm cells so repeats stay identical:
+  //  0 busy = every gap filled with dead notes · 1 natural = the player's own density (unchanged)
+  //  2 more space · 3 lots of space = dead notes and weak-16th notes dropped; downbeats and hammer-on pairs kept
+  const SP=SR.space??1;
+  const spaceAdj=(c,keepFirst)=>{if(SP===1)return c;if(SP===0)return c.replace(/-/g,'t');
+    const pDead=SP===3?.9:.6,pOdd=SP===3?.7:.35,pAnd=SP===3?.4:.12,pPair=SP===3?.35:.12;let out='';
+    for(let k=0;k<c.length;k++){const ch=c[k],pos=k%4;
+      if(ch==='H'){out+=k>0&&k%4!==0&&Math.random()<pPair&&c[k+2]!=='L'?'--':c.slice(k,k+2);k++;continue}
+      if(ch==='L'&&(out[out.length-1]||'-')==='-'){out+='-';continue}
+      if(k===0&&keepFirst||pos===0||ch==='-'){out+=ch;continue}
+      const dead='tpS'.includes(ch),p=dead?pDead:pos%2?pOdd:pAnd;
+      if(Math.random()<p&&!(c[k+1]==='L'))out+='-';else out+=ch}
+    return out};
   const nb=+SR.bars||1;
   // Phrase plan. 1 bar: call answered inside the bar. 2 bars: call | response. 4 bars: call | response | call | final response.
   // Response cells reuse the call's rhythm (an echo) on new notes; the last beat of each bar is its own ending.
@@ -2201,7 +2214,7 @@ function genStyledRiff(st,fixed,instIn){
   const secOf=b=>nb===8&&(b===4||b===5);
   const secC=[5,10,3].find(d=>sc.includes((root+d)%12));
   if(ST.linear){const mk=()=>ST.linear==='ohp'?ohpBar():ST.linear==='odd'?oddBar():ST.linear==='rocco'?roccoBar():kingBar(hams.length);cellOf.W=mk();cellOf.F=mk();
-    cellOf.V=mk();
+    cellOf.V=mk();for(const L of ['W','V','F'])cellOf[L]=spaceAdj(cellOf[L],true);
     for(let b=0;b<nb;b++){const resp=nb>1&&b%2===1,fin=nb>=4&&b===nb-1,sec=secOf(b);
       plan.push({L:fin?'F':(sec?'b':'')+(resp?'rW':'W'),rhythm:fin?'F':sec?'V':'W',resp,sec,bar:b,head:true})}}
   else{
@@ -2210,8 +2223,8 @@ function genStyledRiff(st,fixed,instIn){
         if(i===3)lab=rhythm=nb===1?shape[3]:resp?(fin?'F':sec?'E2':'E'):(sec?'C2':'C');
         else lab=(sec?'b':'')+(resp?'r':'')+L;
         plan.push({L:lab,rhythm,resp,sec,bar:b,head:i===0})}}
-    for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm===shape[0]||p.rhythm==='b'+shape[0]?pickCell(ST.A,true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
-    if(cellOf.F){const busy=ST.B.concat(ST.A).filter(c=>okCell(c)&&(c.match(/[TPHOD]/g)||[]).length>=3);if(busy.length)cellOf.F=busy[rnd(busy.length)]}
+    for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm===shape[0]||p.rhythm==='b'+shape[0]?spaceAdj(pickCell(ST.A,true),true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
+    if(cellOf.F){const busy=ST.B.concat(ST.A).filter(c=>okCell(c)&&(c.match(/[TPHOD]/g)||[]).length>=3);if(busy.length)cellOf.F=spaceAdj(busy[rnd(busy.length)])}
   }
   const memo={},steps=[];let lastT=rootM;
   const pickT=(first,resp)=>{
@@ -2274,7 +2287,7 @@ function genStyledRiff(st,fixed,instIn){
     if(plain(a)&&a.s==='T'&&plain(b)&&b.s==='T'&&Math.random()<ST.chrom&&b.pos.f>0){a.m=b.m-1;a.pos={s:b.pos.s,f:b.pos.f-1}}}
   // dead-note pickup: a ghosted thumb on the 16th right before an accented note gives the line its push
   for(let i=1;i<steps.length;i++){const a=steps[i-1],b=steps[i];
-    if(a.s==='-'&&b.m!=null&&!b.muted&&(i%4===0||b.s==='P')&&Math.random()<(ST.pickup??.35)*(SR.space===2?.4:1))Object.assign(a,{s:'T',muted:true,m:undefined,pos:undefined})}
+    if(a.s==='-'&&b.m!=null&&!b.muted&&(i%4===0||b.s==='P')&&Math.random()<(ST.pickup??.35)*[1.2,1,.35,0][SR.space??1])Object.assign(a,{s:'T',muted:true,m:undefined,pos:undefined})}
   // anticipation: the last 16th of the riff leads back into the one (half step below, or the 5th below)
   const L=steps.length-1,lastS=steps[L],first=steps[0];
   if(first.m!=null&&(lastS.s==='-'||lastS.muted&&lastS.s!=='S')&&Math.random()<(ST.antic??.45)){
@@ -2423,7 +2436,7 @@ function toSlap(r,key){
   const lhP=ST.linear==='king'?.7:.4;
   st.forEach((x,i)=>{const p=st[(i-1+N)%N];if(x.muted&&x.s==='T'&&i%2===1&&p.s!=='-'&&p.s!=='S'&&!LH(p)&&Math.random()<lhP)x.s='S'});
   // slap percussion in the gaps: a dead-thumb pickup before a ringing note, a left-hand slap between strokes
-  const fill=SR.space===2?.15:SR.space===0?.6:.35;
+  const fill=[.6,.35,.15,0][SR.space??1];
   st.forEach((x,i)=>{if(x.s!=='-')return;const p=st[(i-1+N)%N],n=st[(i+1)%N];
     if(n.m!=null&&!n.muted&&Math.random()<fill)Object.assign(x,{s:'T',muted:true});
     else if(i%2===1&&p.s!=='-'&&p.s!=='S'&&!LH(p)&&n.s!=='-'&&Math.random()<fill*.8)Object.assign(x,{s:'S',muted:true})});
