@@ -212,6 +212,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 10px;margin-top:10px}
 .fld{display:grid;gap:4px;font-size:13px;font-weight:800;color:var(--muted)}
 .fld.full{grid-column:1/-1}
+.colorf{display:block;margin:12px 0 2px}
 .fld select{font:inherit;font-size:16px;font-weight:700;color:var(--ink);min-height:46px;border-radius:12px;border:2px solid var(--line);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6a86' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 10px center/16px no-repeat;padding:0 32px 0 12px;-webkit-appearance:none;appearance:none;width:100%;text-overflow:ellipsis}
 .fld select:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .trow{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:12px;margin-top:14px}
@@ -515,6 +516,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <div class="tabctl"><button class="round" id="tabStart" aria-label="Back to the start"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 5h2.5v14H6zM20 5v14l-10-7z"/></svg></button><button class="round" id="tabPlay" aria-label="Play or pause"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></button><span id="tabPos" class="muted"></span><span class="muted tabhint">Tap or drag the tab to move the line</span></div>
         <div class="srtab" id="srTab" aria-label="Tablature with a moving play line"></div>
       </details>
+      <label class="fld full colorf"><span>Hear this riff in another mode</span><select id="srColor"></select></label>
       <div class="btns sl">
         <button class="big play" id="srPlay"><svg><use href="#i-play"/></svg><span>Play</span></button>
         <button class="big" id="srNew"><svg><use href="#i-dice"/></svg><span>New riff</span></button>
@@ -584,7 +586,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0014';
+const APP_VERSION='2026.11.28-0026';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2425,11 +2427,47 @@ function genBand(st,ST,root,mode,nb,fixed){
     x.vel*=x.open?.7:x.s==='L'?.9:1;x.len=x.open?.5:x.m2!=null?1:x.pedal?.55:.85;delete x.pedal;delete x.open});
   return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[Math.max(1,rf),Math.max(1,rf)+3],style:st,inst:'guitar',seed,tune:drop?DROPD.slice():undefined};
 }
+// ---- Mode colour ----
+// The notes that change between modes: 2nd (b2/2), 3rd (b3/3), 6th (b6/6), 7th (b7/7), and the 4th in Lydian (#4).
+// Recolouring keeps the root, the 5th, the blue note (b5) and the rhythm, and leaves chromatic lines (three or
+// more notes moving by half steps) alone so chromatic approaches survive. Power chords and octave shapes move as
+// one shape; double stops recolour each note.
+function colorMap(mode){const sc=scaleOf(mode),m={};for(const pr of [[1,2],[3,4],[8,9],[10,11]]){const w=pr.find(d=>sc.includes(d));if(w!=null)for(const d of pr)m[d]=w}
+  if(!sc.includes(5)&&sc.includes(6))m[5]=6;return m}
+function detectMode(steps,root,pref){
+  const cnt=Array(12).fill(0);for(const x of steps)if(x.m!=null&&!x.muted)cnt[((x.m-root)%12+12)%12]++;
+  let best=5,bs=-1e9;for(let md=0;md<7;md++){const sc=scaleOf(md);let s=0;cnt.forEach((c,d)=>{if(d===6)return;s+=sc.includes(d)?c:-2*c});s+=(pref&&pref[md]||0)*.5;if(s>bs){bs=s;best=md}}
+  return best}
+function recolorSteps(steps,root,mode,TU){
+  const map=colorMap(mode),out=steps.map(x=>JSON.parse(JSON.stringify(x)));
+  const ev=out.map((x,i)=>x.m!=null&&!x.muted?i:-1).filter(i=>i>=0),M=ev.map(i=>out[i].m),chrom=new Set();
+  for(let k=0;k+2<ev.length;k++){const a=M[k+1]-M[k],b=M[k+2]-M[k+1];if(Math.abs(a)===1&&a===b)[k,k+1,k+2].forEach(j=>chrom.add(ev[j]))}
+  const fix=(x,p,key,d)=>{if(!x[p])return true;const f=x[p].f+d;if(f>=0&&f<=17){x[p]={s:x[p].s,f};return true}return false};
+  const move=(x,mk,pk,d)=>{const m=x[mk]+d;let best=null;for(let s=0;s<TU.length;s++){const f=m-TU[s];if(f>=0&&f<=17){const c=Math.abs(s-x[pk].s)*3+Math.abs(f-x[pk].f);if(!best||c<best.c)best={s,f,c}}}if(!best)return false;x[mk]=m;x[pk]={s:best.s,f:best.f};return true};
+  for(const i of ev){if(chrom.has(i))continue;const x=out[i],orig=steps[i];
+    if(x.m2!=null&&x.pos2&&x.pos.f===0&&x.pos2.f===0)continue; // open-string strum
+    const dg=((x.m-root)%12+12)%12,d=(map[dg]??dg)-dg;
+    const shape=x.m2!=null&&[5,7,12].includes(x.m2-x.m);
+    if(d){if(shape){if(fix(x,'pos',null,d)&&fix(x,'pos2',null,d)&&fix(x,'pos3',null,d)){x.m+=d;x.m2+=d;if(x.m3!=null)x.m3+=d}else Object.assign(x,JSON.parse(JSON.stringify(orig)))}
+      else if(!fix(x,'pos',null,d)||(x.m+=d,false)){if(!move(x,'m','pos',d))Object.assign(x,JSON.parse(JSON.stringify(orig)))}}
+    if(x.m2!=null&&!shape){const d2g=((x.m2-root)%12+12)%12,d2=(map[d2g]??d2g)-d2g;if(d2){if(fix(x,'pos2',null,d2))x.m2+=d2}}}
+  // hammer-ons must still go up the same string, pull-offs down it; otherwise keep the original pair
+  for(let i=0;i+1<out.length;i++){const a=out[i],b=out[i+1];
+    const bad=a.ham&&b.s==='O'&&(b.pos.s!==a.pos.s||b.pos.f<=a.pos.f)||a.pull&&b.s==='L'&&(b.pos.s!==a.pos.s||b.pos.f>=a.pos.f);
+    if(bad){out[i]=JSON.parse(JSON.stringify(steps[i]));out[i+1]=JSON.parse(JSON.stringify(steps[i+1]))}}
+  return out}
+// band composers write in their own colour; a chosen mode (not "band recommended") recolours the riff
+function bandColor(r,ST,explicit,mode){
+  const TU=r.tune||TUNING.guitar;
+  if(explicit){r.steps=recolorSteps(r.steps,r.root,mode,TU);r.mode=mode;r.bandMode=false}
+  else{r.mode=detectMode(r.steps,r.root,ST.modes);r.bandMode=true}
+  return r}
 function genStyledRiff(st,fixed,instIn){
   const inst=instIn||crMode,ST=styOf(inst)[st],mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
   const root=fixed?fixed.root:SR.key==='random'?(ST.keys?slPick(Object.keys(ST.keys).map(Number),Object.values(ST.keys)):rnd(12)):+SR.key,mode=fixed?fixed.mode:SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
-  if(ST.compose==='sabbath')return genSabbath(ST,root,mode,+SR.bars||1);
-  if(ST.cmp)return genBand(st,ST,root,mode,+SR.bars||1,fixed);
+  const explicit=fixed?!fixed.band:SR.mode!=='random';
+  if(ST.compose==='sabbath')return bandColor(genSabbath(ST,root,mode,+SR.bars||1),ST,explicit,mode);
+  if(ST.cmp)return bandColor(genBand(st,ST,root,mode,+SR.bars||1,fixed),ST,explicit,mode);
   const sc=ST.notes?ST.notes.map(x=>(root+x)%12):scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
   let {lo,hi,rootM}=srBox(root,TU);if(fixed&&fixed.lo){lo=fixed.lo;hi=lo+3}
   const spots=[];for(let s=0;s<NS;s++)for(const f of [0,lo,lo+1,lo+2,lo+3]){const m=TU[s]+f;if(inS(m))spots.push({s,f,m})}
@@ -2649,7 +2687,8 @@ function renderSR(){
 function syncYard(inst){const sl=inst==='slap',y=$('yardBox');if(y.hidden===sl){y.hidden=!sl;if(sl)y.open=true}$('legSlap').hidden=!sl;$('legInst').hidden=sl}
 function renderSRControls(){
   $('srKeySel').innerHTML=$('keySel').innerHTML;$('srKeySel').value=SR.key;
-  $('srModeSel').innerHTML=opt('random','Any (funky modes more often)')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode;
+  {const S0=STY()[SR.style]||{};$('srModeSel').innerHTML=opt('random',S0.cmp||S0.compose?'Band recommended':'Player recommended')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode}
+  {const r=SR.riff,c=$('srColor');if(c&&r){const base=r.base?r.base.mode:r.mode;c.innerHTML=opt('orig',`As written (${MODES[base].name})`)+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');c.value=r.colorMode!=null?String(r.colorMode):'orig'}}
   const ST=STY();
   if(crMode==='bass'){const fk=Object.keys(BASS_STYLES),sk=Object.keys(SR_STYLES);
     $('srStyle').innerHTML=`<optgroup label="Fingerstyle &amp; pick">${fk.map(k=>opt(k,k==='mix'?'Mixed fingerstyle (no particular player)':BASS_STYLES[k].name)).join('')}</optgroup><optgroup label="Slap">${sk.map(k=>opt('slap_'+k,'Slap · '+SR_STYLES[k].name)).join('')}</optgroup>`}
@@ -2694,7 +2733,7 @@ function srRegenBar(b){
   const r=SR.riff;if(!r)return;const nb=r.steps.length/16,keepBars=SR.bars,sig=a=>a.map(x=>x.s+(x.m??'')+(x.muted?'x':'')).join();
   const cur=sig(r.steps.slice(b*16,b*16+16));let bar=null;
   SR.bars=nb;
-  try{for(let k=0;k<8&&!bar;k++){const f=genStyledRiff(r.style||'mix',{root:r.root,mode:r.mode,lo:r.box[0],seed:r.seed,regen:r.seed!=null?b:null,tune:r.seed!=null?r.tune||null:undefined},r.inst||'slap'),cand=f.steps.slice(b*16,b*16+16);if(sig(cand)!==cur)bar=cand}}
+  try{for(let k=0;k<8&&!bar;k++){const f=genStyledRiff(r.style||'mix',{root:r.root,mode:r.mode,band:!!r.bandMode,lo:r.box[0],seed:r.seed,regen:r.seed!=null?b:null,tune:r.seed!=null?r.tune||null:undefined},r.inst||'slap'),cand=f.steps.slice(b*16,b*16+16);if(sig(cand)!==cur)bar=cand}}
   finally{SR.bars=keepBars}
   if(!bar){toast('Couldn’t find a different version, try again');return}
   r.steps.splice(b*16,16,...bar.map(x=>Object.assign({},x,{bar:b})));
@@ -2704,6 +2743,12 @@ function srRegenBar(b){
   if(slKind==='riff')slapPlay('riff',SR.pos||0);
 }
 $('srNew').onclick=srNew;
+// same riff, different mode colour: always recoloured from the riff as first written, so you can switch back
+chg('srColor',v=>{const r=SR.riff;if(!r)return;if(!r.base)r.base={steps:JSON.parse(JSON.stringify(r.steps)),mode:r.mode,bandMode:!!r.bandMode};
+  const TU=r.tune||TUNING[geomOf(r.inst||'slap')];
+  if(v==='orig'){r.steps=JSON.parse(JSON.stringify(r.base.steps));r.mode=r.base.mode;r.bandMode=r.base.bandMode;r.colorMode=null}
+  else{const md=+v;r.steps=recolorSteps(r.base.steps,r.root,md,TU);r.mode=md;r.bandMode=false;r.colorMode=md}
+  r.v=(r.v||0)+1;saveS();renderSR();renderSRSaved();if(slKind==='riff')slapPlay('riff',SR.pos||0)});
 $('srStick').onclick=e=>{const rg=e.target.closest('[data-regen]');if(rg){srRegenBar(+rg.dataset.regen);return}const g=e.target.closest('[data-bar]');if(g)srToggleBar(+g.dataset.bar)};
 // Switching a bass line between fingerstyle and slap keeps the line (same notes and rhythm) and changes the technique
 const newId=()=>'s'+Date.now().toString(36)+rnd(1e6).toString(36);
