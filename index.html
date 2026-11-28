@@ -587,7 +587,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0209';
+const APP_VERSION='2026.11.28-0214';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1814,7 +1814,7 @@ const isSlapKey=k=>typeof k==='string'&&k.startsWith('slap_');
 // the instrument technique of the current choice: 'slap' for a slap player, else the tab's instrument
 const curInst=()=>crMode==='bass'&&isSlapKey(SR.style)?'slap':crMode;
 // all styles for the tab on screen, slap players included under Bass with a 'slap_' prefix
-const STY=()=>{if(crMode==='guitar')return GTR_STYLES;const o={...BASS_STYLES};for(const k in SR_STYLES)o['slap_'+k]=SR_STYLES[k];return o};
+const STY=()=>{if(crMode==='guitar')return GTR_STYLES;const o={...BASS_STYLES};for(const k in SR_STYLES)o['slap_'+k]=SR_STYLES[k];for(const k in BASS_STYLES)if(k!=='mix')o['slap_of_'+k]={...SR_STYLES.mix,name:BASS_STYLES[k].name.split(':')[0]+' line, slapped',tempo:undefined,beat:undefined};return o};
 // Drum auto-balance: the instrument and the drums are measured while they play, and the drums are nudged up or
 // down (up to +14 dB / -3 dB) so they sit just above the instrument whatever the sound and beat. The drum volume
 // slider still works on top of that (55% = level).
@@ -2735,6 +2735,8 @@ function genStyledRiff(st,fixed,instIn){
   return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi],style:st,inst,fv:ST.__fv,kind:ST.kindName};
 }
 function genSlapRiff(){
+  // a fingerstyle player's line, slapped: write it in their style, then convert (thumbs, pops, left-hand slaps)
+  if(crMode==='bass'&&/^slap_of_/.test(SR.style)){const k=SR.style.slice(8);if(BASS_STYLES[k])return {...toSlap(genStyledRiff(k,null,'bass'),'mix'),style:SR.style}}
   if(isSlapKey(SR.style)&&crMode==='bass'){const k=SR.style.slice(5);return genStyledRiff(SR_STYLES[k]?k:'mix',null,'slap')}
   return genStyledRiff(STY()[SR.style]&&!isSlapKey(SR.style)?SR.style:'mix',null,crMode);
   const root=SR.key==='random'?rnd(12):+SR.key,mode=SR.mode==='random'?slPick([0,1,2,3,4,5,6],SR_MODE_W):+SR.mode;
@@ -2803,7 +2805,7 @@ function renderSRControls(){
   {const S0=STY()[SR.style]||{};$('srModeSel').innerHTML=opt('random',S0.cmp||S0.compose?'Band recommended':'Player recommended')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode}
   const ST=STY();
   if(crMode==='bass'){const fk=Object.keys(BASS_STYLES),sk=Object.keys(SR_STYLES);
-    $('srStyle').innerHTML=`<optgroup label="Fingerstyle &amp; pick">${fk.map(k=>opt(k,k==='mix'?'Mixed fingerstyle (no particular player)':BASS_STYLES[k].name)).join('')}</optgroup><optgroup label="Slap">${sk.map(k=>opt('slap_'+k,'Slap · '+SR_STYLES[k].name)).join('')}</optgroup>`}
+    $('srStyle').innerHTML=`<optgroup label="Fingerstyle &amp; pick">${fk.map(k=>opt(k,k==='mix'?'Mixed fingerstyle (no particular player)':BASS_STYLES[k].name)).join('')}</optgroup><optgroup label="Slap">${sk.map(k=>opt('slap_'+k,'Slap · '+SR_STYLES[k].name)).join('')}</optgroup><optgroup label="Fingerstyle players, slapped">${fk.filter(k=>k!=='mix').map(k=>opt('slap_of_'+k,'Slap · '+BASS_STYLES[k].name.split(':')[0]+' line')).join('')}</optgroup>`}
   else $('srStyle').innerHTML=Object.keys(ST).map(k=>opt(k,ST[k].name)).join('');
   $('srStyle').value=ST[SR.style]?SR.style:'mix';const ci=curInst();
   const G=geomOf(crMode);$('srSoundF').hidden=ci==='slap';$('srToneF').hidden=ci!=='slap';$('srNamesF').hidden=ci!=='slap';
@@ -2832,7 +2834,7 @@ function setCrMode(m){
 $('crTabs').onclick=e=>{const b=e.target.closest('[data-v]');if(b)setCrMode(b.dataset.v)};
 $('yardBox').ontoggle=()=>{SR.yardOpen=$('yardBox').open;saveS()};
 // picking the Slap sound on a bass line means slap technique: switch to the mixed slap player and convert the line
-chg('srSound',v=>{if(crMode==='bass'&&v==='slap'){onStyle('slap_mix');return}SR.sound=v;fetchSamples(geomOf(crMode),v);saveS();if(slKind==='riff')slRestart()});
+chg('srSound',v=>{if(crMode==='bass'&&v==='slap'){onStyle(BASS_STYLES[SR.style]&&SR.style!=='mix'?'slap_of_'+SR.style:'slap_mix');return}SR.sound=v;fetchSamples(geomOf(crMode),v);saveS();if(slKind==='riff')slRestart()});
 const srNew=()=>{SR.riff=genSlapRiff();SR.barOn=null;SR.pos=0;saveS();renderSR();renderSRSaved();if(slBus&&slKind==='riff')slRestart()};
 $('srPlay').onclick=()=>slBus&&slKind==='riff'?slapStop():slapPlay('riff');
 
@@ -2845,7 +2847,7 @@ function srRegenBar(b){
   const r=SR.riff;if(!r)return;const nb=r.steps.length/16,keepBars=SR.bars,sig=a=>a.map(x=>x.s+(x.m??'')+(x.muted?'x':'')).join();
   const cur=sig(r.steps.slice(b*16,b*16+16));let bar=null;
   SR.bars=nb;
-  try{for(let k=0;k<8&&!bar;k++){const f=genStyledRiff(r.style||'mix',{root:r.root,mode:r.mode,band:!!r.bandMode,fv:r.fv,lo:r.box[0],seed:r.seed,regen:r.seed!=null?b:null,tune:r.seed!=null?r.tune||null:undefined},r.inst||'slap'),cand=f.steps.slice(b*16,b*16+16);if(sig(cand)!==cur)bar=cand}}
+  try{for(let k=0;k<8&&!bar;k++){const FX={root:r.root,mode:r.mode,band:!!r.bandMode,fv:r.fv,lo:r.box[0],seed:r.seed,regen:r.seed!=null?b:null,tune:r.seed!=null?r.tune||null:undefined},f=/^slap_of_/.test(r.style||'')?toSlap(genStyledRiff(r.style.slice(8),FX,'bass'),'mix'):genStyledRiff(r.style||'mix',FX,r.inst||'slap'),cand=f.steps.slice(b*16,b*16+16);if(sig(cand)!==cur)bar=cand}}
   finally{SR.bars=keepBars}
   if(!bar){toast('Couldn’t find a different version, try again');return}
   r.steps.splice(b*16,16,...bar.map(x=>Object.assign({},x,{bar:b})));
@@ -2891,7 +2893,7 @@ function toFinger(r,key){
 const onStyle=v=>{const was=SR.riff&&(SR.riff.inst||'slap'),now=crMode==='guitar'?'guitar':isSlapKey(v)?'slap':'bass';
   SR.style=v;const X=STY()[v];if(SR.mode!=='random'){SR.mode='random';toast('Mode set back to recommended for this style')}if(isSlapKey(v)){fetchSamples('bass','slap');fetchDead()}else if(X.sound){SR.sound=X.sound;fetchSamples(geomOf(crMode),X.sound)}
   if(was&&crMode==='bass'&&was!==now){ // convert the current line instead of replacing it; keep its tempo and drums
-    try{SR.riff=now==='slap'?toSlap(SR.riff,v.slice(5)):toFinger(SR.riff,v)}catch(err){showErr&&showErr('Couldn’t convert the line ('+err.message+'), made a new one instead');SR.riff=genSlapRiff()}
+    try{SR.riff=now==='slap'?(/^slap_of_/.test(v)?{...toSlap(SR.riff,'mix'),style:v}:toSlap(SR.riff,v.slice(5))):toFinger(SR.riff,v)}catch(err){showErr&&showErr('Couldn’t convert the line ('+err.message+'), made a new one instead');SR.riff=genSlapRiff()}
     saveS();renderSRControls();renderSR();renderSRSaved();
     toast(now==='slap'?'Same line, now slapped: thumbs, pops and left-hand slaps added':'Same line, now played fingerstyle');
     if(now==='slap')setTimeout(()=>$('yardBox').scrollIntoView({behavior:'smooth',block:'start'}),50);
