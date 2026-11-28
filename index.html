@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2247';
+const APP_VERSION='2026.11.27-2250';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2439,8 +2439,9 @@ chg('srStyle',v=>{const was=SR.riff&&(SR.riff.inst||'slap'),now=crMode==='guitar
   if(was&&crMode==='bass'&&was!==now){ // convert the current line instead of replacing it; keep its tempo and drums
     SR.riff=now==='slap'?toSlap(SR.riff,v.slice(5)):toFinger(SR.riff,v);saveS();renderSRControls();renderSR();renderSRSaved();
     toast(now==='slap'?'Same line, now slapped: thumbs, pops and left-hand slaps added':'Same line, now played fingerstyle');
+    if(now==='slap')setTimeout(()=>$('yardBox').scrollIntoView({behavior:'smooth',block:'start'}),50);
     if(slBus&&slKind==='riff')slapPlay('riff',SR.pos||0);return}
-  if(X.tempo){SR.tempo=X.tempo;SR.beat=X.beat;SR.back=SR.back==='none'?'drums':SR.back}saveS();renderSRControls();srNew()});
+  if(X.tempo){SR.tempo=X.tempo;SR.beat=X.beat;SR.back=SR.back==='none'?'drums':SR.back}saveS();renderSRControls();srNew();if(now==='slap'&&was!=='slap')setTimeout(()=>$('yardBox').scrollIntoView({behavior:'smooth',block:'start'}),50)});
 chg('srKeySel',v=>{SR.key=v;srNew()});chg('srModeSel',v=>{SR.mode=v;srNew()});
 chg('srBars',v=>{SR.bars=+v;srNew()});chg('srSpace',v=>{SR.space=+v;srNew()});chg('srGhosts',v=>{SR.ghosts=+v;srNew()});
 chg('srBack',v=>{SR.back=v;saveS();renderSRControls();if(slKind==='riff')slRestart()});
