@@ -528,7 +528,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <label class="fld full" id="srSoundF"><span>Sound</span><select id="srSound"></select></label>
         <label class="fld"><span>Key</span><select id="srKeySel"></select></label>
         <label class="fld"><span>Mode</span><select id="srModeSel"></select></label>
-        <label class="fld full"><span>Length</span><select id="srBars"><option value="1">1 bar</option><option value="2">2 bars: call &amp; response</option><option value="4">4 bars: call, response ×2</option></select></label>
+        <label class="fld full"><span>Length</span><select id="srBars"><option value="1">1 bar</option><option value="2">2 bars: call &amp; response</option><option value="4">4 bars: call, response ×2</option><option value="8">8 bars: two phrases with a new call in the middle</option></select></label>
         <label class="fld"><span>Space (rests)</span><select id="srSpace"><option value="0">None: all 16ths</option><option value="1">Some rests</option><option value="2">Lots of rests</option></select></label>
         <label class="fld"><span>Dead notes</span><select id="srGhosts"><option value="0">Few</option><option value="1">Some</option><option value="2">Lots</option></select></label>
         <label class="fld" id="srToneF"><span>Dead-note tone</span><select id="srTone"><option value="real">Recorded (real bass)</option><option value="thunk">Synth: thunky</option><option value="click">Synth: clicky</option></select></label>
@@ -546,7 +546,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <p class="hint"><b>Slap, Bass, Guitar:</b> pick an instrument at the top. Each has its own players, sound, settings and saved riffs. Bass and guitar riffs use the same phrase logic as slap (call and response, a pop-style hook, pickups and anticipations) but are played fingerstyle or with a pick, so the rhythm yardstick starts folded away and the tab is the main view. Bass players: James Jamerson, Justin Chancellor (Tool), Jaco Pastorius, Rocco Prestia and Carol Kaye. Guitar: Nile Rodgers, Tony Iommi, Jimmy Page, Jimi Hendrix and Angus Young. They’re style sketches, not transcriptions.</p>
         <p class="hint">Slap riffs use the same building blocks as the rhythm drills, with real notes from the key and mode. Thumbs (T) take the low notes on the E and A strings, favouring the root and fifth. Pops (P) take the high notes on the D and G strings, favouring the octave, third, fifth and seventh. Hammer-ons (O, joined by an arc) start from a thumbed note on the E or A string, a popped note on the G string, or either on the D string. They go up one or two frets, or from an open string up into the hand position. Everything sits in one four-fret hand position around the root, shown on the fretboard.</p>
         <p class="hint"><b>In the style of</b> picks rhythm cells, note choices, tempo and drum beat typical of each player’s approach (for example octave pops for Larry Graham, linear 16ths for Mark King (every 16th filled with left-hand slaps and dead thumbs, ringing notes on syncopated spots or in groups of three), open-string pedals and odd intervals for Les Claypool). They’re style sketches, not transcriptions of anyone’s songs.</p>
-        <p class="hint"><b>Length:</b> a 1-bar riff answers itself (beats 3–4 echo beats 1–2 with a new ending). With 2 bars, bar 1 is the <b>call</b>, ending away from the root so it sounds unfinished, and bar 2 is the <b>response</b>: it echoes the call’s rhythm on different notes (leaning on the 4th or 5th) and comes home to the root. 4 bars play call, response, call, then a busier final response. Dead notes add percussion between the pitched notes.</p>
+        <p class="hint"><b>Length:</b> a 1-bar riff answers itself (beats 3–4 echo beats 1–2 with a new ending). With 8 bars, bars 5–6 bring a new call (different rhythm, starting on the 4th) before the opening call returns and the line ends on the root. With 2 bars, bar 1 is the <b>call</b>, ending away from the root so it sounds unfinished, and bar 2 is the <b>response</b>: it echoes the call’s rhythm on different notes (leaning on the 4th or 5th) and comes home to the root. 4 bars play call, response, call, then a busier final response. Dead notes add percussion between the pitched notes.</p>
       </div>
     </details>
   </div>
@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2206';
+const APP_VERSION='2026.11.27-2213';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2188,31 +2188,37 @@ function genStyledRiff(st){
   // Response cells reuse the call's rhythm (an echo) on new notes; the last beat of each bar is its own ending.
   // Linear styles (King, Wooten) are planned a whole bar at a time.
   const plan=[],cellOf={},shape=ST.shape||'W';
+  // 8 bars: bars 5-6 are a contrasting section (new rhythm, centred on the 4th), then the opening call returns
+  const secOf=b=>nb===8&&(b===4||b===5);
+  const secC=[5,10,3].find(d=>sc.includes((root+d)%12));
   if(ST.linear){const mk=()=>ST.linear==='ohp'?ohpBar():ST.linear==='odd'?oddBar():ST.linear==='rocco'?roccoBar():kingBar(hams.length);cellOf.W=mk();cellOf.F=mk();
-    for(let b=0;b<nb;b++){const resp=nb>1&&b%2===1,fin=nb===4&&b===3;plan.push({L:fin?'F':(resp?'rW':'W'),rhythm:fin?'F':'W',resp,bar:b,head:true})}}
+    cellOf.V=mk();
+    for(let b=0;b<nb;b++){const resp=nb>1&&b%2===1,fin=nb>=4&&b===nb-1,sec=secOf(b);
+      plan.push({L:fin?'F':(sec?'b':'')+(resp?'rW':'W'),rhythm:fin?'F':sec?'V':'W',resp,sec,bar:b,head:true})}}
   else{
-    for(let b=0;b<nb;b++){const resp=nb>1&&b%2===1,fin=nb===4&&b===3;
-      for(let i=0;i<4;i++){let L=shape[i],rhythm=L;
-        if(i===3)L=rhythm=nb===1?shape[3]:resp?(fin?'F':'E'):'C';
-        plan.push({L:(resp&&i<3?'r':'')+L,rhythm,resp,bar:b,head:i===0})}}
-    for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm===shape[0]?pickCell(ST.A,true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
+    for(let b=0;b<nb;b++){const resp=nb>1&&b%2===1,fin=nb>=4&&b===nb-1,sec=secOf(b);
+      for(let i=0;i<4;i++){let L=shape[i],rhythm=sec?'b'+L:L,lab;
+        if(i===3)lab=rhythm=nb===1?shape[3]:resp?(fin?'F':sec?'E2':'E'):(sec?'C2':'C');
+        else lab=(sec?'b':'')+(resp?'r':'')+L;
+        plan.push({L:lab,rhythm,resp,sec,bar:b,head:i===0})}}
+    for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm===shape[0]||p.rhythm==='b'+shape[0]?pickCell(ST.A,true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
     if(cellOf.F){const busy=ST.B.concat(ST.A).filter(c=>okCell(c)&&(c.match(/[TPHOD]/g)||[]).length>=3);if(busy.length)cellOf.F=busy[rnd(busy.length)]}
   }
   const memo={},steps=[];let lastT=rootM;
   const pickT=(first,resp)=>{
-    if(first){const d=resp?center:0;return thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>(st==='king'||st==='flea'?(a.f===0?-1:0)-(b.f===0?-1:0):0)||Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||thumbs.find(q=>q.m===rootM)||thumbs[0]}
-    if(ST.rootLock&&Math.random()<ST.rootLock){const d=resp?center:0;return thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>(a.f===0?-1:0)-(b.f===0?-1:0)||Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||slPick(thumbs,thumbs.map(tW))}
+    if(first){const d=center,nearLow=spots.filter(q=>q.s<=LOW[LOW.length-1]+1&&deg(q.m)===d);return (thumbs.some(q=>deg(q.m)===d)?thumbs:nearLow).filter(q=>deg(q.m)===d).sort((a,b)=>(st==='king'||st==='flea'?(a.f===0?-1:0)-(b.f===0?-1:0):0)||Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||thumbs.find(q=>q.m===rootM)||thumbs[0]}
+    if(ST.rootLock&&Math.random()<ST.rootLock){const d=center;return thumbs.filter(q=>deg(q.m)===d).sort((a,b)=>(a.f===0?-1:0)-(b.f===0?-1:0)||Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||slPick(thumbs,thumbs.map(tW))}
     if(pedal&&Math.random()<ST.pedal)return pedal;
     if(ST.openPass&&Math.random()<ST.openPass){const o=thumbs.filter(q=>q.f===0);if(o.length)return o[rnd(o.length)]}
     const T=ST.pent?thumbs.filter(pentOK):thumbs;return slPick(T.length?T:thumbs,(T.length?T:thumbs).map(tW))};
   plan.forEach(pl=>{
-    center=pl.resp?respC||0:0;
+    center=pl.sec?(pl.resp?respC||0:secC||0):pl.resp?respC||0:0;
     if(!memo[pl.L]){const cell=cellOf[pl.rhythm],out=[];
-      for(let k=0;k<cell.length;k++){const c=cell[k],first=pl.head&&(pl.L===shape[0]||pl.L==='r'+shape[0]||ST.linear)&&k===0,prev=out[out.length-1];
+      for(let k=0;k<cell.length;k++){const c=cell[k],first=pl.head&&k===0,prev=out[out.length-1];
         if(c==='-'){out.push({s:'-'});continue}
         if(c==='S'){out.push({s:'S',muted:true});continue}
         if(c==='t'||c==='p'){out.push({s:c.toUpperCase(),muted:true});continue}
-        if(c==='H'){const want=first?(pl.resp?rootM+(center||0)-(center>6?12:0):rootM):null;
+        if(c==='H'){const want=first?rootM+(center||0)-(center>6?12:0):null;
           const pool=ST.linear==='ohp'&&openHams.length?openHams:hams;
           const hw=x=>x.pop?pW(x.h)*.8+.1:tW(x.o);
           const hm=(want!=null&&!(ST.linear==='ohp')&&hams.find(x=>!x.pop&&deg(x.h.m)===deg(want)))||slPick(pool,pool.map(hw));
@@ -2227,7 +2233,7 @@ function genStyledRiff(st){
           lastT=p.m;out.push({s:'T',m:p.m,pos:{s:p.s,f:p.f},muted:!first&&Math.random()<ST.ghost});continue}
         if(c==='P'||c==='D'){let p=null;const pi=(cell.slice(0,k).match(/[PD]/g)||[]).length;
           if((lastT%12===root%12||ST.octMove&&Math.random()<ST.octMove)&&Math.random()<ST.oct){const q=posFor(lastT+12,ST.popStr||HIGH,lo,hi,TU);if(q)p={...q,m:lastT+12}}
-          if(first&&!p){const q=posFor(rootM+12,ST.popStr||HIGH,lo,hi,TU);if(q)p={...q,m:rootM+12}}
+          if(first&&!p){const m0=rootM+12+(center||0)-(center>6?12:0),q=posFor(m0,ST.popStr||HIGH,lo,hi,TU);if(q)p={...q,m:m0}}
           if(!p&&hookSeq.length&&!center&&Math.random()<hookP){const h=hookSeq[pi%hookSeq.length];p={s:h.s,f:h.f,m:h.m}}
           if(!p&&ST.tritone&&Math.random()<ST.tritone){const q=posFor(rootM+18,ST.popStr||HIGH,lo,hi,TU);if(q)p={...q,m:rootM+18}}
           if(!p)p=pops.length?slPick(pops,pops.map(pW)):slPick(thumbs,thumbs.map(tW));
@@ -2322,7 +2328,7 @@ function genSlapRiff(){
 function srBarsOn(nb){const a=SR.barOn||[];const on=Array.from({length:nb},(_,b)=>a[b]!==false);return on.some(Boolean)?on:on.map(()=>true)}
 function renderSR(){
   const r=SR.riff||(SR.riff=genSlapRiff()),st=r.steps,nb=st.length/16,nm=namesFor(r.root,r.mode);
-  const RH=nb>1?122:108,LB=['CALL','RESPONSE','CALL','RESPONSE (ENDING)'];
+  const RH=nb>1?122:108,LB=nb===8?['CALL','RESPONSE','CALL','RESPONSE','NEW CALL','RESPONSE','CALL','RESPONSE (ENDING)']:['CALL','RESPONSE','CALL','RESPONSE (ENDING)'];
   let h=`<svg viewBox="0 0 352 ${RH*nb}" role="img">`;
   const on=srBarsOn(nb);
   const inst=r.inst||'slap';
