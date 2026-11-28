@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2250';
+const APP_VERSION='2026.11.27-2255';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2342,6 +2342,7 @@ function renderSR(){
   let h=`<svg viewBox="0 0 352 ${RH*nb}" role="img">`;
   const on=srBarsOn(nb);
   const inst=r.inst||'slap';
+  syncYard(inst);
   for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{RH:108,wrap:false,fade:()=>!on[b],check:nb>1?on[b]:null,regen:nb>1,bar:b,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:inst==='slap'&&SR.showNames?nm:null,nmIn:inst==='slap'?null:nm,label:nb>1?`BAR ${b+1} · ${LB[b]}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
   $('srStick').innerHTML=h+'</svg>';
   $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}`;
@@ -2351,6 +2352,8 @@ function renderSR(){
   $('srBoard').innerHTML=fretSVG(items,geomOf(inst));
   renderSlPlay();renderTab();
 }
+// the rhythm yardstick (and slap legend) belong to slap lines only
+function syncYard(inst){const sl=inst==='slap',y=$('yardBox');if(y.hidden===sl){y.hidden=!sl;if(sl)y.open=true}$('legSlap').hidden=!sl;$('legInst').hidden=sl}
 function renderSRControls(){
   $('srKeySel').innerHTML=$('keySel').innerHTML;$('srKeySel').value=SR.key;
   $('srModeSel').innerHTML=opt('random','Any (funky modes more often)')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode;
@@ -2437,7 +2440,8 @@ function toFinger(r,key){
 chg('srStyle',v=>{const was=SR.riff&&(SR.riff.inst||'slap'),now=crMode==='guitar'?'guitar':isSlapKey(v)?'slap':'bass';
   SR.style=v;const X=STY()[v];if(isSlapKey(v)){fetchSamples('bass','slap');fetchDead()}else if(X.sound){SR.sound=X.sound;fetchSamples(geomOf(crMode),X.sound)}
   if(was&&crMode==='bass'&&was!==now){ // convert the current line instead of replacing it; keep its tempo and drums
-    SR.riff=now==='slap'?toSlap(SR.riff,v.slice(5)):toFinger(SR.riff,v);saveS();renderSRControls();renderSR();renderSRSaved();
+    try{SR.riff=now==='slap'?toSlap(SR.riff,v.slice(5)):toFinger(SR.riff,v)}catch(err){showErr&&showErr('Couldn’t convert the line ('+err.message+'), made a new one instead');SR.riff=genSlapRiff()}
+    saveS();renderSRControls();renderSR();renderSRSaved();
     toast(now==='slap'?'Same line, now slapped: thumbs, pops and left-hand slaps added':'Same line, now played fingerstyle');
     if(now==='slap')setTimeout(()=>$('yardBox').scrollIntoView({behavior:'smooth',block:'start'}),50);
     if(slBus&&slKind==='riff')slapPlay('riff',SR.pos||0);return}
