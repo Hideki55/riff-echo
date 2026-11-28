@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2341';
+const APP_VERSION='2026.11.27-2347';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2093,7 +2093,7 @@ const GTR_STYLES={
   // Tony Iommi: slow, dark riffs on the bottom two strings — E-rooted power chords that slide chromatically, the
   // tritone (root to flat 5th), the blues scale with its flat 5th, the minor 6th sliding down to the 5th, palm-muted
   // open-string chugs, and big chords left to ring
-  iommi:{name:'Tony Iommi: dark Sabbath riffs',sound:'heavy',tempo:72,beat:'metal:0',modes:{5:3,2:2},linear:'sabbath',power:true,
+  iommi:{name:'Tony Iommi: dark Sabbath riffs',sound:'heavy',tempo:72,beat:'metal:0',modes:{5:3,2:2},compose:'sabbath',linear:'sabbath',power:true,
     runs:[[0,3,5,6,5,3],[0,0,3,0,5,3],[7,6,5,3,0],[0,3,5,3,0,10],[0,10,8,7],[0,1,0,3,0,5],[5,6,7,6,5,3]],
     keys:{4:6,1:2,2:1,9:1,7:.5,0:.3},notes:[0,1,3,5,6,7,8,10],
     prog:[[0,6,0,5],[0,3,5,6],[0,10,8,7],[0,3,0,6],[0,7,6,5],[0,0,3,5],[0,8,7,6],[0,3,6,5]],
@@ -2217,9 +2217,55 @@ function srBox(root,TU=TUNING.bass){
   const lo=rf===0?1:Math.max(1,rf-rnd(2));return {rs,rf,lo,hi:lo+3,rootM:TU[rs]+rf};
 }
 function posFor(m,strings,lo,hi,TU=TUNING.bass){let best=null;for(const s of strings){const f=m-TU[s];if(f<0||f>20)continue;const d=f===0?.5:f<lo?lo-f:f>hi?f-hi:0;if(!best||d<best.d)best={s,f,d}}return best&&best.d<=2?{s:best.s,f:best.f}:null}
+// ---- Sabbath-style riff composer (Iommi) ----
+// Builds riffs the way heavy riffs are usually written rather than from random cells: a 2-beat HOOK (a ringing
+// power chord followed by a short blues figure), an ANSWER for beats 3-4 (the hook moved to another chord, a
+// varied ending, chord stabs, or a run back to the root), and a phrase plan across bars (hook+answer, hook+other
+// answer, …, a turnaround that lands on the root). Patterns are generic, not taken from songs.
+function genSabbath(ST,root,mode,nb){
+  const TU=TUNING.guitar,rE=TU[0]+((root-TU[0])%12+12)%12,rf=rE-TU[0];
+  const pick=a=>a[rnd(a.length)],W=(a,w)=>slPick(a,w);
+  // positions: chords on the E string (A string higher up), notes on E/A, octave notes on D
+  const chordAt=d=>{let m=rE+d;while(m<TU[0])m+=12;while(m-TU[0]>rf+9&&m-12>=TU[0])m-=12;const s=m-TU[0]<=12?0:1;return {m,pos:{s,f:m-TU[s]},m2:m+7,pos2:{s:s+1,f:m-TU[s]+2}}};
+  const noteAt=d=>{let m=rE+d;while(m<TU[0])m+=12;for(const s of [0,1,2]){const f=m-TU[s];if(f>=0&&f<=rf+5)return {m,pos:{s,f}}}const f=m-TU[2];return {m,pos:{s:2,f:Math.max(0,f)}}};
+  const RHY=['C...N.N.','C..NN.N.','C.XXC...','C...C.N.','C.N.N.C.','C..C..N.','CXXCXXN.','C...NNN.','C.....NN','C.N..N.N','CX.NN.N.','C..NC...'];
+  const FIG=[[3,5],[5,6,5],[10,12],[6,5,3],[8,7],[3,5,6],[12,10,7],[1,0],[0,3,0],[7,6,5],[3,0,10],[5,3,5]];
+  const CH2=[5,3,6,7,8,10,0];
+  const makeHook=(t=0)=>{const r=pick(RHY),fig=pick(FIG),c2=W(CH2,[3,3,2.5,2,1.5,1.5,1]);let ni=0,ci=0;
+    return r.split('').map(ch=>ch==='C'?{k:'C',d:(ci++===0?0:c2)+t}:ch==='N'?{k:'N',d:fig[ni++%fig.length]+t}:ch==='X'?{k:'X'}:null)};
+  const shift=(h,t)=>h.map(x=>x&&x.k!=='X'?{...x,d:x.d+t}:x);
+  const ANS={
+    move:h=>shift(h,W([5,3,7,-2],[3,2,2,1.5])),
+    vary:h=>h.slice(0,4).concat(pick([['C',null,null,null],['N','N','C',null],['X','X','C',null],['C',null,'N','N']]).map((k,i)=>k==='C'?{k:'C',d:pick([5,6,3,7])}:k==='N'?{k:'N',d:pick([[3,5],[6,5],[10,0]])[i%2]}:k==='X'?{k:'X'}:null)),
+    stabs:()=>{const ds=pick([[8,7],[6,5],[5,6],[3,5],[10,8]]);return [{k:'C',d:ds[0]},null,null,null,{k:'C',d:ds[1]},null,null,null]},
+    run:()=>{const r=pick([[7,6,5,3,0],[5,3,0,10,0],[6,5,3,1,0],[10,8,7,6,5]]);return Array.from({length:8},(_,i)=>i<r.length?{k:'N',d:r[i]}:null)}};
+  const pickAns=(not)=>{const ks=Object.keys(ANS).filter(k=>k!==not);return ks[rnd(ks.length)]};
+  const turn=()=>pick([[{k:'C',d:8},null,{k:'C',d:7},null,{k:'C',d:6},null,{k:'C',d:5},null],[{k:'N',d:7},{k:'N',d:6},{k:'N',d:5},{k:'N',d:3},{k:'C',d:0},null,null,null],[{k:'C',d:3},null,{k:'C',d:5},null,{k:'C',d:0},null,null,null]]);
+  const H=makeHook(),H2=makeHook(5),a1=pickAns(),a2=pickAns(a1),A1=ANS[a1](H),A2=ANS[a2](H);
+  const bars=[];
+  for(let b=0;b<nb;b++){const resp=b%2===1,last=b===nb-1&&nb>1,sec=nb===8&&(b===4||b===5);const h=sec?H2:H;
+    let bar=resp?h.concat(sec?ANS[a2](H2):A2):h.concat(sec?ANS[a1](H2):A1);
+    if(last)bar=h.concat(turn());
+    if(nb===1)bar=H.concat(Math.random()<.5?A1:turn());
+    bars.push(bar)}
+  // space setting: busy fills gaps with chugs, more/lots thin out notes and chugs (never the first chord)
+  const SP=SR.space??1;
+  const flat=bars.flat().map((x,i)=>{if(SP===0&&!x)return {k:'X'};if(SP>=2&&x&&i%16!==0&&x.k!=='C'&&Math.random()<(SP===3?.45:.22))return null;return x});
+  let prev=null;
+  const steps=flat.map((x,i)=>{
+    if(!x)return {s:'-'};
+    if(x.k==='X')return {s:'T',muted:true};
+    if(x.k==='C'){const c=chordAt(x.d),st={s:'T',m:c.m,pos:c.pos,m2:c.m2,pos2:c.pos2,muted:false};
+      if(prev&&prev.m2!=null&&Math.abs(prev.m-c.m)>0&&Math.abs(prev.m-c.m)<=2&&c.pos.f>=2)st.slide=Math.abs(prev.m-c.m);prev=st;return st}
+    const n=noteAt(x.d);const st={s:'T',m:n.m,pos:n.pos,muted:false};prev=st;return st});
+  steps.forEach((x,i)=>{x.bar=Math.floor(i/16);x.blk=i>>1;x.k=i&1;
+    x.vel=x.s==='-'?0:x.muted?.8:x.m2!=null?(i%4===0?1.08:1):i%4===0?.98:.9;x.len=x.m2!=null?1:.85});
+  return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[Math.max(1,rf),Math.max(1,rf)+3],style:'iommi',inst:'guitar'};
+}
 function genStyledRiff(st,fixed,instIn){
   const inst=instIn||crMode,ST=styOf(inst)[st],mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
   const root=fixed?fixed.root:SR.key==='random'?(ST.keys?slPick(Object.keys(ST.keys).map(Number),Object.values(ST.keys)):rnd(12)):+SR.key,mode=fixed?fixed.mode:SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
+  if(ST.compose==='sabbath')return genSabbath(ST,root,mode,+SR.bars||1);
   const sc=ST.notes?ST.notes.map(x=>(root+x)%12):scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
   let {lo,hi,rootM}=srBox(root,TU);if(fixed&&fixed.lo){lo=fixed.lo;hi=lo+3}
   const spots=[];for(let s=0;s<NS;s++)for(const f of [0,lo,lo+1,lo+2,lo+3]){const m=TU[s]+f;if(inS(m))spots.push({s,f,m})}
