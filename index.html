@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2331';
+const APP_VERSION='2026.11.27-2336';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2074,7 +2074,8 @@ const GTR_STYLES={
   // Tony Iommi: slow, dark riffs on the bottom two strings — E-rooted power chords that slide chromatically, the
   // tritone (root to flat 5th), the blues scale with its flat 5th, the minor 6th sliding down to the 5th, palm-muted
   // open-string chugs, and big chords left to ring
-  iommi:{name:'Tony Iommi: dark Sabbath riffs',sound:'heavy',tempo:76,beat:'metal:0',modes:{5:3,2:2},shape:'ABAC',power:true,
+  iommi:{name:'Tony Iommi: dark Sabbath riffs',sound:'heavy',tempo:72,beat:'metal:0',modes:{5:3,2:2},linear:'sabbath',power:true,
+    runs:[[0,3,5,6,5,3],[0,0,3,0,5,3],[7,6,5,3,0],[0,3,5,3,0,10],[0,10,8,7],[0,1,0,3,0,5],[5,6,7,6,5,3]],
     keys:{4:6,1:2,2:1,9:1,7:.5,0:.3},notes:[0,1,3,5,6,7,8,10],
     prog:[[0,6,0,5],[0,3,5,6],[0,10,8,7],[0,3,0,6],[0,7,6,5],[0,0,3,5],[0,8,7,6],[0,3,6,5]],
     A:['D---','D--D','D-tt','D-D-','D--t'],B:['D---','--D-','tD-D','D-tt','tttt','T-T-','TTD-','D--t','-D--','ttD-','D-D-','T-TT'],
@@ -2100,6 +2101,14 @@ function oddBar(){
   return s.slice(0,16);
 }
 // Rocco-style bar: every 16th played; a syncopated set of fretted notes, the rest staccato muted notes
+// Sabbath-style bar: a riff rhythm from heavy-riff archetypes (my own generic patterns, not songs): ringing chord stabs
+// with silence, a slow chord walk, the gallop (chord + two palm-muted chugs), chug drive, chords answered by a
+// single-note blues run, a low-string single-note riff, and a 3+3+2 heavy push. The bar repeats (AAA) and the last
+// beat changes to turn the riff around.
+function sabbathBar(){
+  const R=['D-----D---D-----','D---D---D-D-D---','D-ttD-ttD-ttD-tt','DtttD-ttDtttD-D-','D---D---TTT-T-T-','T-TTT-T-TT-TT---','D--D--D-D--D--D-','D-D-----D-D-----','D---ttD-D---TTT-','DttDttD-DttDttD-'];
+  return R[rnd(R.length)];
+}
 function roccoBar(){
   const SK=[[0,3,6,8,10,14],[0,2,6,8,11,14],[0,3,4,7,10,12,14],[0,3,6,10,11,14]][rnd(4)];let s='';
   for(let i=0;i<16;i++)s+=SK.includes(i)?(i===0?'T':Math.random()<.35?'P':'T'):'t';
@@ -2243,7 +2252,7 @@ function genStyledRiff(st,fixed,instIn){
   // 8 bars: bars 5-6 are a contrasting section (new rhythm, centred on the 4th), then the opening call returns
   const secOf=b=>nb===8&&(b===4||b===5);
   const secC=[5,10,3].find(d=>sc.includes((root+d)%12));
-  if(ST.linear){const mk=()=>ST.linear==='ohp'?ohpBar():ST.linear==='odd'?oddBar():ST.linear==='rocco'?roccoBar():kingBar(hams.length);cellOf.W=mk();cellOf.F=mk();
+  if(ST.linear){const mk=()=>ST.linear==='sabbath'?sabbathBar():ST.linear==='ohp'?ohpBar():ST.linear==='odd'?oddBar():ST.linear==='rocco'?roccoBar():kingBar(hams.length);cellOf.W=mk();cellOf.F=mk();
     cellOf.V=mk();for(const L of ['W','V','F'])cellOf[L]=spaceAdj(cellOf[L],true);
     for(let b=0;b<nb;b++){const resp=nb>1&&b%2===1,fin=nb>=4&&b===nb-1,sec=secOf(b);
       plan.push({L:fin?'F':(sec?'b':'')+(resp?'rW':'W'),rhythm:fin?'F':sec?'V':'W',resp,sec,bar:b,head:true})}}
@@ -2256,7 +2265,8 @@ function genStyledRiff(st,fixed,instIn){
     for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm===shape[0]||p.rhythm==='b'+shape[0]?spaceAdj(pickCell(ST.A,true),true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
     if(cellOf.F){const busy=ST.B.concat(ST.A).filter(c=>okCell(c)&&(c.match(/[TPHOD]/g)||[]).length>=3);if(busy.length)cellOf.F=spaceAdj(busy[rnd(busy.length)])}
   }
-  const memo={},steps=[];let lastT=rootM,progI=0,lastChord=null;
+  const memo={},steps=[];let lastT=rootM,progI=0,lastChord=null,runI=0;
+  const runA=ST.runs?ST.runs[rnd(ST.runs.length)]:null,runB=ST.runs?ST.runs[rnd(ST.runs.length)]:null;
   const progA=ST.prog?ST.prog[rnd(ST.prog.length)]:null,progB=ST.prog?ST.prog[rnd(ST.prog.length)]:null;
   const pickT=(first,resp)=>{
     if(first){const d=center,nearLow=spots.filter(q=>q.s<=LOW[LOW.length-1]+1&&deg(q.m)===d);return (thumbs.some(q=>deg(q.m)===d)?thumbs:nearLow).filter(q=>deg(q.m)===d).sort((a,b)=>(st==='king'||st==='flea'?(a.f===0?-1:0)-(b.f===0?-1:0):0)||Math.abs(a.m-rootM)-Math.abs(b.m-rootM))[0]||thumbs.find(q=>q.m===rootM)||thumbs[0]}
@@ -2282,6 +2292,9 @@ function genStyledRiff(st,fixed,instIn){
             if(!q){const c2=spots.filter(o=>o.s===s&&o.f<prev.pos.f&&prev.pos.f-o.f<=3);if(c2.length)q=c2[rnd(c2.length)]}
             if(q){prev.pull=true;out.push({s:'L',m:q.m,pos:{s:q.s,f:q.f}});continue}}
           out.push({s:'T',muted:true});continue}
+        if(c==='T'&&ST.runs){if(k===0||cell[k-1]!=='T')runI=0;const d=(pl.resp?runB:runA)[runI++%(pl.resp?runB:runA).length];
+          const rE=TU[0]+((root-TU[0])%12+12)%12,m0=rE+d,s0=m0-TU[0]<=12?0:1,f0=m0-TU[s0];
+          lastT=m0;out.push({s:'T',m:m0,pos:{s:s0,f:f0},muted:false});continue}
         if(c==='T'){const p=pickT(first,pl.resp);
           lastT=p.m;out.push({s:'T',m:p.m,pos:{s:p.s,f:p.f},muted:!first&&Math.random()<ST.ghost});continue}
         if(c==='P'||c==='D'){let p=null;const pi=(cell.slice(0,k).match(/[PD]/g)||[]).length;
@@ -2316,6 +2329,7 @@ function genStyledRiff(st,fixed,instIn){
   if(nb>1)for(let b=0;b<nb;b++){
     const seg=steps.slice(b*16,b*16+16),lastI=seg.map((x,i)=>plain(x)?i:-1).filter(i=>i>=0).pop();if(lastI==null)continue;
     const x=seg[lastI];
+    if(ST.prog){const ch=seg.map((y,i)=>y.m2!=null&&!y.muted?i:-1).filter(i=>i>=0).pop();if(ch!=null&&b%2===1&&b===nb-1){const y=seg[ch],rE=TU[0]+((root-TU[0])%12+12)%12;Object.assign(y,{m:rE,pos:{s:0,f:rE-TU[0]},m2:rE+7,pos2:{s:1,f:rE-TU[0]+2},slide:0})}continue}
     if(b%2===1){if(deg(x.m)!==0)setNote(x,x.s==='P'?rootM+12:rootM)}
     else if(deg(x.m)===0){const opts=[10,11,7,3,4].filter(d=>sc.includes((root+d)%12));for(const d of opts){if(setNote(x,x.s==='P'?rootM+12+d-(d>7?12:0):rootM+d-(d>7?12:0)))break}}
   }
