@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2307';
+const APP_VERSION='2026.11.27-2324';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1130,11 +1130,11 @@ function renderPlayBtn(){const on=!!playSched||loopMode>0,b=$('playBtn');b.query
 const ksCache=new Map();
 const SOUNDS={
   bass:[{id:'finger',name:'Fingers',d:'Real, clear',real:1},{id:'fingerpunch',name:'Fingers (punchy)',d:'Real, snappy',real:1},{id:'fingerdeep',name:'Fingers (deep)',d:'Real, dark',real:1},{id:'pick',name:'Pick',d:'Real bass',real:1},{id:'slap',name:'Slap',d:'Real bass',real:1},{id:'fretless',name:'Fretless',d:'Real bass',real:1},{id:'upright',name:'Upright',d:'Real acoustic',real:1},{id:'pluck',name:'Plucked',d:'Synth string'},{id:'muted',name:'Palm mute',d:'Synth, thumpy'},{id:'synth',name:'Retro',d:'Synth buzz'}],
-  guitar:[{id:'clean',name:'Clean',d:'Real electric',real:1},{id:'steel',name:'Acoustic',d:'Real acoustic',real:1},{id:'nylon',name:'Nylon',d:'Real classical',real:1},{id:'muted',name:'Muted',d:'Real palm mute',real:1},{id:'drive',name:'Overdrive',d:'Real crunch',real:1},{id:'pluck',name:'Plucked',d:'Synth string'},{id:'synth',name:'Retro',d:'Synth buzz'}],
+  guitar:[{id:'clean',name:'Clean',d:'Real electric',real:1},{id:'steel',name:'Acoustic',d:'Real acoustic',real:1},{id:'nylon',name:'Nylon',d:'Real classical',real:1},{id:'muted',name:'Muted',d:'Real palm mute',real:1},{id:'heavy',name:'Amp: heavy',d:'Real guitar, heavy amp',real:1},{id:'crunch',name:'Amp: crunch',d:'Real guitar, crunchy amp',real:1},{id:'drive',name:'Overdrive (GM)',d:'Recorded overdrive',real:1},{id:'pluck',name:'Plucked',d:'Synth string'},{id:'synth',name:'Retro',d:'Synth buzz'}],
   voice:[{id:'choir',name:'Choir "aah"',d:'Real voices',real:1},{id:'oohs',name:'Choir "ooh"',d:'Real voices',real:1},{id:'ah',name:'Solo "ah"',d:'Synth voice'},{id:'oo',name:'Solo "oo"',d:'Synth voice'},{id:'hum',name:'Hum',d:'Synth, mellow'}]};
 // Real recordings (Musyng Kite soundfont, CC BY-SA 3.0), one file per note, loaded when a sound is chosen
 const SAMPLED={'bass:finger':'fluid_electric_bass_finger','bass:fingerpunch':'fatboy_electric_bass_finger','bass:fingerdeep':'electric_bass_finger','bass:pick':'electric_bass_pick','bass:slap':'slap_bass_1','bass:fretless':'fretless_bass','bass:upright':'acoustic_bass',
-  'guitar:clean':'electric_guitar_clean','guitar:steel':'acoustic_guitar_steel','guitar:nylon':'acoustic_guitar_nylon','guitar:muted':'electric_guitar_muted','guitar:drive':'overdriven_guitar',
+  'guitar:clean':'electric_guitar_clean','guitar:steel':'acoustic_guitar_steel','guitar:nylon':'acoustic_guitar_nylon','guitar:muted':'electric_guitar_muted','guitar:drive':'overdriven_guitar','guitar:heavy':'electric_guitar_clean','guitar:crunch':'electric_guitar_clean',
   'voice:choir':'choir_aahs','voice:oohs':'voice_oohs'};
 const SRANGE={bass:[28,69],guitar:[40,88],voice:[36,84]};
 const FLATN=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
@@ -1170,7 +1170,7 @@ const PLUCK={
   'guitar:muted':{t60:.25,bright:.55,pick:.15,shelf:2,midF:800,mid:2,lp:2500,gain:.65},
   'guitar:drive':{t60:3,bright:.8,pick:.1,shelf:0,midF:900,mid:5,lp:3800,gain:.2,drive:true}};
 // synth stand-ins while recordings load (or if they can't)
-Object.assign(PLUCK,{'bass:pluck':PLUCK['bass:finger'],'bass:fingerpunch':PLUCK['bass:pick'],'bass:fingerdeep':PLUCK['bass:finger'],'bass:slap':PLUCK['bass:pick'],'bass:fretless':PLUCK['bass:upright'],'guitar:pluck':PLUCK['guitar:clean'],'guitar:steel':PLUCK['guitar:clean']});
+Object.assign(PLUCK,{'guitar:heavy':PLUCK['guitar:clean'],'guitar:crunch':PLUCK['guitar:clean'],'bass:pluck':PLUCK['bass:finger'],'bass:fingerpunch':PLUCK['bass:pick'],'bass:fingerdeep':PLUCK['bass:finger'],'bass:slap':PLUCK['bass:pick'],'bass:fretless':PLUCK['bass:upright'],'guitar:pluck':PLUCK['guitar:clean'],'guitar:steel':PLUCK['guitar:clean']});
 let driveCurve=null;
 function pluck(t,midi,len,p,key,vel,slide){
   vel=vel??1;
@@ -1215,7 +1215,29 @@ function singer(t,midi,len,kind){
   if(kind==='choir'){[-9,0,8].forEach((d,i)=>singCore(t+i*.012,midi,len,VOWELS.ah,.2,d));return}
   singCore(t,midi,len,VOWELS.ah,.5,0);
 }
-function playTone(inst,t,midi,len,vel,slide){
+// Guitar amp: the clean guitar recording through a real-time distortion and speaker-cabinet filter. Both notes of a
+// power chord go through the same distortion, like a real amp, which gives the thick, growling sound.
+const AMPS={heavy:{pre:3,k:14,mid:-4,out:.32},crunch:{pre:2,k:5,mid:0,out:.36}},ampCache=new WeakMap();
+function ampCurve(k){const n=2048,c=new Float32Array(n),d=Math.tanh(k);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.tanh(k*x)/d}return c}
+function getAmp(dest,type){
+  let m=ampCache.get(dest);if(!m){m={};ampCache.set(dest,m)}if(m[type])return m[type];const A=AMPS[type];
+  const inp=ctx.createGain();inp.gain.value=A.pre;
+  const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=110;
+  const tight=ctx.createBiquadFilter();tight.type='peaking';tight.frequency.value=750;tight.Q.value=.8;tight.gain.value=6;
+  const sh=ctx.createWaveShaper();sh.curve=ampCurve(A.k);sh.oversample='4x';
+  const low=ctx.createBiquadFilter();low.type='peaking';low.frequency.value=120;low.gain.value=3;
+  const mid=ctx.createBiquadFilter();mid.type='peaking';mid.frequency.value=650;mid.Q.value=1;mid.gain.value=A.mid;
+  const pres=ctx.createBiquadFilter();pres.type='peaking';pres.frequency.value=2200;pres.Q.value=1.1;pres.gain.value=4;
+  const cab1=ctx.createBiquadFilter();cab1.type='lowpass';cab1.frequency.value=4800;cab1.Q.value=.9;
+  const cab2=ctx.createBiquadFilter();cab2.type='lowpass';cab2.frequency.value=6500;cab2.Q.value=.7;
+  const hp2=ctx.createBiquadFilter();hp2.type='highpass';hp2.frequency.value=75;
+  const out=ctx.createGain();out.gain.value=A.out;
+  inp.connect(hp);hp.connect(tight);tight.connect(sh);sh.connect(low);low.connect(mid);mid.connect(pres);pres.connect(cab1);cab1.connect(cab2);cab2.connect(hp2);hp2.connect(out);out.connect(dest);
+  return m[type]=inp;
+}
+// run a sound call with the amp in the path when the guitar sound is an amp sound
+function withAmp(inst,fn){const snd=S.sounds[inst];if(inst!=='guitar'||!AMPS[snd])return fn();const keep=OUTBUS;OUTBUS=getAmp(OUT(),snd);try{return fn()}finally{OUTBUS=keep}}
+function playTone(inst,t,midi,len,vel,slide){if(inst==='guitar'&&AMPS[S.sounds.guitar]&&!playTone.inAmp){playTone.inAmp=1;try{return withAmp(inst,()=>playTone(inst,t,midi,len,vel,slide))}finally{playTone.inAmp=0}}
   vel=vel??1;
   const snd=S.sounds[inst]||SOUNDS[inst][0].id;
   if(inst==='bass'&&S.octUp)midi+=12;
@@ -1226,7 +1248,7 @@ function playTone(inst,t,midi,len,vel,slide){
   if(snd==='synth')return synthTone(t,midi,len,.32*vel,slide);
   pluck(t,midi,len,PLUCK[inst+':'+snd]||PLUCK[inst==='bass'?'bass:finger':'guitar:clean'],inst+':'+snd+':',vel,slide);
 }
-function ghostNote(inst,t,midi){if(inst==='voice')return;if(inst==='bass'&&S.octUp)midi+=12;const f=SAMPLED[inst+':'+S.sounds[inst]];if(f&&playSample(t,f,midi,.05,.3,0,inst))return;pluck(t,midi,.07,PLUCK[inst+':muted'],inst+':muted:',.35)}
+function ghostNote(inst,t,midi){if(inst==='guitar'&&AMPS[S.sounds.guitar]&&!ghostNote.inAmp){ghostNote.inAmp=1;try{return withAmp(inst,()=>ghostNote(inst,t,midi))}finally{ghostNote.inAmp=0}}if(inst==='voice')return;if(inst==='bass'&&S.octUp)midi+=12;const f=SAMPLED[inst+':'+S.sounds[inst]];if(f&&playSample(t,f,midi,.05,.3,0,inst))return;pluck(t,midi,.07,PLUCK[inst+':muted'],inst+':muted:',.35)}
 // how a human would play it: accent by beat position, length by style, a little timing drift
 const GATE={funk:.5,rock:.8,pop:.88,walking:.95,metal:.85};
 function feelFor(r,n,i){
@@ -1761,6 +1783,7 @@ S.cguit=Object.assign({},SRD,{tempo:100,sound:'clean',tabOpen:true,yardOpen:fals
 if(!S.crMerged){S.crMerged=1;if(S.crMode==='slap'||!S.crMode){const o=S.sriff;Object.assign(S.cbass,{style:'slap_'+(o.style||'mix'),tempo:o.tempo,beat:o.beat,back:o.back,space:o.space,ghosts:o.ghosts,bars:o.bars,riff:o.riff?Object.assign(o.riff,{inst:'slap'}):null,barOn:o.barOn});S.crMode='bass'}}
 let crMode=S.crMode==='guitar'?'guitar':'bass';
 let SR=crMode==='bass'?S.cbass:S.cguit;
+if(S.cguit&&S.cguit.sound==='drive'&&['iommi','page','angus'].includes(S.cguit.style))S.cguit.sound=S.cguit.style==='iommi'?'heavy':'crunch';
 for(const [o,G] of [[S.cbass,'bass'],[S.cguit,'guitar']])if(!SOUNDS[G].some(s=>s.id===o.sound))o.sound=G==='bass'?'finger':'clean';
 for(const o of [S.sriff,S.cbass,S.cguit])if(!o.spaceV2){o.spaceV2=1;if(o.space===2)o.space=3}
 const geomOf=inst=>inst==='guitar'?'guitar':'bass';
@@ -2046,11 +2069,11 @@ const GTR_STYLES={
     A:['PpPp','P-pP','PppP','DpPp'],B:['pPpP','-PpP','PpP-','ppPp','DpDp','pPPp','PpDp'],popStr:[3,4,5],oct:.3,ghost:.05,
     popDeg:{0:3,7:2.5,10:2,3:2,2:1.5},chrom:.08,maxRing:11,choke:.7,slide:.05,lag:{P:.002,dead:-.002,LH:.003},jit:.003,vary:.08},
   // Tony Iommi: slow, heavy minor-pentatonic riffs of power chords and single notes, the tritone, plenty of weight
-  iommi:{name:'Tony Iommi: heavy power-chord riffs',sound:'drive',tempo:84,beat:'metal:0',modes:{5:3,2:2,6:1},shape:'ABAC',pent:true,power:true,tritone:.25,
+  iommi:{name:'Tony Iommi: heavy power-chord riffs',sound:'heavy',tempo:84,beat:'metal:0',modes:{5:3,2:2,6:1},shape:'ABAC',pent:true,power:true,tritone:.25,
     A:['D-D-','D--D','D-TT','D---'],B:['D-DD','T-D-','--D-','DD--','T-T-','D---','TTD-','-D-D'],oct:.2,ghost:.04,thumbDeg:{0:5,3:2,5:2,6:1.5,7:2,10:2},
     chrom:.15,choke:.3,slide:.12,lag:{P:.002,dead:0,LH:.003},jit:.006,vary:.04},
   // Jimmy Page: blues-rock riffs from the minor pentatonic, open-string pedals, hammer-ons and pull-offs, syncopation
-  page:{name:'Jimmy Page: blues-rock riffs',sound:'drive',tempo:96,beat:'rock:1',modes:{5:3,4:2,1:2},shape:'ABAC',pent:true,pedal:.3,pullOpen:.7,
+  page:{name:'Jimmy Page: blues-rock riffs',sound:'crunch',tempo:96,beat:'rock:1',modes:{5:3,4:2,1:2},shape:'ABAC',pent:true,pedal:.3,pullOpen:.7,
     A:['T-TT','THO-','T-PL','T-TP','D-T-'],B:['-TPL','HOT-','T-HO','PLT-','TT-P','-T-T','TPLT','D-DT'],power:true,oct:.25,ghost:.05,chrom:.12,
     choke:.35,slide:.15,lag:{P:.004,dead:-.002,LH:.004},jit:.006,vary:.08},
   // Jimi Hendrix: pentatonic lines with double stops, hammer-ons, pull-offs and slides; Dorian/Mixolydian
@@ -2058,7 +2081,7 @@ const GTR_STYLES={
     A:['T-DP','T-HO','D-PL','T--D'],B:['DPL-','-HOD','PLT-','D-D-','-TDP','HOP-','T-PL'],popStr:[3,4,5],oct:.3,ghost:.06,chrom:.1,
     choke:.3,slide:.3,lag:{P:.006,dead:-.002,LH:.005},jit:.007,vary:.1},
   // Angus Young: driving 8th-note open-string power chords and riffs in A and E
-  angus:{name:'Angus Young: 8th-note rock riffs',sound:'drive',tempo:124,beat:'rock:0',modes:{4:3,0:2,5:1},shape:'ABAC',power:true,
+  angus:{name:'Angus Young: 8th-note rock riffs',sound:'crunch',tempo:124,beat:'rock:0',modes:{4:3,0:2,5:1},shape:'ABAC',power:true,
     keys:{9:5,4:4,2:2,7:1,0:.5,5:.3,11:.2,1:.1,3:.1,6:.1,8:.1,10:.1},pedal:.35,
     A:['D-D-','D-DD','T-D-','D-T-'],B:['D-D-','-D-D','DDD-','T-T-','D---','D-TD','T-DD'],oct:.2,ghost:.04,chrom:.05,
     choke:.45,slide:.05,lag:{P:.002,dead:0,LH:.003},jit:.004,vary:.04}};
