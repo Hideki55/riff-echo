@@ -168,7 +168,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 .mstep .round{width:40px;height:40px;font-size:24px}
 .btns.sl{grid-template-columns:1.2fr 1fr}
 .srboard{margin-top:10px}
-.crtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--soft);border-radius:16px;padding:5px;margin:-2px 0 12px}
+.crtabs{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;background:var(--soft);border-radius:16px;padding:5px;margin:-2px 0 12px}
 .crtabs button{font:inherit;font-weight:800;font-size:16px;min-height:44px;border:0;border-radius:12px;background:transparent;color:var(--muted);cursor:pointer}
 .crtabs button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .crtabs button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
@@ -503,7 +503,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
   <!-- ===== SLAP RIFFS ===== -->
   <div class="view" id="viewSRiff" hidden>
     <div class="bar"><a class="back" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="vt">Creator</h1><span class="muted" id="srKey"></span></div>
-    <div class="crtabs" id="crTabs" role="tablist"><button data-v="slap" role="tab">Slap</button><button data-v="bass" role="tab">Bass</button><button data-v="guitar" role="tab">Guitar</button></div>
+    <div class="crtabs" id="crTabs" role="tablist"><button data-v="bass" role="tab">Bass</button><button data-v="guitar" role="tab">Guitar</button></div>
     <section class="card hero slhero" aria-label="Riff">
       <details class="yardwrap" id="yardBox"><summary>Rhythm yardstick</summary>
       <div class="ystick" id="srStick"></div>
@@ -543,7 +543,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
     <details class="card more">
       <summary>How the Creator works</summary>
       <div class="morebody">
-        <p class="hint"><b>Slap, Bass, Guitar:</b> pick an instrument at the top. Each has its own players, sound, settings and saved riffs. Bass and guitar riffs use the same phrase logic as slap (call and response, a pop-style hook, pickups and anticipations) but are played fingerstyle or with a pick, so the rhythm yardstick starts folded away and the tab is the main view. Bass players: James Jamerson, Justin Chancellor (Tool), Jaco Pastorius, Rocco Prestia and Carol Kaye. Guitar: Nile Rodgers, Tony Iommi, Jimmy Page, Jimi Hendrix and Angus Young. They’re style sketches, not transcriptions.</p>
+        <p class="hint"><b>Bass or Guitar:</b> pick an instrument at the top; each keeps its own settings and saved riffs. Under Bass, the <b>Slap</b> group of players switches to slap technique: slap sound, recorded dead notes, thumbs and pops, and the rhythm yardstick. Other players are fingerstyle or pick, with the tab as the main view. Bass players: James Jamerson, Justin Chancellor (Tool), Jaco Pastorius, Rocco Prestia and Carol Kaye. Guitar: Nile Rodgers, Tony Iommi, Jimmy Page, Jimi Hendrix and Angus Young. They’re style sketches, not transcriptions.</p>
         <p class="hint">Slap riffs use the same building blocks as the rhythm drills, with real notes from the key and mode. Thumbs (T) take the low notes on the E and A strings, favouring the root and fifth. Pops (P) take the high notes on the D and G strings, favouring the octave, third, fifth and seventh. Hammer-ons (O, joined by an arc) start from a thumbed note on the E or A string, a popped note on the G string, or either on the D string. They go up one or two frets, or from an open string up into the hand position. Everything sits in one four-fret hand position around the root, shown on the fretboard.</p>
         <p class="hint"><b>In the style of</b> picks rhythm cells, note choices, tempo and drum beat typical of each player’s approach (for example octave pops for Larry Graham, linear 16ths for Mark King (every 16th filled with left-hand slaps and dead thumbs, ringing notes on syncopated spots or in groups of three), open-string pedals and odd intervals for Les Claypool). They’re style sketches, not transcriptions of anyone’s songs.</p>
         <p class="hint"><b>Length:</b> a 1-bar riff answers itself (beats 3–4 echo beats 1–2 with a new ending). With 8 bars, bars 5–6 bring a new call (different rhythm, starting on the 4th) before the opening call returns and the line ends on the root. With 2 bars, bar 1 is the <b>call</b>, ending away from the root so it sounds unfinished, and bar 2 is the <b>response</b>: it echoes the call’s rhythm on different notes (leaning on the 4th or 5th) and comes home to the root. 4 bars play call, response, call, then a busier final response. Dead notes add percussion between the pitched notes.</p>
@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2224';
+const APP_VERSION='2026.11.27-2240';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1757,12 +1757,18 @@ S.sriff=Object.assign({},SRD,{yardOpen:true},S.sriff||{});
 S.cbass=Object.assign({},SRD,{tempo:100,sound:'finger',tabOpen:true,yardOpen:false},S.cbass||{});
 S.cguit=Object.assign({},SRD,{tempo:100,sound:'clean',tabOpen:true,yardOpen:false},S.cguit||{});
 // Creator modes share one page: SR points at the state of the mode on screen
-let crMode=['slap','bass','guitar'].includes(S.crMode)?S.crMode:'slap';
-let SR=crMode==='slap'?S.sriff:crMode==='bass'?S.cbass:S.cguit;
+// Slap is now a set of bass styles (keys 'slap_…'). Move an old Slap-tab session into Bass once.
+if(!S.crMerged){S.crMerged=1;if(S.crMode==='slap'||!S.crMode){const o=S.sriff;Object.assign(S.cbass,{style:'slap_'+(o.style||'mix'),tempo:o.tempo,beat:o.beat,back:o.back,space:o.space,ghosts:o.ghosts,bars:o.bars,riff:o.riff?Object.assign(o.riff,{inst:'slap'}):null,barOn:o.barOn});S.crMode='bass'}}
+let crMode=S.crMode==='guitar'?'guitar':'bass';
+let SR=crMode==='bass'?S.cbass:S.cguit;
 for(const [o,G] of [[S.cbass,'bass'],[S.cguit,'guitar']])if(!SOUNDS[G].some(s=>s.id===o.sound))o.sound=G==='bass'?'finger':'clean';
 const geomOf=inst=>inst==='guitar'?'guitar':'bass';
 const styOf=inst=>inst==='bass'?BASS_STYLES:inst==='guitar'?GTR_STYLES:SR_STYLES;
-const STY=()=>styOf(crMode);
+const isSlapKey=k=>typeof k==='string'&&k.startsWith('slap_');
+// the instrument technique of the current choice: 'slap' for a slap player, else the tab's instrument
+const curInst=()=>crMode==='bass'&&isSlapKey(SR.style)?'slap':crMode;
+// all styles for the tab on screen, slap players included under Bass with a 'slap_' prefix
+const STY=()=>{if(crMode==='guitar')return GTR_STYLES;const o={...BASS_STYLES};for(const k in SR_STYLES)o['slap_'+k]=SR_STYLES[k];return o};
 let slGen=0,slBus=null,slTimer=null,slRaf=0,slSteps=[],slBars=0,slPlayingStep=-1,slNoise=null,slKind=null;
 const slPick=(arr,w)=>{let s=0;for(const x of w)s+=x;let r=Math.random()*s;for(let i=0;i<arr.length;i++){r-=w[i];if(r<=0)return arr[i]}return arr[arr.length-1]};
 // random blocks; the first block of each bar always starts with a thumb or hammer so beat 1 is played
@@ -1808,7 +1814,7 @@ function yardRow(get,y0,opts){
   if(opts.label){const ck=opts.check!=null,c=opts.labelC||'var(--muted)';
     if(ck)h+=`<g data-bar="${opts.bar}" style="cursor:pointer" role="checkbox" aria-checked="${opts.check}"><rect x="${X0-6}" y="${y0-4}" width="200" height="22" fill="transparent"/><circle cx="${X0+5}" cy="${y0+6.5}" r="7" fill="${opts.check?c:'#fff'}" stroke="${c}" stroke-width="2"/>${opts.check?`<path d="M${X0+1.8} ${y0+6.8}l2.3 2.4 4.4-4.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:''}`;
     h+=`<text x="${X0+(ck?17:0)}" y="${y0+10}" font-size="10" font-weight="800" fill="${c}" letter-spacing=".06em">${opts.label}</text>`;if(ck)h+='</g>';
-    if(opts.regen)h+=regenIcon(X0+16*20-30,y0-6,opts.bar);y0+=14}
+    if(opts.regen)h+=regenIcon(X0+16*20-30,Math.max(0,y0-5),opts.bar);y0+=14}
   const pill=(x,w,dash,op)=>`<rect x="${x}" y="${y0+6}" width="${w}" height="30" rx="${dash?8:15}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" opacity="${op}"${dash?' stroke-dasharray="3 3"':''}/>`;
   for(let i=0;i<16;i++){const a=get(i),b=get(i+1),op=opts.fade(i)?.45:1;
     if(a.k===0&&b&&b.blk===a.blk&&b.k===1&&b.bar===a.bar){if(i<15)h+=pill(X0+i*W+3,2*W-6,0,op);else if(opts.wrap)h+=pill(X0+15*W+3,W-3,1,op)+pill(X0,W-3,1,1)}}
@@ -1955,7 +1961,7 @@ async function slapPlay(kind,from){
   if(slBus)slapStop();
   ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
   const g=++slGen;slKind=kind;slBus=newBus();renderSlPlay();
-  const inst=kind==='riff'?(SR.riff&&SR.riff.inst||crMode):'slap';
+  const inst=kind==='riff'?(SR.riff&&SR.riff.inst||curInst()):'slap';
   await Promise.all([...(inst==='slap'?[soundReady('bass','slap'),deadReady()]:[soundReady(geomOf(inst),SR.sound)]),P.back==='drums'?kitReady(slBeatSel(P).st):Promise.resolve()]);
   if(g!==slGen)return;
   slBars=0;let t0=ctx.currentTime+.12,startAt=0;
@@ -2152,8 +2158,8 @@ function srBox(root,TU=TUNING.bass){
   const lo=rf===0?1:Math.max(1,rf-rnd(2));return {rs,rf,lo,hi:lo+3,rootM:TU[rs]+rf};
 }
 function posFor(m,strings,lo,hi,TU=TUNING.bass){let best=null;for(const s of strings){const f=m-TU[s];if(f<0||f>20)continue;const d=f===0?.5:f<lo?lo-f:f>hi?f-hi:0;if(!best||d<best.d)best={s,f,d}}return best&&best.d<=2?{s:best.s,f:best.f}:null}
-function genStyledRiff(st,fixed){
-  const inst=crMode,ST=styOf(inst)[st],mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
+function genStyledRiff(st,fixed,instIn){
+  const inst=instIn||crMode,ST=styOf(inst)[st],mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
   const root=fixed?fixed.root:SR.key==='random'?(ST.keys?slPick(Object.keys(ST.keys).map(Number),Object.values(ST.keys)):rnd(12)):+SR.key,mode=fixed?fixed.mode:SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
   const sc=scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
   let {lo,hi,rootM}=srBox(root,TU);if(fixed&&fixed.lo){lo=fixed.lo;hi=lo+3}
@@ -2287,7 +2293,8 @@ function genStyledRiff(st,fixed){
   return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi],style:st,inst};
 }
 function genSlapRiff(){
-  return genStyledRiff(STY()[SR.style]?SR.style:'mix');
+  if(isSlapKey(SR.style)&&crMode==='bass'){const k=SR.style.slice(5);return genStyledRiff(SR_STYLES[k]?k:'mix',null,'slap')}
+  return genStyledRiff(STY()[SR.style]&&!isSlapKey(SR.style)?SR.style:'mix',null,crMode);
   const root=SR.key==='random'?rnd(12):+SR.key,mode=SR.mode==='random'?slPick([0,1,2,3,4,5,6],SR_MODE_W):+SR.mode;
   const sc=scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
   // root on the E string if it sits in frets 0-7, else on the A string; a 4-fret box around it
@@ -2347,25 +2354,31 @@ function renderSR(){
 function renderSRControls(){
   $('srKeySel').innerHTML=$('keySel').innerHTML;$('srKeySel').value=SR.key;
   $('srModeSel').innerHTML=opt('random','Any (funky modes more often)')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode;
-  const ST=STY();$('srStyle').innerHTML=Object.keys(ST).map(k=>opt(k,ST[k].name)).join('');$('srStyle').value=ST[SR.style]?SR.style:'mix';
-  const G=geomOf(crMode);$('srSoundF').hidden=crMode==='slap';$('srToneF').hidden=crMode!=='slap';$('srNamesF').hidden=crMode!=='slap';
-  if(crMode!=='slap'){const L=SOUNDS[G];$('srSound').innerHTML=`<optgroup label="Real recordings">${L.filter(s=>s.real).map(s=>opt(s.id,s.name)).join('')}</optgroup><optgroup label="Synth">${L.filter(s=>!s.real).map(s=>opt(s.id,s.name)).join('')}</optgroup>`;$('srSound').value=SR.sound}
+  const ST=STY();
+  if(crMode==='bass'){const fk=Object.keys(BASS_STYLES),sk=Object.keys(SR_STYLES);
+    $('srStyle').innerHTML=`<optgroup label="Fingerstyle &amp; pick">${fk.map(k=>opt(k,k==='mix'?'Mixed fingerstyle (no particular player)':BASS_STYLES[k].name)).join('')}</optgroup><optgroup label="Slap">${sk.map(k=>opt('slap_'+k,'Slap · '+SR_STYLES[k].name)).join('')}</optgroup>`}
+  else $('srStyle').innerHTML=Object.keys(ST).map(k=>opt(k,ST[k].name)).join('');
+  $('srStyle').value=ST[SR.style]?SR.style:'mix';const ci=curInst();
+  const G=geomOf(crMode);$('srSoundF').hidden=ci==='slap';$('srToneF').hidden=ci!=='slap';$('srNamesF').hidden=ci!=='slap';
+  if(ci!=='slap'){const L=SOUNDS[G];$('srSound').innerHTML=`<optgroup label="Real recordings">${L.filter(s=>s.real).map(s=>opt(s.id,s.name)).join('')}</optgroup><optgroup label="Synth">${L.filter(s=>!s.real).map(s=>opt(s.id,s.name)).join('')}</optgroup>`;$('srSound').value=SR.sound}
   document.querySelectorAll('#crTabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===crMode)));
-  $('legSlap').hidden=crMode!=='slap';$('legInst').hidden=crMode==='slap';
+  $('legSlap').hidden=ci!=='slap';$('legInst').hidden=ci==='slap';
+  // the rhythm yardstick is a slap tool: shown (open) only for slap players
+  $('yardBox').hidden=ci!=='slap';if(ci==='slap')$('yardBox').open=true;
   $('srBars').value=SR.bars;$('srSpace').value=SR.space;$('srGhosts').value=SR.ghosts;$('srBack').value=SR.back;
   $('srBeat').innerHTML=beatOpts();$('srBeat').value=slBeatKey(SR);$('srBeat').disabled=SR.back!=='drums';
   $('srTone').value=SL.tone||'real';$('srNames').checked=SR.showNames;
   $('srTempo').value=SR.tempo;$('srTempoVal').textContent=SR.tempo;
 }
 function srEnter(){
-  $('srTabBox').open=SR.tabOpen??crMode!=='slap';$('yardBox').open=SR.yardOpen??crMode==='slap';
-  if(crMode==='slap'){fetchSamples('bass','slap');fetchDead()}else fetchSamples(geomOf(crMode),SR.sound);
+  $('srTabBox').open=SR.tabOpen??true;
+  if(curInst()==='slap'){fetchSamples('bass','slap');fetchDead()}else fetchSamples(geomOf(crMode),SR.sound);
   fetchKit('pearl');renderSRControls();renderSR();renderSRSaved()}
 // switch Slap / Bass / Guitar: each keeps its own settings, riff and saved list
 function setCrMode(m){
   if(m===crMode)return;if(slBus&&slKind==='riff')slapStop();
-  crMode=m;S.crMode=m;SR=m==='slap'?S.sriff:m==='bass'?S.cbass:S.cguit;saveS();
-  if(SR.riff&&(SR.riff.inst||'slap')!==m)SR.riff=null;
+  crMode=m;S.crMode=m;SR=m==='bass'?S.cbass:S.cguit;saveS();
+  if(SR.riff&&((SR.riff.inst||'slap')==='guitar')!==(m==='guitar'))SR.riff=null;
   $('srTab').dataset.key='';srEnter();
   if(location.hash!=='#creator/'+m)history.replaceState(null,'','#creator/'+m);
 }
@@ -2384,7 +2397,7 @@ function srRegenBar(b){
   const r=SR.riff;if(!r)return;const nb=r.steps.length/16,keepBars=SR.bars,sig=a=>a.map(x=>x.s+(x.m??'')+(x.muted?'x':'')).join();
   const cur=sig(r.steps.slice(b*16,b*16+16));let bar=null;
   SR.bars=nb;
-  try{for(let k=0;k<8&&!bar;k++){const f=genStyledRiff(r.style||'mix',{root:r.root,mode:r.mode,lo:r.box[0]}),cand=f.steps.slice(b*16,b*16+16);if(sig(cand)!==cur)bar=cand}}
+  try{for(let k=0;k<8&&!bar;k++){const f=genStyledRiff(r.style||'mix',{root:r.root,mode:r.mode,lo:r.box[0]},r.inst||'slap'),cand=f.steps.slice(b*16,b*16+16);if(sig(cand)!==cur)bar=cand}}
   finally{SR.bars=keepBars}
   if(!bar){toast('Couldn’t find a different version, try again');return}
   r.steps.splice(b*16,16,...bar.map(x=>Object.assign({},x,{bar:b})));
@@ -2395,7 +2408,7 @@ function srRegenBar(b){
 }
 $('srNew').onclick=srNew;
 $('srStick').onclick=e=>{const rg=e.target.closest('[data-regen]');if(rg){srRegenBar(+rg.dataset.regen);return}const g=e.target.closest('[data-bar]');if(g)srToggleBar(+g.dataset.bar)};
-chg('srStyle',v=>{SR.style=v;const X=STY()[v];if(X.sound&&crMode!=='slap'){SR.sound=X.sound;fetchSamples(geomOf(crMode),X.sound)}if(X.tempo){SR.tempo=X.tempo;SR.beat=X.beat;SR.back=SR.back==='none'?'drums':SR.back}saveS();renderSRControls();srNew()});
+chg('srStyle',v=>{SR.style=v;const X=STY()[v];if(isSlapKey(v)){fetchSamples('bass','slap');fetchDead()}else if(X.sound){SR.sound=X.sound;fetchSamples(geomOf(crMode),X.sound)}if(X.tempo){SR.tempo=X.tempo;SR.beat=X.beat;SR.back=SR.back==='none'?'drums':SR.back}saveS();renderSRControls();srNew()});
 chg('srKeySel',v=>{SR.key=v;srNew()});chg('srModeSel',v=>{SR.mode=v;srNew()});
 chg('srBars',v=>{SR.bars=+v;srNew()});chg('srSpace',v=>{SR.space=+v;srNew()});chg('srGhosts',v=>{SR.ghosts=+v;srNew()});
 chg('srBack',v=>{SR.back=v;saveS();renderSRControls();if(slKind==='riff')slRestart()});
@@ -2408,15 +2421,15 @@ $('srTUp').onclick=()=>srT(SR.tempo+2);$('srTDown').onclick=()=>srT(SR.tempo-2);
 // ---- saved slap riffs (riff + tempo + drums + feel settings) ----
 let srSaved=store.get('riffecho.slapsaved',[]),srConfirm=-1,srRen=-1;
 const srStore=()=>store.set('riffecho.slapsaved',srSaved);
-function srTitle(r){const nm=namesFor(r.root,r.mode),i=r.inst||'slap';return `${nm[r.root]} ${MODES[r.mode].name}${i==='slap'?'':' '+i}`}
+function srTitle(r){const nm=namesFor(r.root,r.mode),i=r.inst||'slap';return `${nm[r.root]} ${MODES[r.mode].name} ${i}`}
 function renderSRSaved(){
-  const L=$('srSavedList'),word={slap:'slap riffs',bass:'bass lines',guitar:'guitar riffs'}[crMode],mine=srSaved.map((s,i)=>[s,i]).filter(([s])=>(s.riff.inst||'slap')===crMode);
+  const L=$('srSavedList'),word={bass:'bass lines',guitar:'guitar riffs'}[crMode],mine=srSaved.map((s,i)=>[s,i]).filter(([s])=>((s.riff.inst||'slap')==='guitar')===(crMode==='guitar'));
   $('srSavedH').textContent=mine.length?`Saved ${word} (${mine.length})`:`Saved ${word}`;
   $('srMy').textContent=mine.length?`My ${word} (${mine.length})`:`My ${word}`;
   const cur=SR.riff&&srSaved.find(s=>s.riff.id===SR.riff.id);$('srSave').querySelector('span').textContent=cur?'Saved ✓':'Save';$('srSave').classList.toggle('saved',!!cur);
   if(!mine.length){L.innerHTML=`<li style="border:0;padding:0;display:block"><p class="empty">${word[0].toUpperCase()+word.slice(1)} you save land here, with their tempo, sound and drums.</p></li>`;return}
   const BN=k=>{const [st,i]=String(k).split(':');const B=(BEATS[st]||[])[+i];return B?st[0].toUpperCase()+st.slice(1)+' '+B.name:''};
-  L.innerHTML=mine.map(([s,i])=>{const SS=styOf(s.riff.inst||'slap');const meta=[srTitle(s.riff),s.style&&s.style!=='mix'&&SS[s.style]?SS[s.style].name.split(':')[0]+' style':'',`${s.tempo} bpm`,s.back==='drums'?'Drums: '+BN(s.beat):s.back==='click'?'Click':'No drums',s.riff.steps.length>16?s.riff.steps.length/16+' bars':'1 bar'].filter(Boolean).join(' · ');
+  L.innerHTML=mine.map(([s,i])=>{const SS=styOf(s.riff.inst||'slap'),sk=String(s.style||'mix').replace(/^slap_/,''),isS=(s.riff.inst||'slap')==='slap';const meta=[srTitle(s.riff),sk!=='mix'&&SS[sk]?SS[sk].name.split(':')[0]+(isS?' slap':' style'):isS?'Slap':'',`${s.tempo} bpm`,s.back==='drums'?'Drums: '+BN(s.beat):s.back==='click'?'Click':'No drums',s.riff.steps.length>16?s.riff.steps.length/16+' bars':'1 bar'].filter(Boolean).join(' · ');
     const name=srRen===i?`<input id="srRenIn" value="${esc(s.title)}" maxlength="40" aria-label="Riff name">`:`<span class="nm"><b>${esc(s.title)}</b><button class="ren" data-ren="${i}">Rename</button></span>`;
     return `<li><div>${name}<span class="muted">${esc(meta)}</span></div><button class="btn" data-load="${i}">Play</button><button class="btn x${srConfirm===i?' sure':''}" data-del="${i}" aria-label="Delete">${srConfirm===i?'Delete?':'✕'}</button></li>`}).join('');
   const inp=$('srRenIn');if(inp){inp.focus();inp.select();const done=()=>{if(srRen<0)return;const v=inp.value.trim();if(v)srSaved[srRen].title=v;srRen=-1;srStore();renderSRSaved()};inp.onblur=done;inp.onkeydown=e=>{if(e.key==='Enter')inp.blur()}}
@@ -2436,7 +2449,7 @@ $('srSavedList').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.ren!=null){srRen=+b.dataset.ren;srConfirm=-1;renderSRSaved();return}
   if(b.dataset.load!=null){const s=srSaved[+b.dataset.load];
-    Object.assign(SR,{barOn:null,pos:0,sound:s.sound||SR.sound,style:s.style||'mix',tempo:s.tempo,back:s.back,beat:s.beat,space:s.space,ghosts:s.ghosts,showNames:s.showNames!==false,riff:JSON.parse(JSON.stringify(s.riff))});SL.tone=s.tone||SL.tone;saveS();
+    Object.assign(SR,{barOn:null,pos:0,sound:s.sound||SR.sound,style:(s.riff.inst||'slap')==='slap'&&!isSlapKey(s.style)?'slap_'+(s.style||'mix'):s.style||'mix',tempo:s.tempo,back:s.back,beat:s.beat,space:s.space,ghosts:s.ghosts,showNames:s.showNames!==false,riff:JSON.parse(JSON.stringify(s.riff))});SL.tone=s.tone||SL.tone;saveS();
     renderSRControls();renderSR();renderSRSaved();window.scrollTo({top:0,behavior:'smooth'});slapPlay('riff');return}
   if(b.dataset.del!=null){const d=+b.dataset.del;
     if(srConfirm!==d){srConfirm=d;renderSRSaved();setTimeout(()=>{if(srConfirm===d){srConfirm=-1;renderSRSaved()}},3000);return}
@@ -2525,7 +2538,7 @@ function showRoute(){
   if(route==='ear'&&next!=='ear'){if(playSched||loopMode>0)stopPlayback(false);if(listening)stopListening()}
   if((route==='slap'||route==='creator')&&next!==route&&slBus)slapStop();
   route=next;$('viewSlap').hidden=route!=='slap';$('viewSRiff').hidden=route!=='creator';
-  if(route==='creator'){if(sub&&['slap','bass','guitar'].includes(sub)&&sub!==crMode)setCrMode(sub);else srEnter()}
+  if(route==='creator'){if(sub==='slap'){if(crMode!=='bass')setCrMode('bass');if(!isSlapKey(SR.style)){SR.style='slap_mix';SR.riff=null}srEnter()}else if(sub&&['bass','guitar'].includes(sub)&&sub!==crMode)setCrMode(sub);else srEnter()}
   $('viewHome').hidden=route!=='home';$('viewEar').hidden=route!=='ear';$('viewCreate').hidden=route!=='create';
   if(route==='create')renderEditor();if(route==='slap')slapEnter();if(route==='home')renderHomeSaved();
   window.scrollTo({top:0});
