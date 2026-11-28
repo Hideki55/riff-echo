@@ -586,7 +586,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0026';
+const APP_VERSION='2026.11.28-0036';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2688,7 +2688,7 @@ function syncYard(inst){const sl=inst==='slap',y=$('yardBox');if(y.hidden===sl){
 function renderSRControls(){
   $('srKeySel').innerHTML=$('keySel').innerHTML;$('srKeySel').value=SR.key;
   {const S0=STY()[SR.style]||{};$('srModeSel').innerHTML=opt('random',S0.cmp||S0.compose?'Band recommended':'Player recommended')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode}
-  {const r=SR.riff,c=$('srColor');if(c&&r){const base=r.base?r.base.mode:r.mode;c.innerHTML=opt('orig',`As written (${MODES[base].name})`)+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');c.value=r.colorMode!=null?String(r.colorMode):'orig'}}
+  {const r=SR.riff,c=$('srColor');if(c&&r){const base=r.base?r.base.mode:r.mode;const bm=r.base?r.base.bandMode:r.bandMode,why=bm?'band recommended':(STY()[r.style]||{}).cmp||(STY()[r.style]||{}).compose?'from your Mode setting':'';c.innerHTML=opt('orig',`As written (${MODES[base].name}${why?' · '+why:''})`)+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');c.value=r.colorMode!=null?String(r.colorMode):'orig'}}
   const ST=STY();
   if(crMode==='bass'){const fk=Object.keys(BASS_STYLES),sk=Object.keys(SR_STYLES);
     $('srStyle').innerHTML=`<optgroup label="Fingerstyle &amp; pick">${fk.map(k=>opt(k,k==='mix'?'Mixed fingerstyle (no particular player)':BASS_STYLES[k].name)).join('')}</optgroup><optgroup label="Slap">${sk.map(k=>opt('slap_'+k,'Slap · '+SR_STYLES[k].name)).join('')}</optgroup>`}
@@ -2777,7 +2777,7 @@ function toFinger(r,key){
   return {...r,steps:st,inst:'bass',style:key,id:newId(),v:0};
 }
 const onStyle=v=>{const was=SR.riff&&(SR.riff.inst||'slap'),now=crMode==='guitar'?'guitar':isSlapKey(v)?'slap':'bass';
-  SR.style=v;const X=STY()[v];if(isSlapKey(v)){fetchSamples('bass','slap');fetchDead()}else if(X.sound){SR.sound=X.sound;fetchSamples(geomOf(crMode),X.sound)}
+  SR.style=v;const X=STY()[v];if(SR.mode!=='random'){SR.mode='random';toast('Mode set back to recommended for this style')}if(isSlapKey(v)){fetchSamples('bass','slap');fetchDead()}else if(X.sound){SR.sound=X.sound;fetchSamples(geomOf(crMode),X.sound)}
   if(was&&crMode==='bass'&&was!==now){ // convert the current line instead of replacing it; keep its tempo and drums
     try{SR.riff=now==='slap'?toSlap(SR.riff,v.slice(5)):toFinger(SR.riff,v)}catch(err){showErr&&showErr('Couldn’t convert the line ('+err.message+'), made a new one instead');SR.riff=genSlapRiff()}
     saveS();renderSRControls();renderSR();renderSRSaved();
