@@ -586,7 +586,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0111';
+const APP_VERSION='2026.11.28-0121';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2156,8 +2156,15 @@ const GTR_STYLES={
   // Tool (Adam Jones): drop D, polymeter groupings like 7-7-2 or 3s against the 4/4, palm-muted low-D chugs,
   // fretted notes pulled off to the open D, ideas from the blues scale, dissonant flat-2 and tritone accents
   tool:{name:'Tool: odd-meter drop-D riffs',sound:'heavy',tempo:96,beat:'rock:7',keys:{2:8,4:1},modes:{2:3,5:2,6:1},jit:.004,
-    cmp:{tune:'D',grpP:.8,full:.4,pullP:.45,groups:[[7,7,2],[5,5,6],[3,3,3,3,4],[3,3,2,3,3,2],[6,6,4],[5,5,3,3],[7,9]],fill:'X',fillP:.7,accChord:.3,
+    cmp:{tune:'D',full:.4,pullP:.35,ways:{group:2.5,poly:3,drone:1.5,stomp:1.2,hook:1},
+      groups:[[7,7,2],[5,5,6],[3,3,3,3,4],[3,3,2,3,3,2],[6,6,4],[5,5,3,3],[7,9]],fill:'X',fillP:.7,accChord:.3,
       acc:[[0,1,0,6],[0,3,1,0],[0,8,7,6],[0,6,5,1],[0,3,5,6],[0,10,7,6],[0,12,0,6],[0,1,3,1]],
+      // cycles that run across the bar line (5, 7, 9) and pull-off triplets (3 against 4)
+      polys:[{c:'AXXAX',seqs:[[0,1],[0,6],[0,3,1],[0,8,7]]},{c:'CXAX.',seqs:[[1,3],[6,5],[3,1,6]]},{c:'AXAXXAX',seqs:[[0,1,0,6],[0,3,5,6],[0,10,8,7]]},
+        {c:'CXXAXAX',seqs:[[1,0],[6,5],[3,1]]},{c:'CXXAXXAX.',seqs:[[1,6],[3,1],[8,7,6]]},{c:'ALX',seqs:[[1,3,1,6,5,3],[5,6,5,3,1,3],[8,7,6,5],[3,5,6,3,1]]},
+        {c:'ALP',seqs:[[3,1,5,3],[6,5,3,1],[1,3,6,3]]},{c:'AXX',seqs:[[0,1,0,6,0,3],[0,0,1,0,8,7]]}],
+      stomps:['C0 . . . . . X X C1 . . . . . . .','C0 . . . . . . . C6 . . . C5 . . .','C0 . . X X . C1 . . . . . X X X .','C0 . . . C8 . . . C7 . . . C6 . . .','C0 . . . . . . . X . X . C1 . . .','C0 . . X . . X . C3 . . . C1 . . .'],
+      drone:{rhy:['P.N.P.N.','PNP.PNP.','P..NP.N.','PPN.PPN.','P.NNP...'],figs:[[13,12],[15,13,12],[18,17,15],[20,19,13],[12,13,15,13],[18,19,18,13]],ans:{repeat:2,vary:2,move:1}},
       rhy:['C..XN.L.','X.XXN.LX','N.L.N.LX','C.XXXN.L','XXN.XXN.'],figs:[[1,0],[6,5],[8,7],[3,1],[5,3],[6,3]],ch2:[1,6,8,3],
       ans:{repeat:2,move:1.5,vary:1.5,pedal:2},moves:[1,6,-1],ends:['XXN.','X.XN','N.XX','C...','N.L.'],pedals:['XNXNXXNX','XXNXXNXN','X.XNX.XN'],
       stabs:['C6 . . C1 . . C0 .'],runs:['N0 N1 N3 N1 N0 N1 . .','N6 L N5 L N3 L N1 L'],
@@ -2407,7 +2414,7 @@ function genBand(st,ST,root,mode,nb,fixed){
     const ch=(C.ch2||[3,5]).filter(d=>d);const a=pick(ch),b=pick([1,-1,2,-2,a+(a>6?-2:2)]);const slots=pick([[0,2,4],[0,3,6],[0,4,6],[2,4,6]]);
     E[slots[0]]={k:'C',d:a};E[slots[1]]={k:'C',d:b};E[slots[2]]={k:'C',d:0};return E};
   const pickAns=not=>{let a=W(C.ans);for(let k=0;k<5&&a===not;k++)a=W(C.ans);return a};
-  const way=C.vcP&&nb>1&&R()<C.vcP?'vc':C.prog&&R()<(C.progP??1)?'prog':C.groups&&R()<(C.grpP??1)?'group':'hook';
+  const way=C.ways?W(C.ways):C.vcP&&nb>1&&R()<C.vcP?'vc':C.prog&&R()<(C.progP??1)?'prog':C.groups&&R()<(C.grpP??1)?'group':'hook';
   const sec=b=>nb===8&&(b===4||b===5);
   let barOf;
   const hookWay=()=>{
@@ -2438,7 +2445,20 @@ function genBand(st,ST,root,mode,nb,fixed){
       return o};
     return (b,fresh)=>{if(fresh){const P=pick(C.prog);return bar(P,b,b===nb-1&&nb>1,cellOf(W(Object.fromEntries(Object.entries(FE).map(([k,v])=>[k,v.w])))))}
       return bar(sec(b)?P2:P1,b,nb>1&&b===nb-1&&(per===4||b%2===1),sec(b)?cell2:cell)}};
-  if(way==='hook')barOf=hookWay();else if(way==='group')barOf=groupWay();
+  // polymeter: a short cycle (3, 5, 7 or 9 sixteenths) repeated straight through the bar lines, so every bar
+  // starts at a different point in it; A = next note of a melody sequence, C = chord, L = pull-off to open string
+  const polyWay=()=>{const P=pick(C.polys),cyc=P.c.split(''),sq=pick(P.seqs),sq2=pick(P.seqs),Ln=cyc.length;
+    const run=(g0,n,t,s)=>{let ai=Math.floor(g0/Ln)*cyc.filter(c=>c==='A').length+cyc.slice(0,g0%Ln).filter(c=>c==='A').length;const o=[];
+      for(let g=g0;g<g0+n;g++){const c=cyc[g%Ln];o.push(c==='A'?{k:'N',d:s[ai++%s.length]+t}:c==='C'?{k:'C',d:t}:c==='.'?null:{k:c})}return o};
+    const T=mkTurn(null);
+    return (b,fresh)=>{const t=sec(b)?(C.secT??5):0;if(fresh)return run(b*16,16,t,pick(P.seqs));
+      let o=run(b*16,16,t,b%4>=2&&nb>=4?sq2:sq);if(nb>1&&b===nb-1)o=o.slice(0,8).concat(T);return o}};
+  // stomp: half-time weight, big chords left to ring with a few chugs between
+  const stompWay=()=>{const A=parse(pick(C.stomps)),B=parse(pick(C.stomps)),T=mkTurn(null);
+    return (b,fresh)=>{if(fresh)return parse(pick(C.stomps));if(nb>1&&b===nb-1)return A.slice(0,8).concat(T);return b%2&&nb>1?B:A}};
+  // drone: the open low string keeps ringing under dissonant notes higher up (flat 9, tritone, flat 6)
+  const droneWay=()=>{const keep=[C.rhy,C.figs,C.ans];C.rhy=C.drone.rhy;C.figs=C.drone.figs;C.ans=C.drone.ans;try{return hookWay()}finally{[C.rhy,C.figs,C.ans]=keep}};
+  if(way==='hook')barOf=hookWay();else if(way==='group')barOf=groupWay();else if(way==='poly')barOf=polyWay();else if(way==='stomp')barOf=stompWay();else if(way==='drone')barOf=droneWay();
   else if(way==='vc'){ // verse into chorus: a quieter single-note riff, then the chords come in loud
     const hb=hookWay(),pb=progWay(),half=Math.max(1,nb/2);
     barOf=(b,fresh)=>b<half?hb(b,fresh).map(x=>x&&{...x,q:1}):pb(b,fresh)}
