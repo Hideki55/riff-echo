@@ -534,9 +534,9 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <label class="fld full"><span>Length</span><select id="srBars"><option value="1">1 bar</option><option value="2">2 bars: call &amp; response</option><option value="4">4 bars: call, response ×2</option><option value="8">8 bars: two phrases with a new call in the middle</option></select></label>
         <label class="fld"><span>Space</span><select id="srSpace"><option value="0">Busy: fill the gaps</option><option value="1">Natural for the player</option><option value="2">More space</option><option value="3">Lots of space</option></select></label>
         <label class="fld"><span>Dead notes</span><select id="srGhosts"><option value="0">Few</option><option value="1">Some</option><option value="2">Lots</option></select></label>
-        <label class="fld" id="srToneF"><span>Dead-note tone</span><select id="srTone"><option value="real">Recorded (real bass)</option><option value="thunk">Synth: thunky</option><option value="click">Synth: clicky</option></select></label>
         <label class="fld"><span>Backing</span><select id="srBack"><option value="drums">Drums</option><option value="click">Click only</option><option value="none">Nothing</option></select></label>
         <label class="fld"><span>Drum beat</span><select id="srBeat"></select></label>
+        <label class="fld" id="srToneF"><span>Dead-note tone</span><select id="srTone"><option value="real">Recorded (real bass)</option><option value="thunk">Synth: thunky</option><option value="click">Synth: clicky</option></select></label>
       </div>
       <div class="trow"><span class="tl2">Tempo</span><div class="tempo"><button class="round" id="srTDown" aria-label="Slower">–</button><div class="bpm"><span class="n" id="srTempoVal">84</span><small>bpm</small></div><button class="round" id="srTUp" aria-label="Faster">+</button></div></div>
       <input type="range" id="srTempo" min="40" max="140" step="2" aria-label="Tempo">
@@ -587,7 +587,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0154';
+const APP_VERSION='2026.11.28-0209';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
