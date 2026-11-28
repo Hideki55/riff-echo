@@ -557,7 +557,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-1540';
+const APP_VERSION='2026.11.27-2124';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1362,7 +1362,8 @@ async function audition(idx){
   muteUntil=Math.max(muteUntil,t+len+.3);cand=null;candN=0;vbuf=[];pauseMicFor(muteUntil);
   const startAnim=!playSched;playSched={list:[{t,end:t+len,i:idx}],stop:t+len,riff};if(startAnim)requestAnimationFrame(playAnim);
 }
-let playGen=0,crIdx=0,crCycle=0,crWrong=false,lastNoteAt=0,doneAt=0;
+let playGen=0,crIdx=0,crCycle=0,crWrong=false,lastNoteAt=0,lastSoundAt=0,doneAt=0;
+const CR_QUIET=2200,CR_MAXWAIT=20000; // replay only after you've paused this long (ms); never wait longer than the max
 async function playRiff(contAt){
   if(!riff)return;ensureCtx();const gen=++playGen;
   if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
@@ -1417,9 +1418,12 @@ async function playRiff(contAt){
     const myCycle=crCycle;
     setTimeout(()=>{if(loopMode===2&&riff===myRiff&&!done&&myCycle===crCycle)setStatus(!listening?'Your turn! (tap Listen so the app can hear you)':micPaused?'Your turn! Mic is switching on…':'Your turn!')},Math.max(0,(muteUntil-ctx.currentTime)*1000));
     // At the end of the pause: if you're mid-riff and on track, wait for you (notes matter more than time)
+    // Your turn starts when the call ends. While you're still playing or singing (sound in the last 2.2 s), the
+    // app waits, even after a wrong note, so you can correct yourself; it replays once you pause.
+    const turnStart=performance.now()+Math.max(0,(callEnd-ctx.currentTime)*1000);
     const gapEnd=()=>{loopTimer=null;if(loopMode!==2||riff!==myRiff||myCycle!==crCycle)return;
-      const idle=performance.now()-lastNoteAt>2500;
-      if(progress>0&&!done&&!crWrong&&!idle){setStatus(`Keep going… ${progress} of ${target.length}`);loopTimer=setTimeout(gapEnd,100);return}
+      const now=performance.now(),last=Math.max(lastNoteAt,lastSoundAt),trying=last>turnStart&&now-last<CR_QUIET&&now-turnStart<CR_MAXWAIT;
+      if(!done&&(trying||progress>0&&!crWrong&&now-lastNoteAt<CR_QUIET+300)){setStatus(crWrong?'Not quite. Keep trying, it replays when you pause':`Keep going… ${progress} of ${target.length}`);loopTimer=setTimeout(gapEnd,100);return}
       if(done&&performance.now()-doneAt<1400){loopTimer=setTimeout(gapEnd,100);return}   // let the celebration land
       const at=Math.max(next,ctx.currentTime+.25);
       if(S.crAuto&&done&&!riff.single){const keep=loopMode;loadRiff(genRiff(S),false);loopMode=keep;renderToggles()}
@@ -1474,6 +1478,7 @@ function loop(){
   const lvl=v=>Math.max(0,Math.min(100,(Math.log10(v)+3.6)/3.3*100));
   $('level').style.width=lvl(rms)+'%';$('gate').style.left=lvl(gate)+'%';
   const muted=ctx.currentTime<muteUntil;
+  if(!muted&&rms>=gate)lastSoundAt=performance.now();
   if(muted||rms<gate){cand=null;candN=0;vbuf=[];vt.silence();if(++silentN>12){$('noteBig').textContent='–';setNeedle(0)}requestAnimationFrame(loop);return}
   silentN=0;
   const isV=S.instrument==='voice';
