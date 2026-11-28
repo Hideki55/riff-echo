@@ -586,7 +586,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0038';
+const APP_VERSION='2026.11.28-0057';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1220,7 +1220,7 @@ function singer(t,midi,len,kind){
 }
 // Guitar amp: the clean guitar recording through a real-time distortion and speaker-cabinet filter. Both notes of a
 // power chord go through the same distortion, like a real amp, which gives the thick, growling sound.
-const AMPS={heavy:{pre:3,k:14,mid:-4,out:.22},metal:{pre:3,k:12,mid:-6,out:.22},crunch:{pre:2,k:5,mid:0,out:.25}},ampCache=new WeakMap();
+const AMPS={heavy:{pre:3,k:14,mid:-4,out:.14},metal:{pre:3,k:12,mid:-6,out:.14},crunch:{pre:2,k:5,mid:0,out:.13}},ampCache=new WeakMap();
 function ampCurve(k){const n=2048,c=new Float32Array(n),d=Math.tanh(k);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.tanh(k*x)/d}return c}
 function getAmp(dest,type){
   let m=ampCache.get(dest);if(!m){m={};ampCache.set(dest,m)}if(m[type])return m[type];const A=AMPS[type];
@@ -1814,6 +1814,20 @@ const isSlapKey=k=>typeof k==='string'&&k.startsWith('slap_');
 const curInst=()=>crMode==='bass'&&isSlapKey(SR.style)?'slap':crMode;
 // all styles for the tab on screen, slap players included under Bass with a 'slap_' prefix
 const STY=()=>{if(crMode==='guitar')return GTR_STYLES;const o={...BASS_STYLES};for(const k in SR_STYLES)o['slap_'+k]=SR_STYLES[k];return o};
+// Drum auto-balance: the instrument and the drums are measured while they play, and the drums are nudged up or
+// down (up to +10 dB / -3 dB) so they sit level with the instrument whatever the sound and beat. The drum volume
+// slider still works on top of that (55% = level).
+let slDrum=null,slBal=null;const balMem={};
+function startBalance(key){
+  const aT=ctx.createAnalyser(),aD=ctx.createAnalyser();aT.fftSize=aD.fftSize=2048;slBus.connect(aT);
+  slDrum=ctx.createGain();slDrum.gain.value=balMem[key]||1.4;slDrum.connect(slBus);slDrum.connect(aD);
+  const buf=new Float32Array(2048),pw=a=>{a.getFloatTimeDomainData(buf);let s=0;for(const v of buf)s+=v*v;return s/buf.length};
+  let PT=0,PD=0,n=0;const d=slDrum;
+  slBal=setInterval(()=>{if(!ctx||d!==slDrum)return;const g=d.gain.value;PT=PT*.96+pw(aT)*.04;PD=PD*.96+pw(aD)*.04;if(++n<16)return;
+    const PI=Math.max(PT-PD,0);if(PI<1e-6||PD<1e-7)return;
+    const want=Math.pow(10,-1/10)*Math.pow(S.drumVol/.55,2),ratio=PD/PI,next=Math.min(3.2,Math.max(.7,g*Math.pow(want/ratio,.12)));balMem[key]=next;
+    d.gain.setTargetAtTime(next,ctx.currentTime,1.2)},150)}
+function stopBalance(){clearInterval(slBal);slBal=null;slDrum=null}
 let slGen=0,slBus=null,slTimer=null,slRaf=0,slSteps=[],slBars=0,slPlayingStep=-1,slNoise=null,slKind=null;
 const slPick=(arr,w)=>{let s=0;for(const x of w)s+=x;let r=Math.random()*s;for(let i=0;i<arr.length;i++){r-=w[i];if(r<=0)return arr[i]}return arr[arr.length-1]};
 // random blocks; the first block of each bar always starts with a thumb or hammer so beat 1 is played
@@ -2007,7 +2021,7 @@ async function slapPlay(kind,from){
   kind=kind||'drill';const P=kind==='drill'?SL:SR;from=from|0;
   if(slBus)slapStop();
   ensureCtx();if(ctx.state!=='running'){try{await ctx.resume()}catch(e){}}
-  const g=++slGen;slKind=kind;slBus=newBus();renderSlPlay();
+  const g=++slGen;slKind=kind;slBus=newBus();startBalance(kind==='riff'?(SR.riff&&SR.riff.style)+'|'+SR.sound+'|'+P.beat:'drill|'+P.beat);renderSlPlay();
   const inst=kind==='riff'?(SR.riff&&SR.riff.inst||curInst()):'slap';
   await Promise.all([...(inst==='slap'?[soundReady('bass','slap'),deadReady()]:[soundReady(geomOf(inst),SR.sound),...(inst==='guitar'?[soundReady('guitar','muted')]:[])]),P.back==='drums'?kitReady(slBeatSel(P).st):Promise.resolve()]);
   if(g!==slGen)return;
@@ -2029,7 +2043,7 @@ async function slapPlay(kind,from){
       if(feel&&x.muted&&x.s!=='S'&&i%16!==0&&Math.random()<(feel.vary||0))continue;
       slapHit(x,t0+i*e16+(feel&&feel.swing&&i%2?feel.swing*e16:0),e16,i%4===0,rings[i],feel,inst)}
     if(P.back==='drums'){const keep=DRUMBUS,sb=slBeatSel(P);playDrums(t0,N,sb.st,e16,slBars===0&&from0===0,sb.B,from0);
-      const db=drumBuses[drumBuses.length-1];try{db.disconnect();db.connect(slBus)}catch(e){}DRUMBUS=keep}
+      const db=drumBuses[drumBuses.length-1];try{db.disconnect();db.connect(slDrum||slBus)}catch(e){}DRUMBUS=keep}
     else if(P.back==='click'){for(let b=Math.ceil(from0/4);b<N/4;b++)slNoiseHit(t0+b*4*e16,.03,b%4?2200:3200,4,b%4?.35:.6)}
     slBars+=N/16;t0+=N*e16;
     slTimer=setTimeout(cycle,Math.max(10,(t0-ctx.currentTime-.35)*1000));
@@ -2044,7 +2058,7 @@ async function slapPlay(kind,from){
   slRaf=requestAnimationFrame(tick);
 }
 function slapStop(){
-  slGen++;clearTimeout(slTimer);cancelAnimationFrame(slRaf);slSteps=[];slPlayingStep=-1;
+  slGen++;clearTimeout(slTimer);cancelAnimationFrame(slRaf);slSteps=[];slPlayingStep=-1;stopBalance();
   if(slBus&&ctx){const g=slBus,now=ctx.currentTime;try{g.gain.setValueAtTime(g.gain.value,now);g.gain.linearRampToValueAtTime(0,now+.04)}catch(e){}setTimeout(()=>{try{g.disconnect()}catch(e){}},150)}
   const k=slKind;slBus=null;slKind=null;if(k==='riff')renderSR();else renderSlap();renderSlPlay();
 }
@@ -2375,22 +2389,33 @@ function genBand(st,ST,root,mode,nb,fixed){
     run:()=>parse(pick(C.runs)),
     pedal:()=>parse(pick(C.pedals||['XNXNXNXN','X.XNX.XN','XNXNXN..','XXNXXNXN']),{fig:pick(C.figs)}),
     stop:h=>pick([[h[0],null,null,null,null,null,null,null],h.slice(0,4).concat([null,null,null,null]),[null,null,null,null].concat(h.slice(0,4))])};
+  // turnarounds are built fresh each time from the band's own material, so riffs don't all end the same way:
+  // a chromatic approach (2-4 half steps, from above or below, into the root, 4th or 5th), the hook's opening
+  // moved to another chord then landing home, a short chord walk home, or one of the band's stock endings
+  const mkTurn=h=>{const k=R(),E=Array(8).fill(null);
+    if(k<.2)return parse(pick(C.turns));
+    if(k<.5){const tgt=pick([0,0,0,7,5]),len=2+Math.floor(R()*3),dir=R()<.6?1:-1,sp=len<=2||R()<.5?2:1;
+      let p=Math.max(0,8-len*sp-1-(R()<.4?1:0));if((p+len*sp)%2)p=Math.max(0,p-1);
+      for(let j=0;j<len&&p+j*sp<8;j++)E[p+j*sp]={k:'N',d:tgt+dir*(len-j)};const lp=Math.min(7,p+len*sp);E[lp]={k:R()<.6?'C':'N',d:tgt};return E}
+    if(k<.75&&h){const mv=pick(C.moves||[5,3,-2]),o=shift(h.slice(0,4),mv);o.forEach((x,i)=>E[i]=x);E[4]={k:'C',d:0};if(R()<.5)E[6]={k:'X'};return E}
+    const ch=(C.ch2||[3,5]).filter(d=>d);const a=pick(ch),b=pick([1,-1,2,-2,a+(a>6?-2:2)]);const slots=pick([[0,2,4],[0,3,6],[0,4,6],[2,4,6]]);
+    E[slots[0]]={k:'C',d:a};E[slots[1]]={k:'C',d:b};E[slots[2]]={k:'C',d:0};return E};
   const pickAns=not=>{let a=W(C.ans);for(let k=0;k<5&&a===not;k++)a=W(C.ans);return a};
   const way=C.prog&&R()<(C.progP??1)?'prog':C.groups&&R()<(C.grpP??1)?'group':'hook';
   const sec=b=>nb===8&&(b===4||b===5);
   let barOf;
   if(way==='hook'){
-    const H=mkHook(0),H2=mkHook(C.secT??5),a1=pickAns(),a2=pickAns(a1),A1=ANS[a1](H),A2=ANS[a2](H),B1=ANS[a1](H2),B2=ANS[a2](H2),T=parse(pick(C.turns)),one=R()<.5;
+    const H=mkHook(0),H2=mkHook(C.secT??5),a1=pickAns(),a2=pickAns(a1),A1=ANS[a1](H),A2=ANS[a2](H),B1=ANS[a1](H2),B2=ANS[a2](H2),T=mkTurn(H),one=R()<.5;
     barOf=(b,fresh)=>{const h=sec(b)?H2:H;
-      if(fresh)return b===nb-1&&nb>1?h.concat(parse(pick(C.turns))):h.concat(ANS[pickAns()](h));
+      if(fresh)return b===nb-1&&nb>1?h.concat(mkTurn(h)):h.concat(ANS[pickAns()](h));
       if(nb===1)return H.concat(one?A1:T);if(b===nb-1)return H.concat(T);
       return h.concat(sec(b)?(b%2?B2:B1):(b%2?A2:A1))}}
   else if(way==='group'){
     const G=pick(C.groups),fill=G.map(n=>Array.from({length:n-1},(_,i)=>R()<(C.fillP??.6)?{k:C.fill||'X'}:null));
     const accChord=G.map((_,i)=>R()<(C.accChord??.3)),mkAcc=(t,first)=>{const seq=pick(C.acc);return G.map((_,i)=>({k:accChord[i]?'C':C.accV&&i%2?'V':'N',d:(i===0&&first?0:seq[i%seq.length])+t}))};
-    const AC=mkAcc(0,true),AR=mkAcc(0,true),AS=mkAcc(C.secT??5,false),T=parse(pick(C.turns));
+    const AC=mkAcc(0,true),AR=mkAcc(0,true),AS=mkAcc(C.secT??5,false),T=mkTurn(null);
     const build=acc=>{const o=[];G.forEach((n,i)=>{o.push(acc[i]);o.push(...fill[i])});return o};
-    barOf=(b,fresh)=>{if(fresh)return b===nb-1&&nb>1?build(AC).slice(0,8).concat(parse(pick(C.turns))):build(mkAcc(0,true));
+    barOf=(b,fresh)=>{if(fresh)return b===nb-1&&nb>1?build(AC).slice(0,8).concat(mkTurn(null)):build(mkAcc(0,true));
       if(nb>1&&b===nb-1)return build(AC).slice(0,8).concat(T);return build(sec(b)?AS:b%2?AR:AC)}}
   else{
     let P1=pick(C.prog),P2=pick(C.prog);const per=nb===1||R()<.55?4:2,cell=per===4?pick(C.c4):pick(C.c8),fin=pick(C.fin||[0]);
