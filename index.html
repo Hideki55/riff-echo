@@ -584,7 +584,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.27-2213';
+const APP_VERSION='2026.11.27-2224';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1799,13 +1799,16 @@ function slapSteps(){
     if(!x.muted)x.m=x.code==='PO'?(x.s==='P'?45:47):x.s==='P'?40:x.s==='H'?38:x.s==='O'?40:x.s==='T'?28:null}
   return out;
 }
+// small 'make a new version of this bar' button used on the yardstick and the tab
+const regenIcon=(x,y,b)=>`<g data-regen="${b}" style="cursor:pointer" role="button" aria-label="New version of bar ${b+1}"><rect x="${x}" y="${y}" width="30" height="24" rx="8" fill="var(--soft)"/><path d="M${x+20.5} ${y+8.5}a6 6 0 1 0 1.2 5" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/><path d="M${x+21.5} ${y+4}v5h-5" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 const SLCOL={T:'var(--coral)',P:'var(--blue)',S:'#9b5de5',H:'var(--mint)',O:'var(--mint)',L:'var(--mint)'};
 // one yardstick row (16 steps) as SVG; get(i) returns the step for column i
 function yardRow(get,y0,opts){
   const W=20,X0=16,cnt=['1','e','&','a'];let h='';
   if(opts.label){const ck=opts.check!=null,c=opts.labelC||'var(--muted)';
     if(ck)h+=`<g data-bar="${opts.bar}" style="cursor:pointer" role="checkbox" aria-checked="${opts.check}"><rect x="${X0-6}" y="${y0-4}" width="200" height="22" fill="transparent"/><circle cx="${X0+5}" cy="${y0+6.5}" r="7" fill="${opts.check?c:'#fff'}" stroke="${c}" stroke-width="2"/>${opts.check?`<path d="M${X0+1.8} ${y0+6.8}l2.3 2.4 4.4-4.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:''}`;
-    h+=`<text x="${X0+(ck?17:0)}" y="${y0+10}" font-size="10" font-weight="800" fill="${c}" letter-spacing=".06em">${opts.label}</text>`;if(ck)h+='</g>';y0+=14}
+    h+=`<text x="${X0+(ck?17:0)}" y="${y0+10}" font-size="10" font-weight="800" fill="${c}" letter-spacing=".06em">${opts.label}</text>`;if(ck)h+='</g>';
+    if(opts.regen)h+=regenIcon(X0+16*20-30,y0-6,opts.bar);y0+=14}
   const pill=(x,w,dash,op)=>`<rect x="${x}" y="${y0+6}" width="${w}" height="30" rx="${dash?8:15}" fill="var(--soft)" stroke="var(--line)" stroke-width="1.5" opacity="${op}"${dash?' stroke-dasharray="3 3"':''}/>`;
   for(let i=0;i<16;i++){const a=get(i),b=get(i+1),op=opts.fade(i)?.45:1;
     if(a.k===0&&b&&b.blk===a.blk&&b.k===1&&b.bar===a.bar){if(i<15)h+=pill(X0+i*W+3,2*W-6,0,op);else if(opts.wrap)h+=pill(X0+15*W+3,W-3,1,op)+pill(X0,W-3,1,1)}}
@@ -2149,11 +2152,11 @@ function srBox(root,TU=TUNING.bass){
   const lo=rf===0?1:Math.max(1,rf-rnd(2));return {rs,rf,lo,hi:lo+3,rootM:TU[rs]+rf};
 }
 function posFor(m,strings,lo,hi,TU=TUNING.bass){let best=null;for(const s of strings){const f=m-TU[s];if(f<0||f>20)continue;const d=f===0?.5:f<lo?lo-f:f>hi?f-hi:0;if(!best||d<best.d)best={s,f,d}}return best&&best.d<=2?{s:best.s,f:best.f}:null}
-function genStyledRiff(st){
+function genStyledRiff(st,fixed){
   const inst=crMode,ST=styOf(inst)[st],mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
-  const root=SR.key==='random'?(ST.keys?slPick(Object.keys(ST.keys).map(Number),Object.values(ST.keys)):rnd(12)):+SR.key,mode=SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
+  const root=fixed?fixed.root:SR.key==='random'?(ST.keys?slPick(Object.keys(ST.keys).map(Number),Object.values(ST.keys)):rnd(12)):+SR.key,mode=fixed?fixed.mode:SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
   const sc=scaleOf(mode).map(x=>(root+x)%12),inS=m=>sc.includes(m%12),deg=m=>((m-root)%12+12)%12;
-  const {lo,hi,rootM}=srBox(root,TU);
+  let {lo,hi,rootM}=srBox(root,TU);if(fixed&&fixed.lo){lo=fixed.lo;hi=lo+3}
   const spots=[];for(let s=0;s<NS;s++)for(const f of [0,lo,lo+1,lo+2,lo+3]){const m=TU[s]+f;if(inS(m))spots.push({s,f,m})}
   // Funk lines live on root, octave, 5th and 7th, plus the 3rd and 4th (pentatonic/blues); other scale notes are rare passing tones
   const strong=new Set([0,3,4,5,7,10,11].filter(d=>sc.includes((root+d)%12)));
@@ -2332,7 +2335,7 @@ function renderSR(){
   let h=`<svg viewBox="0 0 352 ${RH*nb}" role="img">`;
   const on=srBarsOn(nb);
   const inst=r.inst||'slap';
-  for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{RH:108,wrap:false,fade:()=>!on[b],check:nb>1?on[b]:null,bar:b,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:inst==='slap'&&SR.showNames?nm:null,nmIn:inst==='slap'?null:nm,label:nb>1?`BAR ${b+1} · ${LB[b]}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
+  for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{RH:108,wrap:false,fade:()=>!on[b],check:nb>1?on[b]:null,regen:nb>1,bar:b,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:inst==='slap'&&SR.showNames?nm:null,nmIn:inst==='slap'?null:nm,label:nb>1?`BAR ${b+1} · ${LB[b]}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
   $('srStick').innerHTML=h+'</svg>';
   $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}`;
   const cur=slKind==='riff'&&slPlayingStep>=0?st[slPlayingStep]:null;
@@ -2371,9 +2374,27 @@ $('yardBox').ontoggle=()=>{SR.yardOpen=$('yardBox').open;saveS()};
 chg('srSound',v=>{SR.sound=v;fetchSamples(geomOf(crMode),v);saveS();if(slKind==='riff')slRestart()});
 const srNew=()=>{SR.riff=genSlapRiff();SR.barOn=null;SR.pos=0;saveS();renderSR();renderSRSaved();if(slBus&&slKind==='riff')slRestart()};
 $('srPlay').onclick=()=>slBus&&slKind==='riff'?slapStop():slapPlay('riff');
+
+// Turn one bar on/off (from the yardstick or the tab)
+function srToggleBar(b){const nb=SR.riff.steps.length/16,on=srBarsOn(nb);
+  if(on[b]&&on.filter(Boolean).length===1){toast('Keep at least one bar on');return}on[b]=!on[b];SR.barOn=on;saveS();renderSR();if(slKind==='riff')slapPlay('riff',SR.pos||0)}
+// New version of one bar that still fits the song: same key, mode, hand position and player, and the same role
+// in the phrase (a call stays open, a response comes home to the root, bars 5-6 of 8 keep their new centre)
+function srRegenBar(b){
+  const r=SR.riff;if(!r)return;const nb=r.steps.length/16,keepBars=SR.bars,sig=a=>a.map(x=>x.s+(x.m??'')+(x.muted?'x':'')).join();
+  const cur=sig(r.steps.slice(b*16,b*16+16));let bar=null;
+  SR.bars=nb;
+  try{for(let k=0;k<8&&!bar;k++){const f=genStyledRiff(r.style||'mix',{root:r.root,mode:r.mode,lo:r.box[0]}),cand=f.steps.slice(b*16,b*16+16);if(sig(cand)!==cur)bar=cand}}
+  finally{SR.bars=keepBars}
+  if(!bar){toast('Couldn’t find a different version, try again');return}
+  r.steps.splice(b*16,16,...bar.map(x=>Object.assign({},x,{bar:b})));
+  r.steps.forEach((x,i)=>{x.blk=i>>1;x.k=i&1});
+  if((r.inst||'slap')==='slap')slHands(r.steps,SR.tempo,(styOf('slap')[r.style]||{}).maxThumb);
+  r.v=(r.v||0)+1;saveS();renderSR();renderSRSaved();toast(`New version of bar ${b+1}`);
+  if(slKind==='riff')slapPlay('riff',SR.pos||0);
+}
 $('srNew').onclick=srNew;
-$('srStick').onclick=e=>{const g=e.target.closest('[data-bar]');if(!g)return;const nb=SR.riff.steps.length/16,on=srBarsOn(nb),b=+g.dataset.bar;
-  if(on[b]&&on.filter(Boolean).length===1){toast('Keep at least one bar on');return}on[b]=!on[b];SR.barOn=on;saveS();renderSR();if(slKind==='riff')slRestart()};
+$('srStick').onclick=e=>{const rg=e.target.closest('[data-regen]');if(rg){srRegenBar(+rg.dataset.regen);return}const g=e.target.closest('[data-bar]');if(g)srToggleBar(+g.dataset.bar)};
 chg('srStyle',v=>{SR.style=v;const X=STY()[v];if(X.sound&&crMode!=='slap'){SR.sound=X.sound;fetchSamples(geomOf(crMode),X.sound)}if(X.tempo){SR.tempo=X.tempo;SR.beat=X.beat;SR.back=SR.back==='none'?'drums':SR.back}saveS();renderSRControls();srNew()});
 chg('srKeySel',v=>{SR.key=v;srNew()});chg('srModeSel',v=>{SR.mode=v;srNew()});
 chg('srBars',v=>{SR.bars=+v;srNew()});chg('srSpace',v=>{SR.space=+v;srNew()});chg('srGhosts',v=>{SR.ghosts=+v;srNew()});
@@ -2404,7 +2425,7 @@ $('srSave').onclick=()=>{
   if(!SR.riff)return;if(!SR.riff.id)SR.riff.id='s'+Date.now().toString(36)+rnd(1e6).toString(36);
   const cfg={style:SR.style||'mix',sound:SR.sound,tempo:SR.tempo,back:SR.back,beat:slBeatKey(SR),tone:SL.tone||'real',space:SR.space,ghosts:SR.ghosts,showNames:SR.showNames};
   const i=srSaved.findIndex(s=>s.riff.id===SR.riff.id);
-  if(i>=0){Object.assign(srSaved[i],cfg);srStore();renderSRSaved();toast(`Updated tempo and drums for "${srSaved[i].title}"`);return}
+  if(i>=0){Object.assign(srSaved[i],cfg,{riff:JSON.parse(JSON.stringify(SR.riff))});srStore();renderSRSaved();toast(`Updated "${srSaved[i].title}"`);return}
   const base=srTitle(SR.riff),title=`${base} ${srSaved.filter(s=>s.title.startsWith(base)).length+1}`;
   srSaved.unshift(Object.assign({id:SR.riff.id,title,riff:JSON.parse(JSON.stringify(SR.riff)),savedAt:Date.now()},cfg));
   const ok=srStore();renderSRSaved();
@@ -2430,13 +2451,14 @@ function tabGeo(){const G=geomOf(SR.riff&&SR.riff.inst||crMode),n=TUNING[G].leng
 function renderTab(){
   const box=$('srTab');if(!box||!SR.riff)return;
   const st=SR.riff.steps,nb=st.length/16,on=srBarsOn(nb),{n,X0,W,RH,SY,names}=tabGeo(),inst=SR.riff.inst||'slap';
-  const key=SR.riff.id+'|'+on.join();if(box.dataset.key===key&&$('tabSvg'))return;box.dataset.key=key;
+  const key=SR.riff.id+'|'+(SR.riff.v||0)+'|'+on.join();if(box.dataset.key===key&&$('tabSvg'))return;box.dataset.key=key;
   const yOf=s=>SY[n-1-s];let lastTs=0,lastPs=n-1,h=`<svg viewBox="0 0 352 ${RH*nb}" id="tabSvg">`;
   const TECH=inst==='slap'?{T:'T',P:'P',S:'S',H:'T',O:'H',L:'PO'}:{O:'H',L:'PO'};
   for(let b=0;b<nb;b++){const y0=b*RH,op=on[b]?1:.4;h+=`<g opacity="${op}">`;
     names.forEach((nm,k)=>{h+=`<text x="6" y="${y0+SY[k]+4}" font-size="10" font-weight="800" fill="var(--muted)">${nm}</text><line x1="${X0}" y1="${y0+SY[k]}" x2="${X0+16*W}" y2="${y0+SY[k]}" stroke="#c9c8d8" stroke-width="1.2"/>`});
     for(const xb of [X0,X0+16*W])h+=`<line x1="${xb}" y1="${y0+SY[0]}" x2="${xb}" y2="${y0+SY[n-1]}" stroke="var(--ink)" stroke-width="2"/>`;
-    h+=`<text x="6" y="${y0+15}" font-size="10" font-weight="800" fill="var(--ink)">${b+1}</text>`;
+    if(nb>1){const c=b%2?'var(--blue)':'var(--coral)';h+=`<g data-bar="${b}" style="cursor:pointer"><rect x="0" y="${y0}" width="24" height="22" fill="transparent"/><circle cx="11" cy="${y0+10}" r="7" fill="${on[b]?c:'#fff'}" stroke="${c}" stroke-width="2"/>${on[b]?`<path d="M7.8 ${y0+10.3}l2.3 2.4 4.4-4.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:''}</g>`+regenIcon(X0+16*W-30,y0+1,b)}
+    else h+=`<text x="6" y="${y0+15}" font-size="10" font-weight="800" fill="var(--ink)">${b+1}</text>`;
     for(let i=0;i<16;i++){const x=st[b*16+i],cx=X0+i*W+W/2;
       if(i%4===0)h+=`<text x="${cx}" y="${y0+SY[n-1]+21}" text-anchor="middle" font-size="11" font-weight="800" fill="var(--muted)">${i/4+1}</text>`;
       if(x.s==='-')continue;
@@ -2458,7 +2480,7 @@ function renderTab(){
   const svg=$('tabSvg');let drag=false;
   const posAt=e=>{const r=svg.getBoundingClientRect(),sx=352/r.width,x=(e.clientX-r.left)*sx,y=(e.clientY-r.top)*sx;
     const b=Math.max(0,Math.min(nb-1,Math.floor(y/RH))),c=Math.max(0,Math.min(15,Math.floor((x-X0)/W)));return b*16+c};
-  svg.onpointerdown=e=>{drag=true;svg.setPointerCapture(e.pointerId);SR.pos=posAt(e);moveTabLine(SR.pos)};
+  svg.onpointerdown=e=>{const rg=e.target.closest('[data-regen]');if(rg){srRegenBar(+rg.dataset.regen);return}const bt=e.target.closest('[data-bar]');if(bt){srToggleBar(+bt.dataset.bar);return}drag=true;svg.setPointerCapture(e.pointerId);SR.pos=posAt(e);moveTabLine(SR.pos)};
   svg.onpointermove=e=>{if(!drag)return;SR.pos=posAt(e);moveTabLine(SR.pos)};
   svg.onpointerup=svg.onpointercancel=()=>{if(!drag)return;drag=false;if(slKind==='riff')slapPlay('riff',SR.pos)};
 }
