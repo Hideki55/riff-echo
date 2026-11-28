@@ -586,7 +586,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0057';
+const APP_VERSION='2026.11.28-0111';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2142,10 +2142,16 @@ const GTR_STYLES={
   // muted strums between them, open strings strummed on the last 16th before a chord change, and on the
   // punkier songs palm-muted single-note riffs with chromatic passing notes; standard or drop D
   nirvana:{name:'Nirvana: power-chord grunge',sound:'heavy',tempo:116,beat:'rock:1',keys:{5:2,4:2,9:1.5,2:1,1:1,0:1,7:1},modes:{5:2,1:2,2:1},jit:.007,
-    cmp:{tune:'mix',dropP:.3,progP:.75,full:1,prog:[[0,5,3,8],[0,3,10,5],[0,8,3,10],[0,1,5,3],[0,6,5,3],[0,10,8,5],[0,3,5,0],[0,1,5,7],[0,10,3,5],[0,5,8,6],[0,3,8,6]],
-      c4:['C.XZ','C..Z','C.XX','CXXZ','C.X.','C.XC'],c8:['C..XC.XZ','C...XX.Z','C.XXC.XX','C..X..XZ','C.X.X.XZ'],fin:[0,10,5],
-      rhy:['XXN.XXN.','X.XXNNN.','XXXXN.N.','N.N.N.N.','XXN.N.XX'],figs:[[0,1,2,3],[3,2,1,0],[0,3,5,3],[0,10,0,3],[0,3,5,6],[7,6,5,3]],ch2:[3,5,10],
-      ans:{repeat:2,move:2,vary:1},ends:['C...','N.N.','NNC.'],stabs:['C3 . . . C5 . . .'],runs:['N7 N6 N5 N3 . . . .'],
+    cmp:{tune:'mix',dropP:.3,progP:.7,vcP:.3,pushP:.35,full:1,
+      prog:[[0,5,3,8],[0,3,10,5],[0,8,3,10],[0,1,5,3],[0,6,5,3],[0,10,8,5],[0,3,5,0],[0,1,5,7],[0,10,3,5],[0,5,8,6],[0,3,8,6],[0,5,10,3],[0,8,5,3],[0,4,5,3],[0,3,0,10]],
+      feels:{drive:{w:3,push:false,c4:['C.C.','C.C.','C.CZ'],c8:['C.C.C.C.','C.C.C.CZ','C.C.C..Z']},
+        ring:{w:2,c4:['C...','C..Z'],c8:['C.......','C......Z','C.....C.']},
+        palm:{w:2,c4:['X.X.','XXX.','X.XX'],c8:['X.X.C...','XXX.C...','X.X.X.C.','C...X.X.']},
+        scratch:{w:1.3,push:false,c4:['C.XX','CXXZ','C.XZ','C..X'],c8:['C..XC.XZ','C.XXC.XX','C...XX.Z']},
+        gallop:{w:.7,push:false,c4:['C.CC'],c8:['C.CCC.CC','C.CCC...']}},fin:[0,10,5,3],
+      rhy:['N.N.NNN.','N.NN.N..','NN.N.NN.','N..N.N.N','XXN.XXN.','N.N.N.N.','N...N.NN','NN..N.N.'],
+      figs:[[0,1,2,3],[3,2,1,0],[0,3,5,3],[0,10,0,3],[0,3,5,6],[7,6,5,3],[0,0,3,2],[5,3,2,0],[0,7,5,3],[0,3,2,0,10]],ch2:[3,5,10],
+      ans:{repeat:2,move:2,vary:1.5},ends:['N...','N.N.','NNN.','N.NN'],stabs:['C3 . . . C5 . . .'],runs:['N7 N6 N5 N3 . . . .'],
       turns:['C3 . . . C5 . . .','C10 . . . C0 . . .'],chugV:.6}},
   // Tool (Adam Jones): drop D, polymeter groupings like 7-7-2 or 3s against the 4/4, palm-muted low-D chugs,
   // fretted notes pulled off to the open D, ideas from the blues scale, dissonant flat-2 and tritone accents
@@ -2401,28 +2407,42 @@ function genBand(st,ST,root,mode,nb,fixed){
     const ch=(C.ch2||[3,5]).filter(d=>d);const a=pick(ch),b=pick([1,-1,2,-2,a+(a>6?-2:2)]);const slots=pick([[0,2,4],[0,3,6],[0,4,6],[2,4,6]]);
     E[slots[0]]={k:'C',d:a};E[slots[1]]={k:'C',d:b};E[slots[2]]={k:'C',d:0};return E};
   const pickAns=not=>{let a=W(C.ans);for(let k=0;k<5&&a===not;k++)a=W(C.ans);return a};
-  const way=C.prog&&R()<(C.progP??1)?'prog':C.groups&&R()<(C.grpP??1)?'group':'hook';
+  const way=C.vcP&&nb>1&&R()<C.vcP?'vc':C.prog&&R()<(C.progP??1)?'prog':C.groups&&R()<(C.grpP??1)?'group':'hook';
   const sec=b=>nb===8&&(b===4||b===5);
   let barOf;
-  if(way==='hook'){
+  const hookWay=()=>{
     const H=mkHook(0),H2=mkHook(C.secT??5),a1=pickAns(),a2=pickAns(a1),A1=ANS[a1](H),A2=ANS[a2](H),B1=ANS[a1](H2),B2=ANS[a2](H2),T=mkTurn(H),one=R()<.5;
-    barOf=(b,fresh)=>{const h=sec(b)?H2:H;
+    return (b,fresh)=>{const h=sec(b)?H2:H;
       if(fresh)return b===nb-1&&nb>1?h.concat(mkTurn(h)):h.concat(ANS[pickAns()](h));
       if(nb===1)return H.concat(one?A1:T);if(b===nb-1)return H.concat(T);
-      return h.concat(sec(b)?(b%2?B2:B1):(b%2?A2:A1))}}
-  else if(way==='group'){
+      return h.concat(sec(b)?(b%2?B2:B1):(b%2?A2:A1))}};
+  const groupWay=()=>{
     const G=pick(C.groups),fill=G.map(n=>Array.from({length:n-1},(_,i)=>R()<(C.fillP??.6)?{k:C.fill||'X'}:null));
     const accChord=G.map((_,i)=>R()<(C.accChord??.3)),mkAcc=(t,first)=>{const seq=pick(C.acc);return G.map((_,i)=>({k:accChord[i]?'C':C.accV&&i%2?'V':'N',d:(i===0&&first?0:seq[i%seq.length])+t}))};
     const AC=mkAcc(0,true),AR=mkAcc(0,true),AS=mkAcc(C.secT??5,false),T=mkTurn(null);
     const build=acc=>{const o=[];G.forEach((n,i)=>{o.push(acc[i]);o.push(...fill[i])});return o};
-    barOf=(b,fresh)=>{if(fresh)return b===nb-1&&nb>1?build(AC).slice(0,8).concat(mkTurn(null)):build(mkAcc(0,true));
-      if(nb>1&&b===nb-1)return build(AC).slice(0,8).concat(T);return build(sec(b)?AS:b%2?AR:AC)}}
-  else{
-    let P1=pick(C.prog),P2=pick(C.prog);const per=nb===1||R()<.55?4:2,cell=per===4?pick(C.c4):pick(C.c8),fin=pick(C.fin||[0]);
-    const bar=(P,b,last,cl=cell)=>{let ch=per===4?P.slice():P.slice((b%2)*2,(b%2)*2+2);if(last)ch[ch.length-1]=fin;
-      const o=[];ch.forEach((d,i)=>{const c=last&&i===ch.length-1?(per===4?'C...':'C.......'):cl;parse(c,{ch:[d],fig:[d]}).forEach(x=>o.push(x&&x.k==='X'?{k:'X',d,mc:1}:x))});return o};
-    barOf=(b,fresh)=>{if(fresh){const P=pick(C.prog);return bar(P,b,b===nb-1&&nb>1,per===4?pick(C.c4):pick(C.c8))}
-      return bar(sec(b)?P2:P1,b,nb>1&&b===nb-1&&(per===4||b%2===1))}}
+    return (b,fresh)=>{if(fresh)return b===nb-1&&nb>1?build(AC).slice(0,8).concat(mkTurn(null)):build(mkAcc(0,true));
+      if(nb>1&&b===nb-1)return build(AC).slice(0,8).concat(T);return build(sec(b)?AS:b%2?AR:AC)}};
+  // chord riffs: a progression played with one strumming feel per riff (Nirvana-style feels: driving 8th
+  // downstrokes, chords left to ring, palm-muted chord chugs opening up, gallops, and the 16th muted scratches),
+  // sometimes with the chord changes pushed an 8th early
+  const progWay=()=>{
+    let P1=pick(C.prog),P2=pick(C.prog);const per=nb===1||R()<.55?4:2,fin=pick(C.fin||[0]);
+    const FE=C.feels||{scratch:{c4:C.c4,c8:C.c8,w:1}},fk=W(Object.fromEntries(Object.entries(FE).map(([k,v])=>[k,v.w])));
+    const fk2=W(Object.fromEntries(Object.entries(FE).map(([k,v])=>[k,v.w]))),push=R()<(C.pushP||0)&&(FE[fk].push??true);
+    const cellOf=(f,R0=R)=>{const F=FE[f];const L=per===4?F.c4:F.c8;return L[Math.floor(R0()*L.length)]};
+    const cell=cellOf(fk),cell2=cellOf(fk2);
+    const bar=(P,b,last,cl)=>{let ch=per===4?P.slice():P.slice((b%2)*2,(b%2)*2+2);if(last)ch[ch.length-1]=fin;
+      const o=[];ch.forEach((d,i)=>{const c=last&&i===ch.length-1?(per===4?'C...':'C.......'):cl;parse(c,{ch:[d],fig:[d]}).forEach(x=>o.push(x&&x.k==='X'?{k:'X',d,mc:1}:x))});
+      if(push){const L=16/ch.length;for(let i=1;i<ch.length;i++){const s=i*L;if(o[s]&&o[s].k==='C'){o[s-2]={k:'C',d:ch[i]};o[s-1]=null;o[s]=null}}}
+      return o};
+    return (b,fresh)=>{if(fresh){const P=pick(C.prog);return bar(P,b,b===nb-1&&nb>1,cellOf(W(Object.fromEntries(Object.entries(FE).map(([k,v])=>[k,v.w])))))}
+      return bar(sec(b)?P2:P1,b,nb>1&&b===nb-1&&(per===4||b%2===1),sec(b)?cell2:cell)}};
+  if(way==='hook')barOf=hookWay();else if(way==='group')barOf=groupWay();
+  else if(way==='vc'){ // verse into chorus: a quieter single-note riff, then the chords come in loud
+    const hb=hookWay(),pb=progWay(),half=Math.max(1,nb/2);
+    barOf=(b,fresh)=>b<half?hb(b,fresh).map(x=>x&&{...x,q:1}):pb(b,fresh)}
+  else barOf=progWay();
   // one bar at a time, each with its own random stream so a regenerated bar leaves the others exactly as they were
   const SP=SR.space??1,bars=[];
   for(let b=0;b<nb;b++){const fresh=b===regen;R=fresh?Math.random:mkRng(seed*7+b*131+17);
@@ -2447,9 +2467,10 @@ function genBand(st,ST,root,mode,nb,fixed){
   // pull-offs to the open string: a fretted note followed by a gap or a chug is flicked off to the open string
   if(C.pullP)for(let i=0;i<steps.length-1;i++){const a=steps[i],b=steps[i+1];
     if(a.m!=null&&a.m2==null&&!a.muted&&a.pos.f>0&&a.pos.f<=9&&(b.s==='-'||b.muted)&&!a.pull&&sR(i+11,a.m)<C.pullP){a.pull=true;steps[i+1]={s:'L',m:TU[a.pos.s],pos:{s:a.pos.s,f:0},muted:false}}}
+  const QV=bars.flat().map(x=>!!(x&&x.q));
   steps.forEach((x,i)=>{x.bar=Math.floor(i/16);x.blk=i>>1;x.k=i&1;const on=i%4===0;
     x.vel=x.s==='-'?0:x.muted?(C.chugV||.8)*(on?1.08:1):x.m2!=null?(on?1.08:1):x.pedal?.84:on?.98:.9;
-    x.vel*=x.open?.7:x.s==='L'?.9:1;x.len=x.open?.5:x.m2!=null?1:x.pedal?.55:.85;delete x.pedal;delete x.open});
+    x.vel*=(x.open?.7:x.s==='L'?.9:1)*(QV[i]?.78:1);x.len=x.open?.5:x.m2!=null?1:x.pedal?.55:.85;delete x.pedal;delete x.open});
   return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[Math.max(1,rf),Math.max(1,rf)+3],style:st,inst:'guitar',seed,tune:drop?DROPD.slice():undefined};
 }
 // ---- Mode colour ----
