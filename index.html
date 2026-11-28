@@ -586,7 +586,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0036';
+const APP_VERSION='2026.11.28-0038';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2677,6 +2677,7 @@ function renderSR(){
   for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{RH:108,wrap:false,fade:()=>!on[b],check:nb>1?on[b]:null,regen:nb>1,bar:b,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:inst==='slap'&&SR.showNames?nm:null,nmIn:inst==='slap'?null:nm,label:nb>1?`BAR ${b+1} · ${LB[b]}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
   $('srStick').innerHTML=h+'</svg>';
   $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}${r.tune?' · Drop D':''}`;
+  {const opt=(v,l)=>`<option value="${v}">${l}</option>`,c=$('srColor');if(c&&r){const base=r.base?r.base.mode:r.mode;const bm=r.base?r.base.bandMode:r.bandMode,why=bm?'band recommended':(STY()[r.style]||{}).cmp||(STY()[r.style]||{}).compose?'from your Mode setting':'';c.innerHTML=opt('orig',`As written (${MODES[base].name}${why?' · '+why:''})`)+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');c.value=r.colorMode!=null?String(r.colorMode):'orig'}}
   const cur=slKind==='riff'&&slPlayingStep>=0?st[slPlayingStep]:null;
   const at=(x,p)=>!!(cur&&!cur.muted&&(cur.pos&&cur.pos.s===p.s&&cur.pos.f===p.f||cur.pos2&&cur.pos2.s===p.s&&cur.pos2.f===p.f||cur.pos3&&cur.pos3.s===p.s&&cur.pos3.f===p.f));
   const items=st.filter(x=>x.pos).map(x=>({p:x.pos,label:nm[x.m%12],play:at(x,x.pos),old:x.muted})).concat(st.filter(x=>x.pos3).map(x=>({p:x.pos3,label:nm[x.m3%12],play:at(x,x.pos3)}))).concat(st.filter(x=>x.pos2).map(x=>({p:x.pos2,label:nm[x.m2%12],play:at(x,x.pos2)})));
@@ -2688,7 +2689,6 @@ function syncYard(inst){const sl=inst==='slap',y=$('yardBox');if(y.hidden===sl){
 function renderSRControls(){
   $('srKeySel').innerHTML=$('keySel').innerHTML;$('srKeySel').value=SR.key;
   {const S0=STY()[SR.style]||{};$('srModeSel').innerHTML=opt('random',S0.cmp||S0.compose?'Band recommended':'Player recommended')+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');$('srModeSel').value=SR.mode}
-  {const r=SR.riff,c=$('srColor');if(c&&r){const base=r.base?r.base.mode:r.mode;const bm=r.base?r.base.bandMode:r.bandMode,why=bm?'band recommended':(STY()[r.style]||{}).cmp||(STY()[r.style]||{}).compose?'from your Mode setting':'';c.innerHTML=opt('orig',`As written (${MODES[base].name}${why?' · '+why:''})`)+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');c.value=r.colorMode!=null?String(r.colorMode):'orig'}}
   const ST=STY();
   if(crMode==='bass'){const fk=Object.keys(BASS_STYLES),sk=Object.keys(SR_STYLES);
     $('srStyle').innerHTML=`<optgroup label="Fingerstyle &amp; pick">${fk.map(k=>opt(k,k==='mix'?'Mixed fingerstyle (no particular player)':BASS_STYLES[k].name)).join('')}</optgroup><optgroup label="Slap">${sk.map(k=>opt('slap_'+k,'Slap · '+SR_STYLES[k].name)).join('')}</optgroup>`}
