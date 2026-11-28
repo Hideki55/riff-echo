@@ -516,6 +516,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
         <div class="tabctl"><button class="round" id="tabStart" aria-label="Back to the start"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 5h2.5v14H6zM20 5v14l-10-7z"/></svg></button><button class="round" id="tabPlay" aria-label="Play or pause"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></button><span id="tabPos" class="muted"></span><span class="muted tabhint">Tap or drag the tab to move the line</span></div>
         <div class="srtab" id="srTab" aria-label="Tablature with a moving play line"></div>
       </details>
+      <p class="hint" id="srKind" style="margin:10px 0 0"></p>
       <label class="fld full colorf"><span>Hear this riff in another mode</span><select id="srColor"></select></label>
       <div class="btns sl">
         <button class="big play" id="srPlay"><svg><use href="#i-play"/></svg><span>Play</span></button>
@@ -586,7 +587,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0128';
+const APP_VERSION='2026.11.28-0142';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1815,18 +1816,18 @@ const curInst=()=>crMode==='bass'&&isSlapKey(SR.style)?'slap':crMode;
 // all styles for the tab on screen, slap players included under Bass with a 'slap_' prefix
 const STY=()=>{if(crMode==='guitar')return GTR_STYLES;const o={...BASS_STYLES};for(const k in SR_STYLES)o['slap_'+k]=SR_STYLES[k];return o};
 // Drum auto-balance: the instrument and the drums are measured while they play, and the drums are nudged up or
-// down (up to +10 dB / -3 dB) so they sit level with the instrument whatever the sound and beat. The drum volume
+// down (up to +14 dB / -3 dB) so they sit just above the instrument whatever the sound and beat. The drum volume
 // slider still works on top of that (55% = level).
 let slDrum=null,slBal=null;const balMem={};
 function startBalance(key){
   const aT=ctx.createAnalyser(),aD=ctx.createAnalyser();aT.fftSize=aD.fftSize=2048;slBus.connect(aT);
-  slDrum=ctx.createGain();slDrum.gain.value=balMem[key]||1.4;slDrum.connect(slBus);slDrum.connect(aD);
+  slDrum=ctx.createGain();slDrum.gain.value=balMem[key]||2;slDrum.connect(slBus);slDrum.connect(aD);
   const buf=new Float32Array(2048),pw=a=>{a.getFloatTimeDomainData(buf);let s=0;for(const v of buf)s+=v*v;return s/buf.length};
-  let PT=0,PD=0,n=0;const d=slDrum;
-  slBal=setInterval(()=>{if(!ctx||d!==slDrum)return;const g=d.gain.value;PT=PT*.96+pw(aT)*.04;PD=PD*.96+pw(aD)*.04;if(++n<16)return;
+  let PT=0,PD=0,n=0,first=true;const d=slDrum;
+  slBal=setInterval(()=>{if(!ctx||d!==slDrum)return;const g=d.gain.value;const a=first?.25:.05;PT=PT*(1-a)+pw(aT)*a;PD=PD*(1-a)+pw(aD)*a;if(++n<10)return;
     const PI=Math.max(PT-PD,0);if(PI<1e-6||PD<1e-7)return;
-    const want=Math.pow(10,-1/10)*Math.pow(S.drumVol/.55,2),ratio=PD/PI,next=Math.min(3.2,Math.max(.7,g*Math.pow(want/ratio,.12)));balMem[key]=next;
-    d.gain.setTargetAtTime(next,ctx.currentTime,1.2)},150)}
+    const want=Math.pow(10,1.5/10)*Math.pow(S.drumVol/.55,2),ratio=PD/PI,next=Math.min(5,Math.max(.7,g*Math.pow(want/ratio,first?.5:.15))),tc=first?.3:1;first=false;balMem[key]=next;
+    d.gain.setTargetAtTime(next,ctx.currentTime,tc)},150)}
 function stopBalance(){clearInterval(slBal);slBal=null;slDrum=null}
 let slGen=0,slBus=null,slTimer=null,slRaf=0,slSteps=[],slBars=0,slPlayingStep=-1,slNoise=null,slKind=null;
 const slPick=(arr,w)=>{let s=0;for(const x of w)s+=x;let r=Math.random()*s;for(let i=0;i<arr.length;i++){r-=w[i];if(r<=0)return arr[i]}return arr[arr.length-1]};
@@ -2071,50 +2072,55 @@ const SR_MODE_W=[2,3,1,1,3,2,.5]; // Ionian..Locrian: funk favours Dorian and Mi
 // Same cell letters as slap, but read as: T = a low note (root area, low strings), P = an upper note (high strings),
 // t/p = dead (muted) notes, D = double stop (or a power chord on guitar), H…O hammer-on, L pull-off, - rest.
 const BASS_STYLES={
-  mix:{name:'Mixed (no particular player)',sound:'finger',modes:{0:2,1:3,4:3,5:2,2:.5},shape:'ABAC',
+  mix:{kinds:[{w:1,name:'groove'},{w:1,name:'sparse',A:['T---','T--t','T--T'],B:['----','--T-','---T','-T--','T---']},{w:1,name:'driving 8ths',A:['T-T-','T-TT'],B:['T-T-','T-P-','TTT-','T-tT']}],name:'Mixed (no particular player)',sound:'finger',modes:{0:2,1:3,4:3,5:2,2:.5},shape:'ABAC',
     A:['T-TP','T--P','T-tP','TtP-'],B:['-TP-','T-PT','tTP-','P-T-','T-tP','-T-P','TPtP','HOT-'],oct:.45,ghost:.12,chrom:.15,choke:.35,slide:.12,lag:{P:.004,dead:-.002,LH:.004},jit:.005,vary:.1},
   // Jamerson: built from root-5th-octave shapes plus scale and chromatic passing tones, syncopation, soft ghosted
   // pickups (often open strings), open strings as passing notes, one-finger "hook" plucking and a hint of swing
-  jamerson:{name:'James Jamerson: Motown hook',sound:'finger',tempo:100,beat:'pop:0',modes:{0:3,4:3,1:2},shape:'ABAC',swing:.12,
+  jamerson:{kinds:[{w:2,name:'syncopated hook'},{w:1.5,name:'walking 8ths with chromatic approaches',A:['T-T-','T-TT'],B:['T-T-','T-P-','TTT-','T-tT','T-TP'],chrom:.45,ghost:.12},{w:1,name:'sparse ballad line with pickups',A:['T---','T--T'],B:['----','--T-','---T','-T-T','T---'],slide:.25}],name:'James Jamerson: Motown hook',sound:'finger',tempo:100,beat:'pop:0',modes:{0:3,4:3,1:2},shape:'ABAC',swing:.12,
     A:['T-tP','T--P','T-TP','T-t-','T-PT'],B:['-TPt','t-T-','TtP-','-T-P','PtT-','T-PT','tPT-','-tTP','T-tT'],
     oct:.45,ghost:.08,thumbDeg:{0:5,7:3,4:1.5,9:1,2:1},popDeg:{0:3,7:3,4:2,9:1.5,10:1},chrom:.45,openPass:.35,pickup:.5,
     choke:.35,slide:.18,lag:{P:.008,dead:-.002,LH:.004},jit:.007,vary:.12},
   // Justin Chancellor (Tool): picked, a droning open string under higher melodic notes, hypnotic repetition,
   // odd groupings (7+7+2, 3+3+3+3+4…) laid over straight 4/4, Phrygian/Dorian colours
-  chancellor:{name:'Justin Chancellor: Tool-style odd groupings',sound:'pick',tempo:112,beat:'rock:0',modes:{2:3,1:2,5:2},linear:'odd',
+  chancellor:{kinds:[{w:2.5,name:'odd groupings'},{w:1,name:'melodic high line over a drone',linear:false,shape:'AABC',A:['TPTP','T-PP','TP-P'],B:['PTPT','P-PT','TPPT','-PTP'],pedal:.6,popStr:[2,3]},{w:1,name:'slow and heavy',linear:false,shape:'ABAC',A:['T---','T--T'],B:['----','T-T-','--T-','T---'],slide:.35}],name:'Justin Chancellor: Tool-style odd groupings',sound:'pick',tempo:112,beat:'rock:0',modes:{2:3,1:2,5:2},linear:'odd',
     keys:{2:4,4:3,9:2,7:1,0:.5,5:.5,11:.3,1:.2,3:.2,6:.2,8:.2,10:.2},A:['T-TP'],B:['T-TP'],pedal:.7,droneD:.6,
     oct:.35,ghost:.05,thumbDeg:{0:5,7:2,1:2,10:1.5},popDeg:{0:3,7:3,3:2,1:2,10:1.5},chrom:.1,maxRing:16,
     choke:.25,slide:.08,lag:{P:.001,dead:0,LH:.002},jit:.003,vary:.04},
   // Jaco: fingerstyle 16ths with left-hand-muted staccato notes, octaves, chromatic movement, Dorian funk
-  jaco:{name:'Jaco Pastorius: 16th-note funk',sound:'finger',tempo:100,beat:'funk:7',modes:{1:3,4:2,5:1},shape:'ABAC',
+  jaco:{kinds:[{w:2,name:'16th-note funk'},{w:1,name:'melodic high-register line',A:['P---','T---','P--P'],B:['P--P','-P--','P-P-','--P-','P---'],popStr:[2,3],slide:.3},{w:1,name:'double stops and chords',A:['D---','T-D-'],B:['--D-','D-D-','T-D-','-D--']}],name:'Jaco Pastorius: 16th-note funk',sound:'finger',tempo:100,beat:'funk:7',modes:{1:3,4:2,5:1},shape:'ABAC',
     A:['TtPt','TtTP','T-PT','TtPT'],B:['tTPt','PtTt','tPTt','TPtP','-tPT','TtTt','PtPt'],
     oct:.65,octMove:.4,ghost:.12,thumbDeg:{0:5,7:2,10:2,3:1.5},chrom:.3,maxRing:12,choke:.55,slide:.1,lag:{P:.004,dead:-.002,LH:.003},jit:.004,vary:.1},
   // Rocco Prestia: a constant chain of staccato muted 16ths in one root-5th-octave position, the space made by
   // ghosted notes; repetition with occasional variation
-  rocco:{name:'Rocco Prestia: muted 16ths',sound:'finger',tempo:104,beat:'funk:0',modes:{1:3,4:2,0:1},linear:'rocco',rootLock:.6,
+  rocco:{kinds:[{w:2.5,name:'muted 16ths'},{w:1,name:'staccato 8ths',linear:false,shape:'ABAC',A:['T-t-','TtTt'],B:['t-T-','T-tT','tTt-','T-T-'],ghost:.35}],name:'Rocco Prestia: muted 16ths',sound:'finger',tempo:104,beat:'funk:0',modes:{1:3,4:2,0:1},linear:'rocco',rootLock:.6,
     A:['TtTt'],B:['TtTt'],oct:.5,ghost:.04,thumbDeg:{0:6,7:3,10:1.5},popDeg:{0:4,7:3,10:2},chrom:.2,maxRing:9,
     choke:.75,slide:.05,lag:{P:.002,dead:-.001,LH:.002},jit:.003,vary:.05},
   // Carol Kaye: picked, melodic 8th-note pop lines, root-5th-6th-octave shapes, leading tones
-  kaye:{name:'Carol Kaye: melodic pick',sound:'pick',tempo:112,beat:'pop:1',modes:{0:3,4:3,1:1},shape:'ABAC',
+  kaye:{kinds:[{w:2,name:'pop hook'},{w:1.2,name:'Motown 8ths',A:['T-T-','T-TT'],B:['T-T-','T-P-','TTT-','T-TP'],chrom:.3},{w:1,name:'syncopated funk',A:['T--T','T-tT'],B:['-TT-','T--T','tT-P','-P-T','--TT']}],name:'Carol Kaye: melodic pick',sound:'pick',tempo:112,beat:'pop:1',modes:{0:3,4:3,1:1},shape:'ABAC',
     A:['T-P-','T-T-','T-PP','T---'],B:['P-T-','T-P-','PP-T','-TP-','T-PT','P-P-','T-tP'],hook:.7,
     oct:.35,ghost:.04,popDeg:{0:3,7:3,9:2.5,4:2,2:1},chrom:.15,choke:.25,slide:.12,lag:{P:.003,dead:0,LH:.003},jit:.004,vary:.06}};
 const GTR_STYLES={
-  mix:{name:'Mixed (no particular player)',sound:'clean',modes:{1:3,5:3,4:2,0:1},shape:'ABAC',pent:true,
+  mix:{kinds:[{w:1,name:'riff'},{w:1,name:'power-chord riff',power:true,A:['D-D-','D--D'],B:['D-D-','-D-D','D---','T-D-']},{w:1,name:'single-note line',A:['T-TT','TTT-'],B:['T-T-','TT-T','-TTT','T-TP']}],name:'Mixed (no particular player)',sound:'clean',modes:{1:3,5:3,4:2,0:1},shape:'ABAC',pent:true,
     A:['T-TP','T-P-','TtPt','THO-'],B:['-TP-','PLT-','T-PT','tTP-','P-T-','TPL-','-T-P'],oct:.3,ghost:.12,chrom:.1,choke:.35,slide:.15,lag:{P:.003,dead:-.002,LH:.004},jit:.005,vary:.1},
   // Nile Rodgers: syncopated single-note 16ths, octaves and choppy partial chords with lots of muted strokes
-  rodgers:{name:'Nile Rodgers: funk single notes',sound:'clean',tempo:114,beat:'funk:0',modes:{1:3,4:2,0:2},shape:'ABAC',
+  rodgers:{kinds:[{w:2,name:'16th single notes'},{w:1,name:'choppy chord stabs',A:['D-p-','Dp-D'],B:['p-D-','-D-p','D-pD','pDp-']},{w:1,name:'octave line',A:['PpPp','P-P-'],B:['P-pP','pP-P','PP-p'],oct:.8}],name:'Nile Rodgers: funk single notes',sound:'clean',tempo:114,beat:'funk:0',modes:{1:3,4:2,0:2},shape:'ABAC',
     A:['PpPp','P-pP','PppP','DpPp'],B:['pPpP','-PpP','PpP-','ppPp','DpDp','pPPp','PpDp'],popStr:[3,4,5],oct:.3,ghost:.05,
     popDeg:{0:3,7:2.5,10:2,3:2,2:1.5},chrom:.08,maxRing:11,choke:.7,slide:.05,lag:{P:.002,dead:-.002,LH:.003},jit:.003,vary:.08},
   // Tony Iommi: slow, heavy minor-pentatonic riffs of power chords and single notes, the tritone, plenty of weight
   // Tony Iommi: slow, dark riffs on the bottom two strings — E-rooted power chords that slide chromatically, the
   // tritone (root to flat 5th), the blues scale with its flat 5th, the minor 6th sliding down to the 5th, palm-muted
   // open-string chugs, and big chords left to ring
-  iommi:{name:'Tony Iommi: dark Sabbath riffs',sound:'heavy',tempo:72,beat:'metal:0',modes:{5:3,2:2},compose:'sabbath',linear:'sabbath',power:true,
-    runs:[[0,3,5,6,5,3],[0,0,3,0,5,3],[7,6,5,3,0],[0,3,5,3,0,10],[0,10,8,7],[0,1,0,3,0,5],[5,6,7,6,5,3]],
-    keys:{4:6,1:2,2:1,9:1,7:.5,0:.3},notes:[0,1,3,5,6,7,8,10],
-    prog:[[0,6,0,5],[0,3,5,6],[0,10,8,7],[0,3,0,6],[0,7,6,5],[0,0,3,5],[0,8,7,6],[0,3,6,5]],
-    A:['D---','D--D','D-tt','D-D-','D--t'],B:['D---','--D-','tD-D','D-tt','tttt','T-T-','TTD-','D--t','-D--','ttD-','D-D-','T-TT'],
-    oct:.1,ghost:.02,thumbDeg:{0:6,3:2,5:2,6:2,7:2,10:2},chrom:.25,choke:.12,slide:.1,maxRing:14,lag:{P:.002,dead:0,LH:.003},jit:.006,vary:.03},
+  iommi:{name:'Tony Iommi: dark Sabbath riffs',sound:'heavy',tempo:72,beat:'metal:0',modes:{5:3,2:2},lag:{T:.006},jit:.006,keys:{4:6,1:2,2:1,9:1,7:.5,0:.3},
+    cmp:{tune:'E',full:.25,slide:.6,ways:{hook:3,stomp:1.3,group:.8,poly:.6},
+      rhy:['C...N.N.','C..NN.N.','C.XXC...','C...C.N.','C.N.N.C.','C..C..N.','CXXCXXN.','C...NNN.','C.....NN','C.N..N.N','CX.NN.N.','C..NC...'],
+      figs:[[3,5],[5,6,5],[10,12],[6,5,3],[8,7],[3,5,6],[12,10,7],[1,0],[0,3,0],[7,6,5],[3,0,10],[5,3,5]],ch2:[5,3,6,7,8,10],
+      ans:{move:3,vary:2,stabs:2,run:1.5},moves:[5,3,7,-2],ends:['C...','NNC.','XXC.','C.NN'],
+      stabs:['C8 . . . C7 . . .','C6 . . . C5 . . .','C5 . . . C6 . . .','C3 . . . C5 . . .','C10 . . . C8 . . .'],
+      runs:['N7 N6 N5 N3 N0 . . .','N5 N3 N0 N10 N0 . . .','N6 N5 N3 N1 N0 . . .','N10 N8 N7 N6 N5 . . .'],
+      turns:['C8 . C7 . C6 . C5 .','N7 N6 N5 N3 C0 . . .','C3 . C5 . C0 . . .'],
+      stomps:['C0 . . . . . . . C6 . . . C5 . . .','C0 . . . . . . . . . . . C10 . C8 .','C0 . . . C3 . . . C5 . . . C6 . C5 .','C0 . . . . . . . C1 . . . . . . .'],
+      groups:[[3,3,2,3,3,2],[3,3,3,3,4]],fill:'X',fillP:.8,accChord:.7,acc:[[0,3,5,6],[0,6,5,3],[0,10,8,7]],
+      polys:[{c:'C.XX',seqs:[[0]]},{c:'CXX',seqs:[[0]]}]}},
   // ---- bands: riff habits, not transcriptions ----
   // Tokens: C power chord · V octave shape · N single note · X palm-muted chug · P ringing low pedal · Z open-string
   // strum between chords · L pull-off to the open string · D<n> note on the D string · . rest
@@ -2122,7 +2128,10 @@ const GTR_STYLES={
   // (7/4, 9/8) approximated with 7- and 9-note accent groups, the low D left ringing, dissonant flat 2 and tritone,
   // played a hair behind the beat
   soundgarden:{name:'Soundgarden: drop-D odd grooves',sound:'heavy',tempo:100,beat:'rock:7',keys:{2:8,4:1,9:.5},modes:{5:2,2:2,4:1},lag:{T:.012,dead:.006},jit:.006,
-    cmp:{tune:'D',grpP:.5,full:.8,groups:[[7,7,2],[7,9],[9,7],[3,3,3,3,4],[5,5,6],[3,3,2,3,3,2],[7,5,4]],fill:'P',fillP:.5,accChord:.45,
+    cmp:{tune:'D',full:.8,ways:{group:2,hook:2,poly:1.3,drone:1.2,stomp:.8},
+      polys:[{c:'CPPAPPA',seqs:[[10,12],[3,5],[1,3],[7,10]]},{c:'CPAPPAP',seqs:[[12,10,7],[3,1,0],[5,6,5]]},{c:'CPPAPPAPP',seqs:[[10,12,3],[1,0,3]]}],
+      drone:{rhy:['P.N.P.N.','PPN.PPN.','P.NNP.N.','PNPNPNPN'],figs:[[13,12],[18,17],[15,13,12],[22,20,19],[13,15,13,12]],ans:{repeat:2,vary:2,move:1}},
+      stomps:['C0 . . . . . . . C10 . . . C12 . . .','C0 . . . C1 . . . C0 . . . . . . .','C3 . . . . . C5 . . . . . C0 . . .','C0 . . . . . . . C6 . . . C5 . . .'],groups:[[7,7,2],[7,9],[9,7],[3,3,3,3,4],[5,5,6],[3,3,2,3,3,2],[7,5,4]],fill:'P',fillP:.5,accChord:.45,
       acc:[[0,10,12,3],[0,3,5,10],[12,10,7,5],[0,1,3,1],[0,6,5,3],[0,5,3,10],[0,10,0,1]],
       rhy:['C...N.N.','C.PPC...','P.P.C..N','CC.CC.C.','C.CC.CC.','C..C..C.','C...PPN.','N.N.C...','PPC.PPC.','C..PN.N.'],
       figs:[[3,5],[10,12],[1,0],[7,10],[5,3],[12,10,7],[8,7],[3,1,0],[6,5],[10,7]],ch2:[10,3,5,8,1,6,7],
@@ -2133,7 +2142,8 @@ const GTR_STYLES={
   // Stone Temple Pilots, Core (Dean DeLeo): low-string grinding built on two chords, palm-muted pushes into big
   // sliding chords, chromatically descending chord moves, and chord inversions that sound like drop D in standard
   stp:{name:'Stone Temple Pilots: Core-era grunge',sound:'heavy',tempo:108,beat:'rock:1',keys:{2:5,4:3,9:1},modes:{5:3,1:2,2:1},jit:.005,
-    cmp:{tune:'mix',dropP:.55,inv:.6,full:.6,rhy:['XXXXC...','C..XC.X.','C.XXXC..','XXC.XXC.','C...C.N.','C..C..C.','X.XXC..C','C...XXN.','XX.C.XC.'],
+    cmp:{tune:'mix',dropP:.55,inv:.6,full:.6,ways:{hook:3,prog:1.5,stomp:.8},
+      prog:[[0,10,8,7],[0,3,5,3],[0,5,4,3],[0,8,10,5],[0,1,3,5]],feels:{ring:{w:2,c4:['C...','C..C'],c8:['C.......','C.....C.']},drive:{w:2,push:false,c4:['C.C.','C.XX'],c8:['C.C.C.C.','C.XXC.XX']},palm:{w:1.5,c4:['XXX.','X.XX'],c8:['XXXXC...','X.X.C...']}},pushP:.4,fin:[0,3,5],rhy:['XXXXC...','C..XC.X.','C.XXXC..','XXC.XXC.','C...C.N.','C..C..C.','X.XXC..C','C...XXN.','XX.C.XC.'],
       figs:[[3,5],[5,3,0],[10,0],[3,2,0],[7,5],[0,3,5],[5,7]],ch2:[3,5,10,1,2,8],
       ans:{repeat:2,move:2.5,vary:2,stabs:2},moves:[5,3,2,-2],ends:['C...','XXC.','C.C.','N.C.','XXXX'],
       stabs:['C3 . . C5 . . C0 .','C5 . C4 . C3 . . .','C10 . . . C8 . . .','C3 . . . C2 . . .','C1 . . . C0 . . .'],runs:['N5 N3 N2 N0 . . . .'],
@@ -2174,7 +2184,9 @@ const GTR_STYLES={
   // ring, gallops (8th + two 16ths) and reverse gallops (two 16ths + 8th), open-E pedal-tone riffs, sliding power
   // chords, Phrygian flat 2 and the tritone; a tighter rhythm tone with less gain than people expect
   metallica:{name:'Metallica: thrash (first 4 albums)',sound:'metal',tempo:120,beat:'metal:1',keys:{4:8,9:.6,2:.4},modes:{2:3,5:3},jit:.002,
-    cmp:{tune:'E',full:.35,rhy:['X.XXX.XX','XXX.XXX.','C.XXC.XX','X.XXN.N.','XNXNXNXN','XXXXC.C.','X.XXC...','XXX.C...','XXN.XXN.','C..XXXC.','XXXXNNN.'],
+    cmp:{tune:'E',full:.35,ways:{hook:3,poly:1.3,group:1,stomp:.7},
+      polys:[{c:'XXA',seqs:[[1,2,3,5],[3,5,6,7],[12,11,10,7],[1,0,3,0]]},{c:'XXAXA',seqs:[[1,3],[6,5],[3,6,7]]},{c:'X.XXA',seqs:[[1,0],[6,5,3]]}],
+      groups:[[3,3,2,3,3,2],[3,3,3,3,4],[6,6,4]],fill:'X',fillP:.85,accChord:.6,acc:[[0,1,0,6],[0,3,5,6],[0,6,5,3],[0,1,3,1],[0,7,6,5]],rhy:['X.XXX.XX','XXX.XXX.','C.XXC.XX','X.XXN.N.','XNXNXNXN','XXXXC.C.','X.XXC...','XXX.C...','XXN.XXN.','C..XXXC.','XXXXNNN.'],
       figs:[[1,0],[3,5,6],[6,5],[7,6,5],[1,2,3],[5,6,7],[10,8,7],[12,11,10],[3,2,1],[0,7,6]],ch2:[1,6,5,3,7,8,10],
       ans:{move:2,vary:2,stabs:2,pedal:2.5,run:1,repeat:1},moves:[5,3,1,7,-2],ends:['X.XX','XXX.','C...','XXC.','N.N.','C.C.','XNXN'],
       pedals:['XNXNXNXN','X.XNX.XN','XXNXXNXN','XNXNXXNN','X.XXNNN.'],
@@ -2185,7 +2197,8 @@ const GTR_STYLES={
   // Velvet Revolver, Slither (Slash/Kushner): drop D at a fast tempo, a syncopated, hypnotic riff of octave shapes
   // over palm-muted low D, one-finger chords, and a descending figure on the D string to turn it round
   slither:{name:'Velvet Revolver: Slither-style groove',sound:'heavy',tempo:138,beat:'rock:1',keys:{2:7,4:1.5,9:.5},modes:{5:3,1:2},jit:.005,
-    cmp:{tune:'D',full:.5,rhy:['XXV.XXV.','X.V.XXV.','XX.V..V.','C.XXV.V.','XXXXV.VV','X.XXV..V','XXV.V.XX'],
+    cmp:{tune:'D',full:.5,ways:{hook:3,poly:1.2,group:.8},polys:[{c:'XXV',seqs:[[3,5,7,5],[5,7,10,7],[12,10,7,5]]},{c:'XVXXV',seqs:[[3,5],[7,5],[10,12]]}],
+      groups:[[3,3,2,3,3,2],[3,3,3,3,4]],fill:'X',fillP:.8,accChord:.4,accV:1,acc:[[0,3,5,7],[0,5,7,10],[0,3,0,5]],rhy:['XXV.XXV.','X.V.XXV.','XX.V..V.','C.XXV.V.','XXXXV.VV','X.XXV..V','XXV.V.XX'],
       figs:[[3,5],[5,7],[7,5,3],[10,12],[3,5,7],[5,3,0],[12,10],[5,6,5]],ch2:[3,5,10,7],
       ans:{repeat:3,vary:2,move:1.5,stabs:1},moves:[5,3,7],ends:['V.V.','XXV.','C...','V.VV','X.V.'],
       stabs:['C3 . . C5 . . C0 .','C5 . . . C3 . . .'],runs:['D12 D10 D8 D7 D5 D3 D0 .'],
@@ -2195,22 +2208,23 @@ const GTR_STYLES={
   // low strings, the low D ping-ponging with its octave, "outside" notes like the flat 2 and major 7, riffs
   // that start off the one, repeat, then stop dead
   ratm:{name:'Rage Against the Machine: drop-D riffs',sound:'crunch',tempo:88,beat:'rock:7',keys:{2:8,4:1},modes:{5:2,1:2,2:1},jit:.004,
-    cmp:{tune:'D',full:.3,accV:1,rhy:['N..N..N.','NN.N.N..','N.NN..N.','X..N.NN.','N.N..NN.','.N.NN..N','X.N..N.N','N...N.NN','NN..V.V.','V..V..N.'],
+    cmp:{tune:'D',full:.3,accV:1,ways:{hook:3,poly:1.2,group:1},polys:[{c:'A.XA.X',seqs:[[0,12],[0,3,5],[0,0,12,10]]},{c:'AXA.X',seqs:[[0,3],[0,12,10],[5,3,0]]},{c:'A..A.',seqs:[[0,12],[0,3,5,6]]}],
+      groups:[[3,3,2,3,3,2],[3,3,3,3,4],[3,3,2,8]],fill:'X',fillP:.4,accChord:.2,acc:[[0,12,0,10],[0,3,5,3],[0,6,5,3],[0,1,0,11]],rhy:['N..N..N.','NN.N.N..','N.NN..N.','X..N.NN.','N.N..NN.','.N.NN..N','X.N..N.N','N...N.NN','NN..V.V.','V..V..N.'],
       figs:[[0,12,0,12],[0,12,10,12],[0,3,5,3],[0,10,0,3],[5,3,0,0],[0,0,3,5],[0,1,0,11],[7,5,3,0],[0,6,5,3],[3,5,6,5],[0,3,0,10]],ch2:[3,5,10],
       ans:{repeat:3,vary:2,stop:1.5,move:1},moves:[5,3,-2],ends:['N.N.','NN..','C...','X.N.','N..N','V.V.'],
       stabs:['C0 . . C3 . . C5 .'],runs:['N0 N3 N5 N6 N7 . . .'],
       turns:['N0 . . . . . . .','C0 . . C3 . . C5 .','N7 N5 N3 N0 . . X X','C5 . C3 . C0 . . .','V0 . . V3 . . V5 .'],slideN:.12,chugV:.85,
       stomps:['C0 . . . . . . . . . . . X X X X','C0 . . C0 . . . . C3 . . . . . . .','X X X X X X X X C5 . . . C3 . . .','C0 . . . . . . . C1 . . . . . . .']}},
   // Jimmy Page: blues-rock riffs from the minor pentatonic, open-string pedals, hammer-ons and pull-offs, syncopation
-  page:{name:'Jimmy Page: blues-rock riffs',sound:'crunch',tempo:96,beat:'rock:1',modes:{5:3,4:2,1:2},shape:'ABAC',pent:true,pedal:.3,pullOpen:.7,
+  page:{kinds:[{w:2,name:'blues-rock riff'},{w:1,name:'open-string pedal riff',pedal:.7,A:['T-TT','TTT-'],B:['TPLT','T-TT','TTHO','TT-T']},{w:1,name:'big chord riff',A:['D---','D--D'],B:['D-D-','--D-','D-DD','-D--']}],name:'Jimmy Page: blues-rock riffs',sound:'crunch',tempo:96,beat:'rock:1',modes:{5:3,4:2,1:2},shape:'ABAC',pent:true,pedal:.3,pullOpen:.7,
     A:['T-TT','THO-','T-PL','T-TP','D-T-'],B:['-TPL','HOT-','T-HO','PLT-','TT-P','-T-T','TPLT','D-DT'],power:true,oct:.25,ghost:.05,chrom:.12,
     choke:.35,slide:.15,lag:{P:.004,dead:-.002,LH:.004},jit:.006,vary:.08},
   // Jimi Hendrix: pentatonic lines with double stops, hammer-ons, pull-offs and slides; Dorian/Mixolydian
-  hendrix:{name:'Jimi Hendrix: double stops & hammers',sound:'clean',tempo:90,beat:'rock:2',modes:{1:3,4:3,5:2},shape:'ABAC',pent:true,
+  hendrix:{kinds:[{w:2,name:'double stops and hammers'},{w:1,name:'R&B chord melody',A:['D-P-','DPL-'],B:['PLD-','-DP-','D-PL','HOD-']},{w:1,name:'heavy riff',power:true,A:['T-TT','D-T-'],B:['TTD-','T-D-','-TTD','D-D-']}],name:'Jimi Hendrix: double stops & hammers',sound:'clean',tempo:90,beat:'rock:2',modes:{1:3,4:3,5:2},shape:'ABAC',pent:true,
     A:['T-DP','T-HO','D-PL','T--D'],B:['DPL-','-HOD','PLT-','D-D-','-TDP','HOP-','T-PL'],popStr:[3,4,5],oct:.3,ghost:.06,chrom:.1,
     choke:.3,slide:.3,lag:{P:.006,dead:-.002,LH:.005},jit:.007,vary:.1},
   // Angus Young: driving 8th-note open-string power chords and riffs in A and E
-  angus:{name:'Angus Young: 8th-note rock riffs',sound:'crunch',tempo:124,beat:'rock:0',modes:{4:3,0:2,5:1},shape:'ABAC',power:true,
+  angus:{kinds:[{w:2,name:'8th-note chord riff'},{w:1,name:'single-note boogie',A:['T-T-','T-TT'],B:['T-T-','TTT-','T-TP','TT-T']},{w:1,name:'chord stabs with space',A:['D---','D--D'],B:['----','--D-','D---','-D--']}],name:'Angus Young: 8th-note rock riffs',sound:'crunch',tempo:124,beat:'rock:0',modes:{4:3,0:2,5:1},shape:'ABAC',power:true,
     keys:{9:5,4:4,2:2,7:1,0:.5,5:.3,11:.2,1:.1,3:.1,6:.1,8:.1,10:.1},pedal:.35,
     A:['D-D-','D-DD','T-D-','D-T-'],B:['D-D-','-D-D','DDD-','T-T-','D---','D-TD','T-DD'],oct:.2,ghost:.04,chrom:.05,
     choke:.45,slide:.05,lag:{P:.002,dead:0,LH:.003},jit:.004,vary:.04}};
@@ -2243,37 +2257,37 @@ function roccoBar(){
 // feel: lag = how late (s) pops / dead notes / left-hand notes sit behind the grid, jit = random timing spread,
 // choke = share of notes the fretting hand cuts short, vary = chance a dead note is left out on a given pass.
 const SR_STYLES={
-  mix:{name:'Mixed (no particular player)',modes:{0:2,1:3,2:1,3:1,4:3,5:2,6:.5},shape:'ABAC',
+  mix:{kinds:[{w:1,name:'groove'},{w:1,name:'octave pops',A:['T-P-','TtP-','T-Pt'],B:['T-P-','tTP-','T-PT','-TP-'],oct:.85},{w:1,name:'sparse',A:['T---','T--P'],B:['----','--P-','T---','-T-P']}],name:'Mixed (no particular player)',modes:{0:2,1:3,2:1,3:1,4:3,5:2,6:.5},shape:'ABAC',
     A:['T-TP','TTP-','THOP','T-P-','TtPt','T--P','HOTP'],B:['STPT','TPTT','-TP-','PTTP','HOTP','STP-','T-tP','--PT','TP-P','TtTP','-PTP','TPL-'],
     oct:.5,ghost:.15,chrom:.1,choke:.4,slide:.12,lag:{P:.005,dead:-.002,LH:.004},jit:.004,vary:.1},
   // Larry Graham: drum-like thumpin' and pluckin', mostly 8th notes, root and octave, plenty of space
-  graham:{name:'Larry Graham: thump & pluck',tempo:104,beat:'funk:3',modes:{4:3,1:2,0:1},shape:'ABAC',
+  graham:{kinds:[{w:2,name:'thump and pluck 8ths'},{w:1,name:'busy octave 16ths',A:['TtPt','T-PT','TPTP'],B:['tPTP','TtPt','PTtP','T-PT'],oct:.9},{w:1,name:'sparse funk with space',A:['T---','T--P'],B:['----','--P-','-T--','T---','---P']}],name:'Larry Graham: thump & pluck',tempo:104,beat:'funk:3',modes:{4:3,1:2,0:1},shape:'ABAC',
     A:['T-P-','T-T-','T---','T-tP','T-P-'],B:['T-P-','P-T-','--P-','T-T-','P---','-T-P','T-PT','t-P-','T-tP'],
     oct:.88,ghost:.08,thumbDeg:{0:7,7:2,10:2,5:1},chrom:.05,choke:.55,slide:.15,hook:.4,lag:{P:.006,dead:0,LH:.004},jit:.005,vary:.08},
   // Mark King: linear 16ths, the thumb hammering the root (often open E) between left-hand slaps, few pops
-  king:{name:'Mark King: machine-gun 16ths',tempo:118,beat:'funk:0',modes:{1:3,5:2,0:1,4:1},linear:'king',hook:.45,rootLock:.85,maxRing:12,
+  king:{kinds:[{w:2.5,name:'machine-gun 16ths'},{w:1,name:'machine-gun with more pops',oct:.85,rootLock:.7}],name:'Mark King: machine-gun 16ths',tempo:118,beat:'funk:0',modes:{1:3,5:2,0:1,4:1},linear:'king',hook:.45,rootLock:.85,maxRing:12,
     keys:{4:7,9:2,2:1,0:.5,7:.5,5:.5,11:.3,1:.2,3:.2,6:.2,8:.2,10:.2},A:['TtPt'],B:['TStP'],
     oct:.65,ghost:.05,thumbDeg:{0:6,7:2,10:1.5,3:1},chrom:.05,choke:.6,slide:.05,lag:{P:.003,dead:-.001,LH:.002},jit:.003,vary:.06},
   // Flea: "static bass" thumbs on open E with pops moving round the minor pentatonic, octaves moved around the scale,
   // lots of dead notes, hammer-ons 2–3 frets apart
-  flea:{name:'Flea: punk-funk',tempo:112,beat:'funk:1',modes:{5:3,1:3,2:1,4:1},shape:'ABAC',keys:{4:6,9:2,2:1,7:1,0:.5,5:.5,11:.4,1:.2,3:.2,6:.2,8:.2,10:.2},
+  flea:{kinds:[{w:2,name:'punk-funk 16ths'},{w:1,name:'melodic pentatonic pops',A:['T-P-','TPP-','T-PP'],B:['P-P-','PP-P','-PTP','P--P','TP-P'],octMove:.6},{w:1,name:'laid-back groove with space',A:['T--P','T---'],B:['--T-','-P--','T--P','----','-T-P']}],name:'Flea: punk-funk',tempo:112,beat:'funk:1',modes:{5:3,1:3,2:1,4:1},shape:'ABAC',keys:{4:6,9:2,2:1,7:1,0:.5,5:.5,11:.4,1:.2,3:.2,6:.2,8:.2,10:.2},
     A:['T-TP','TtP-','T-PT','TPtP','TP-P'],B:['-TPT','TP-P','tTPt','TPTP','-PTP','HOP-','TT-P','tPTP','TtPt','PLTP'],
     oct:.55,ghost:.18,thumbDeg:{0:6,7:2,10:2,3:1.5,5:1},popDeg:{0:3,3:2.5,5:2,7:2.5,10:2.5},pedal:.5,pedalStr:0,octMove:.4,pent:true,hamGap:3,
     chrom:.25,choke:.5,slide:.12,lag:{P:.002,dead:-.003,LH:.002},jit:.006,vary:.14},
   // Les Claypool: an open-string drone (often D or E) under melodic pops on the G string, pull-offs to open
   // strings, odd modes and intervals, hypnotic repetition
-  claypool:{name:'Les Claypool: odd & hypnotic',tempo:128,beat:'funk:2',modes:{2:3,6:2,3:2},shape:'AAAB',
+  claypool:{kinds:[{w:2,name:'hypnotic drone'},{w:1,name:'galloping thumbs',A:['TTt-','T-TT','TTtT'],B:['TTt-','tTT-','TtTT','T-TT'],pedal:.8},{w:1,name:'pop melody on the G string',A:['T-PP','TP-P'],B:['PPLT','P-PP','PLPT','-PPP']}],name:'Les Claypool: odd & hypnotic',tempo:128,beat:'funk:2',modes:{2:3,6:2,3:2},shape:'AAAB',
     A:['T-TT','TTtP','TPL-','TtTt','THO-','TPLT'],B:['TPTT','HOTt','TTHO','PLTT','tTPL','T-PP','HOHO','TPLt','PLPL'],
     oct:.25,ghost:.1,thumbDeg:{0:4,6:2,1:2,7:1},popStr:[3],chrom:.3,pedal:.7,droneD:.4,tritone:.3,pullOpen:.8,
     choke:.35,slide:.1,lag:{P:.002,dead:-.002,LH:.002},jit:.004,vary:.1},
   // Marcus Miller: laid-back pocket, space, pops on the 7th, 9th, 5th and octave, double stops and slides
-  miller:{name:'Marcus Miller: smooth pocket',tempo:92,beat:'funk:7',modes:{1:3,5:2,4:1},shape:'ABAC',
+  miller:{kinds:[{w:2,name:'smooth pocket'},{w:1,name:'busier 16th funk',A:['TtPt','T-tP','TPtP'],B:['tPTt','TtPt','-tPT','PTtP']},{w:1,name:'double stops',A:['T--D','T-D-'],B:['D---','--D-','-D-D','T-D-']}],name:'Marcus Miller: smooth pocket',tempo:92,beat:'funk:7',modes:{1:3,5:2,4:1},shape:'ABAC',
     A:['T--t','T-tP','T--D','T-P-','T-tD'],B:['--D-','t-T-','tPt-','-tD-','T---','--PT','-T-P','t-tD','D---','-tP-'],
     oct:.4,ghost:.15,popDeg:{10:3,2:2,7:2.5,0:2,3:1.5},thumbDeg:{0:6,7:2,10:2,5:1},chrom:.1,
     choke:.3,slide:.3,lag:{P:.012,dead:.004,LH:.008},jit:.005,vary:.1},
   // Victor Wooten: open-hammer-pluck — thumb an open string, hammer a note with the left hand, pluck a note —
   // three notes that roll across the beat like triplets; double thumbing allows longer thumb runs
-  wooten:{name:'Victor Wooten: open-hammer-pluck',tempo:100,beat:'funk:6',modes:{4:3,1:2,0:1},linear:'ohp',maxThumb:6,maxRing:13,
+  wooten:{kinds:[{w:2.5,name:'open-hammer-pluck'},{w:1,name:'thumb grooves',linear:false,shape:'ABAC',A:['TtTP','T-TT','TTtP'],B:['tTTP','TtTt','T-TP','TTP-']}],name:'Victor Wooten: open-hammer-pluck',tempo:100,beat:'funk:6',modes:{4:3,1:2,0:1},linear:'ohp',maxThumb:6,maxRing:13,
     keys:{4:3,9:3,2:2,7:1,0:.5,5:.5,11:.3,1:.2,3:.2,6:.2,8:.2,10:.2},A:['HOP'],B:['HOP'],
     oct:.4,ghost:.06,thumbDeg:{0:5,7:2.5,5:1.5,10:1},chrom:.05,choke:.3,slide:.05,lag:{P:.002,dead:0,LH:.003},jit:.003,vary:.06}};
 // One bar of Mark King-style linear 16ths: ringing root thumbs hammered out between left-hand slaps (S) and dead
@@ -2452,8 +2466,8 @@ function genBand(st,ST,root,mode,nb,fixed){
   // polymeter: a short cycle (3, 5, 7 or 9 sixteenths) repeated straight through the bar lines, so every bar
   // starts at a different point in it; A = next note of a melody sequence, C = chord, L = pull-off to open string
   const polyWay=()=>{const P=pick(C.polys),cyc=P.c.split(''),sq=pick(P.seqs),sq2=pick(P.seqs),Ln=cyc.length;
-    const run=(g0,n,t,s)=>{let ai=Math.floor(g0/Ln)*cyc.filter(c=>c==='A').length+cyc.slice(0,g0%Ln).filter(c=>c==='A').length;const o=[];
-      for(let g=g0;g<g0+n;g++){const c=cyc[g%Ln];o.push(c==='A'?{k:'N',d:s[ai++%s.length]+t}:c==='C'?{k:'C',d:t}:c==='.'?null:{k:c})}return o};
+    const run=(g0,n,t,s)=>{const isA=c=>c==='A'||c==='V';let ai=Math.floor(g0/Ln)*cyc.filter(isA).length+cyc.slice(0,g0%Ln).filter(isA).length;const o=[];
+      for(let g=g0;g<g0+n;g++){const c=cyc[g%Ln];o.push(isA(c)?{k:c==='V'?'V':'N',d:s[ai++%s.length]+t}:c==='C'?{k:'C',d:t}:c==='.'?null:{k:c})}return o};
     const T=mkTurn(null);
     return (b,fresh)=>{const t=sec(b)?(C.secT??5):0;if(fresh)return run(b*16,16,t,pick(P.seqs));
       let o=run(b*16,16,t,b%4>=2&&nb>=4?sq2:sq);if(nb>1&&b===nb-1)o=o.slice(0,8).concat(T);return o}};
@@ -2502,7 +2516,7 @@ function genBand(st,ST,root,mode,nb,fixed){
   steps.forEach((x,i)=>{x.bar=Math.floor(i/16);x.blk=i>>1;x.k=i&1;const on=i%4===0;
     x.vel=x.s==='-'?0:x.muted?(C.chugV||.8)*(on?1.08:1):x.m2!=null?(on?1.08:1):x.pedal?.84:on?.98:.9;
     x.vel*=(x.open?.7:x.s==='L'?.9:1)*(QV[i]?.78:1);x.len=x.open?.5:x.m2!=null?1:x.pedal?.55:.85;delete x.pedal;delete x.open});
-  return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[Math.max(1,rf),Math.max(1,rf)+3],style:st,inst:'guitar',seed,tune:drop?DROPD.slice():undefined};
+  return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[Math.max(1,rf),Math.max(1,rf)+3],style:st,inst:'guitar',seed,tune:drop?DROPD.slice():undefined,kind:{hook:'hook riff',group:'accent groups',poly:'pattern across the bar line',stomp:'half-time stomp',drone:'drone',prog:'chord progression',vc:'verse into chorus'}[way]+(nb===8?' (new section in bars 5–6)':'')};
 }
 // ---- Mode colour ----
 // The notes that change between modes: 2nd (b2/2), 3rd (b3/3), 6th (b6/6), 7th (b7/7), and the 4th in Lydian (#4).
@@ -2539,8 +2553,19 @@ function bandColor(r,ST,explicit,mode){
   if(explicit){r.steps=recolorSteps(r.steps,r.root,mode,TU);r.mode=mode;r.bandMode=false}
   else{r.mode=detectMode(r.steps,r.root,ST.modes);r.bandMode=true}
   return r}
+// Per-riff character for the cell-based players (bass, slap and the non-band guitarists): each new riff leans a
+// different way, e.g. more octaves, more dead notes, more chromatic approaches or slides, a busier or sparser
+// rhythm, and a different phrase shape (ABAC, AABC, ABAB…). Stored with the riff so a regenerated bar matches it.
+function varySt(S0,fixed){if(!S0||S0.cmp||S0.compose)return S0;
+  const fv=fixed&&fixed.fv||{oct:.5+Math.random(),ghost:.5+Math.random(),chrom:.4+Math.random()*1.2,slide:.4+Math.random()*1.3,hook:.6+Math.random()*.8,dens:[-1,0,0,1][rnd(4)],sh:rnd(7)};
+  const c=x=>Math.min(.95,x),S1={...S0,__fv:fv,oct:c((S0.oct||0)*fv.oct),ghost:c((S0.ghost||0)*fv.ghost),chrom:c((S0.chrom||0)*fv.chrom),slide:c((S0.slide||0)*fv.slide),hook:c((S0.hook??.6)*fv.hook)};
+  // each player has a few kinds of riff (their main style plus others they're known for); one is picked per riff
+  if(S0.kinds){if(fv.kind==null)fv.kind=slPick(S0.kinds.map((_,i)=>i),S0.kinds.map(k=>k.w));const k=S0.kinds[fv.kind]||{};
+    for(const x in k)if(x!=='w'&&x!=='name')S1[x]=k[x];if(k.linear===false)delete S1.linear;S1.kindName=k.name}
+  if(S1.shape&&!S1.linear){const alt=[S1.shape,S1.shape,'AABC','ABBC','ABCC','ABAB','AAAB'];S1.shape=alt[fv.sh%alt.length]}
+  return S1}
 function genStyledRiff(st,fixed,instIn){
-  const inst=instIn||crMode,ST=styOf(inst)[st],mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
+  const inst=instIn||crMode,ST=varySt(styOf(inst)[st],fixed),mk=Object.keys(ST.modes).map(Number),G=geomOf(inst),TU=TUNING[G],NS=TU.length,LOW=G==='guitar'?[0,1,2]:[0,1],HIGH=G==='guitar'?[3,4,5]:[2,3];
   const root=fixed?fixed.root:SR.key==='random'?(ST.keys?slPick(Object.keys(ST.keys).map(Number),Object.values(ST.keys)):rnd(12)):+SR.key,mode=fixed?fixed.mode:SR.mode==='random'?slPick(mk,mk.map(k=>ST.modes[k])):+SR.mode;
   const explicit=fixed?!fixed.band:SR.mode!=='random';
   if(ST.compose==='sabbath')return bandColor(genSabbath(ST,root,mode,+SR.bars||1),ST,explicit,mode);
@@ -2574,7 +2599,7 @@ function genStyledRiff(st,fixed,instIn){
   const pedalStr=ST.droneD&&Math.random()<ST.droneD?2:ST.pedalStr??(inS(28)||st==='claypool'?0:1);
   const pedal=ST.pedal?{s:pedalStr,f:0,m:TU[pedalStr]}:null;
   const okCell=c=>(hams.length||!/H/.test(c));
-  const pickCell=(L,first)=>{const c=L.filter(c=>okCell(c)&&(!first||c[0]==='T'||inst!=='slap'&&/[DP]/.test(c[0])));return (c.length?c:['T-P-'])[rnd(c.length||1)]};
+  const dens=ST.__fv?ST.__fv.dens:0,pickCell=(L,first)=>{const c=L.filter(c=>okCell(c)&&(!first||c[0]==='T'||inst!=='slap'&&/[DP]/.test(c[0])));if(!c.length)return 'T-P-';return slPick(c,c.map(x=>Math.exp(dens*((x.match(/[^-]/g)||[]).length-2.5)*.6)))};
   // Space setting, applied to the rhythm cells so repeats stay identical:
   //  0 busy = every gap filled with dead notes · 1 natural = the player's own density (unchanged)
   //  2 more space · 3 lots of space = dead notes and weak-16th notes dropped; downbeats and hammer-on pairs kept
@@ -2698,7 +2723,7 @@ function genStyledRiff(st,fixed,instIn){
     if(plain(x)&&x.pos.f>=2&&nextSound>=2&&Math.random()<(ST.slide||0)*(i%16===0?1.6:1))x.slide=2;
     x.len=plain(x)&&i%16!==0&&Math.random()<(ST.choke||0)?.5:1;
     x.vel=x.s==='-'?0:x.muted?(x.s==='S'?.85:.78):i%16===0?1.08:i%4===0?.98:x.s==='P'?(deg(x.m)===0?1.05:.96):x.s==='O'||x.s==='L'?.9:i%2===0?.9:.84});
-  return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi],style:st,inst};
+  return {id:'s'+Date.now().toString(36)+rnd(1e6).toString(36),root,mode,steps,box:[lo,hi],style:st,inst,fv:ST.__fv,kind:ST.kindName};
 }
 function genSlapRiff(){
   if(isSlapKey(SR.style)&&crMode==='bass'){const k=SR.style.slice(5);return genStyledRiff(SR_STYLES[k]?k:'mix',null,'slap')}
@@ -2754,6 +2779,7 @@ function renderSR(){
   for(let b=0;b<nb;b++)h+=yardRow(i=>st[b*16+i]||null,b*RH,{RH:108,wrap:false,fade:()=>!on[b],check:nb>1?on[b]:null,regen:nb>1,bar:b,on:i=>b*16+i===slPlayingStep,idx:i=>b*16+i,names:inst==='slap'&&SR.showNames?nm:null,nmIn:inst==='slap'?null:nm,label:nb>1?`BAR ${b+1} · ${LB[b]}`:'',labelC:b%2?'var(--blue)':'var(--coral)'});
   $('srStick').innerHTML=h+'</svg>';
   $('srKey').textContent=`${nm[r.root]} ${MODES[r.mode].name}${r.tune?' · Drop D':''}`;
+  {const k=$('srKind');if(k){k.textContent=r.kind?'This riff: '+r.kind:'';k.hidden=!r.kind}}
   {const opt=(v,l)=>`<option value="${v}">${l}</option>`,c=$('srColor');if(c&&r){const base=r.base?r.base.mode:r.mode;const bm=r.base?r.base.bandMode:r.bandMode,why=bm?'band recommended':(STY()[r.style]||{}).cmp||(STY()[r.style]||{}).compose?'from your Mode setting':'';c.innerHTML=opt('orig',`As written (${MODES[base].name}${why?' · '+why:''})`)+MODES.map((m,i)=>opt(i,m.name+(m.label?` (${m.label})`:''))).join('');c.value=r.colorMode!=null?String(r.colorMode):'orig'}}
   const cur=slKind==='riff'&&slPlayingStep>=0?st[slPlayingStep]:null;
   const at=(x,p)=>!!(cur&&!cur.muted&&(cur.pos&&cur.pos.s===p.s&&cur.pos.f===p.f||cur.pos2&&cur.pos2.s===p.s&&cur.pos2.f===p.f||cur.pos3&&cur.pos3.s===p.s&&cur.pos3.f===p.f));
@@ -2810,7 +2836,7 @@ function srRegenBar(b){
   const r=SR.riff;if(!r)return;const nb=r.steps.length/16,keepBars=SR.bars,sig=a=>a.map(x=>x.s+(x.m??'')+(x.muted?'x':'')).join();
   const cur=sig(r.steps.slice(b*16,b*16+16));let bar=null;
   SR.bars=nb;
-  try{for(let k=0;k<8&&!bar;k++){const f=genStyledRiff(r.style||'mix',{root:r.root,mode:r.mode,band:!!r.bandMode,lo:r.box[0],seed:r.seed,regen:r.seed!=null?b:null,tune:r.seed!=null?r.tune||null:undefined},r.inst||'slap'),cand=f.steps.slice(b*16,b*16+16);if(sig(cand)!==cur)bar=cand}}
+  try{for(let k=0;k<8&&!bar;k++){const f=genStyledRiff(r.style||'mix',{root:r.root,mode:r.mode,band:!!r.bandMode,fv:r.fv,lo:r.box[0],seed:r.seed,regen:r.seed!=null?b:null,tune:r.seed!=null?r.tune||null:undefined},r.inst||'slap'),cand=f.steps.slice(b*16,b*16+16);if(sig(cand)!==cur)bar=cand}}
   finally{SR.bars=keepBars}
   if(!bar){toast('Couldn’t find a different version, try again');return}
   r.steps.splice(b*16,16,...bar.map(x=>Object.assign({},x,{bar:b})));
