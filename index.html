@@ -588,7 +588,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--coral);margin:8px 0 
 </main>
 
 <script>
-const APP_VERSION='2026.11.28-0232';
+const APP_VERSION='2026.11.28-0249';
 {
 /*CORE-START*/
 const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -2589,7 +2589,7 @@ function bandColor(r,ST,explicit,mode){
 // Shared techniques (what turning one off/on does) and, per player, which ones they get and their default.
 // 'k:<kind>' toggles one of the player's kinds of riff, 'w:<way>' one of a band's kinds of riff.
 const FT={
-  ds:{name:'Double stops',on:{add:{A:['T-D-'],B:['--D-','D-P-','-D-D','TD--']}},off:{rep:[['D','P']]}},
+  ds:{name:'Double stops',on:{add:{A:['T-D-','T--D'],B:['--D-','D-P-','-D-D','TD--','D---']},need:'D'},off:{rep:[['D','P']]}},
   ham:{name:'Hammer-ons',off:{rep:[['HO','T-'],['H','T'],['O','-']]}},
   pull:{name:'Pull-offs',off:{rep:[['L','-']],set:{pullP:0,pullOpen:0}},offBand:{rep:[['L','X']],set:{pullP:0}}},
   lhs:{name:'Left-hand slaps',off:{rep:[['S','t']],set:{noLHS:true}}},
@@ -2644,7 +2644,7 @@ function featCell(S1,inst,st){const fl=featList(inst,st);if(!fl.length)return S1
   S1.__feat=fl;return S1}
 function featCellAfter(S1){for(const f of S1.__feat||[]){if(f.id.includes(':'))continue;const P=f.on?FT[f.id].on:FT[f.id].off;if(!P)continue;
     if(P.set)Object.assign(S1,P.set);
-    if(P.add){S1.A=(S1.A||[]).concat(P.add.A||[]);S1.B=(S1.B||[]).concat(P.add.B||[])}
+    if(P.add){S1.A=(S1.A||[]).concat(P.add.A||[]);S1.B=(S1.B||[]).concat(P.add.B||[])}if(P.need)S1.__need=(S1.__need||'')+P.need;
     if(P.rep){const r=c=>repDeep(c,P.rep);S1.A=(S1.A||[]).map(r);S1.B=(S1.B||[]).map(r);S1.__rep=(S1.__rep||[]).concat(P.rep)}}
   return S1}
 // band composer: apply toggles to a copy of the band's settings
@@ -2733,6 +2733,11 @@ function genStyledRiff(st,fixed,instIn){
     for(const p of plan)if(!cellOf[p.rhythm])cellOf[p.rhythm]=p.rhythm===shape[0]||p.rhythm==='b'+shape[0]?spaceAdj(pickCell(ST.A,true),true):spaceAdj(pickCell(ST.B.concat(ST.A),false));
     if(cellOf.F){const busy=ST.B.concat(ST.A).filter(c=>okCell(c)&&(c.match(/[TPHOD]/g)||[]).length>=3);if(busy.length)cellOf.F=spaceAdj(busy[rnd(busy.length)])}
   }
+  // a technique turned on must actually be heard: if no rhythm cell has a double stop, put some in (on single
+  // notes at off-beat spots, never the riff's first note), in linear players' bars too
+  if(ST.__need&&ST.__need.includes('D')&&!Object.values(cellOf).some(c=>c.includes('D'))){
+    for(const L of Object.keys(cellOf)){const c=cellOf[L].split('');const spots=c.map((ch,i)=>(ch==='T'||ch==='P')&&!(i===0&&(L===shape[0]||L==='W'||L==='V'))&&c[i+1]!=='O'&&c[i+1]!=='L'?i:-1).filter(i=>i>=0);
+      const n=Math.min(spots.length,c.length>4?2:1);for(let j=0;j<n;j++){const k=spots.splice(Math.floor(Math.random()*spots.length),1)[0];c[k]='D'}cellOf[L]=c.join('')}}
   const memo={},steps=[];let lastT=rootM,progI=0,lastChord=null,runI=0;
   const runA=ST.runs?ST.runs[rnd(ST.runs.length)]:null,runB=ST.runs?ST.runs[rnd(ST.runs.length)]:null;
   const progA=ST.prog?ST.prog[rnd(ST.prog.length)]:null,progB=ST.prog?ST.prog[rnd(ST.prog.length)]:null;
@@ -2956,7 +2961,8 @@ $('srFeat').onclick=e=>{const b=e.target.closest('[data-feat]');if(!b)return;con
   const fl=featList(fi,fs),cur=fl.find(f=>f.id===id);if(!cur)return;
   // keep at least one kind of riff on
   if(cur.on&&/^[kw]:/.test(id)){const pre=id.slice(0,2),kinds=fl.filter(f=>f.id.startsWith(pre)&&f.on);const total=(FEATS[fi][fs]||[]).filter(x=>x[0].startsWith(pre)).length;
-    if(id.startsWith('w:')&&kinds.length<=1){toast('Keep at least one kind of riff on');return}}
+    const hasMain=id.startsWith('k:')&&(styOf(fi==='slap'?'slap':fi)[fs]||{}).kinds&&!(FEATS[fi][fs]||[]).some(x=>x[0]==='k:'+(styOf(fi==='slap'?'slap':fi)[fs].kinds[0].name));
+    if(!hasMain&&kinds.length<=1){toast('Keep at least one kind of riff on');return}}
   SR.feat=SR.feat||{};SR.feat[k]={...(SR.feat[k]||{}),[id]:!cur.on};saveS();renderSRControls();srNew();toast(`${cur.name}: ${cur.on?'off':'on'}`)};
 // same riff, different mode colour: always recoloured from the riff as first written, so you can switch back
 chg('srColor',v=>{const r=SR.riff;if(!r)return;if(!r.base)r.base={steps:JSON.parse(JSON.stringify(r.steps)),mode:r.mode,bandMode:!!r.bandMode};
